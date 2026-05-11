@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
+import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as AuthenticatedSlaMideaRouteImport } from './routes/_authenticated/sla-midea'
 import { Route as AuthenticatedSlaBoschRouteImport } from './routes/_authenticated/sla-bosch'
 import { Route as AuthenticatedPlanoAcaoRouteImport } from './routes/_authenticated/plano-acao'
@@ -26,6 +27,11 @@ const LoginRoute = LoginRouteImport.update({
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedSlaMideaRoute = AuthenticatedSlaMideaRouteImport.update({
   id: '/sla-midea',
@@ -60,7 +66,7 @@ const AuthenticatedCadastroRoute = AuthenticatedCadastroRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof AuthenticatedRouteWithChildren
+  '/': typeof AuthenticatedIndexRoute
   '/login': typeof LoginRoute
   '/cadastro': typeof AuthenticatedCadastroRoute
   '/diagnostico': typeof AuthenticatedDiagnosticoRoute
@@ -70,7 +76,6 @@ export interface FileRoutesByFullPath {
   '/sla-midea': typeof AuthenticatedSlaMideaRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
   '/cadastro': typeof AuthenticatedCadastroRoute
   '/diagnostico': typeof AuthenticatedDiagnosticoRoute
@@ -78,6 +83,7 @@ export interface FileRoutesByTo {
   '/plano-acao': typeof AuthenticatedPlanoAcaoRoute
   '/sla-bosch': typeof AuthenticatedSlaBoschRoute
   '/sla-midea': typeof AuthenticatedSlaMideaRoute
+  '/': typeof AuthenticatedIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -89,6 +95,7 @@ export interface FileRoutesById {
   '/_authenticated/plano-acao': typeof AuthenticatedPlanoAcaoRoute
   '/_authenticated/sla-bosch': typeof AuthenticatedSlaBoschRoute
   '/_authenticated/sla-midea': typeof AuthenticatedSlaMideaRoute
+  '/_authenticated/': typeof AuthenticatedIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -103,7 +110,6 @@ export interface FileRouteTypes {
     | '/sla-midea'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/'
     | '/login'
     | '/cadastro'
     | '/diagnostico'
@@ -111,6 +117,7 @@ export interface FileRouteTypes {
     | '/plano-acao'
     | '/sla-bosch'
     | '/sla-midea'
+    | '/'
   id:
     | '__root__'
     | '/_authenticated'
@@ -121,6 +128,7 @@ export interface FileRouteTypes {
     | '/_authenticated/plano-acao'
     | '/_authenticated/sla-bosch'
     | '/_authenticated/sla-midea'
+    | '/_authenticated/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -143,6 +151,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/': {
+      id: '/_authenticated/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/sla-midea': {
       id: '/_authenticated/sla-midea'
@@ -196,6 +211,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedPlanoAcaoRoute: typeof AuthenticatedPlanoAcaoRoute
   AuthenticatedSlaBoschRoute: typeof AuthenticatedSlaBoschRoute
   AuthenticatedSlaMideaRoute: typeof AuthenticatedSlaMideaRoute
+  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -205,6 +221,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedPlanoAcaoRoute: AuthenticatedPlanoAcaoRoute,
   AuthenticatedSlaBoschRoute: AuthenticatedSlaBoschRoute,
   AuthenticatedSlaMideaRoute: AuthenticatedSlaMideaRoute,
+  AuthenticatedIndexRoute: AuthenticatedIndexRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
