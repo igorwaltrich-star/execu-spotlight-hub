@@ -1,0 +1,159 @@
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
+import { useRealtimeTable } from "@/hooks/use-realtime-table";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from "@/components/ui/table";
+import { Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import { fmtMes, META_PRODUTIVIDADE } from "@/lib/constants";
+
+export function PageHeader({ title, description }: { title: string; description?: string }) {
+  return (
+    <div className="border-b border-border bg-card">
+      <div className="px-8 py-6">
+        <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+        {description && <p className="text-sm text-muted-foreground mt-1">{description}</p>}
+      </div>
+    </div>
+  );
+}
+
+type Row = { id: string; mes: string; volume: number; pessoas: number; produtividade: number | null };
+
+export function CadastroOperacionalView() {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  const queryKey = ["operacional_mensal"];
+  useRealtimeTable("operacional_mensal", queryKey);
+
+  const { data: rows = [] } = useQuery({
+    queryKey,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("operacional_mensal")
+        .select("*")
+        .order("mes", { ascending: true });
+      if (error) throw error;
+      return data as Row[];
+    },
+  });
+
+  const [mes, setMes] = useState("");
+  const [volume, setVolume] = useState<number | "">("");
+  const [pessoas, setPessoas] = useState<number | "">("");
+
+  const upsert = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error("Não autenticado");
+      if (!mes || volume === "" || pessoas === "") throw new Error("Preencha todos os campos");
+      const { error } = await supabase
+        .from("operacional_mensal")
+        .upsert(
+          { user_id: user.id, mes: `${mes}-01`, volume: Number(volume), pessoas: Number(pessoas) },
+          { onConflict: "user_id,mes" }
+        );
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Registro salvo");
+      setMes(""); setVolume(""); setPessoas("");
+      qc.invalidateQueries({ queryKey });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const del = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("operacional_mensal").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey }),
+  });
+
+  return (
+    <>
+      <PageHeader
+        title="Cadastro Operacional"
+        description={`Volume mensal e equipe. Meta de produtividade: ${META_PRODUTIVIDADE} processos/pessoa.`}
+      />
+      <div className="p-8 space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Novo registro mensal</CardTitle>
+            <CardDescription>Atualiza automaticamente se o mês já existir.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form
+              className="grid grid-cols-1 md:grid-cols-4 gap-4"
+              onSubmit={(e) => { e.preventDefault(); upsert.mutate(); }}
+            >
+              <div className="space-y-2">
+                <Label>Mês</Label>
+                <Input type="month" value={mes} onChange={(e) => setMes(e.target.value)} required />
+              </div>
+              <div className="space-y-2">
+                <Label>Volume</Label>
+                <Input type="number" min={0} value={volume} onChange={(e) => setVolume(e.target.value === "" ? "" : Number(e.target.value))} required />
+              </div>
+              <div className="space-y-2">
+                <Label>Pessoas</Label>
+                <Input type="number" min={1} value={pessoas} onChange={(e) => setPessoas(e.target.value === "" ? "" : Number(e.target.value))} required />
+              </div>
+              <div className="flex items-end">
+                <Button type="submit" className="w-full" disabled={upsert.isPending}>Salvar</Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader><CardTitle>Histórico</CardTitle></CardHeader>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Mês</TableHead>
+                  <TableHead className="text-right">Volume</TableHead>
+                  <TableHead className="text-right">Pessoas</TableHead>
+                  <TableHead className="text-right">Produtividade</TableHead>
+                  <TableHead className="w-12" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {rows.length === 0 && (
+                  <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Sem registros.</TableCell></TableRow>
+                )}
+                {rows.map((r) => {
+                  const p = Number(r.produtividade ?? 0);
+                  const ok = p >= META_PRODUTIVIDADE;
+                  return (
+                    <TableRow key={r.id}>
+                      <TableCell>{fmtMes(r.mes)}</TableCell>
+                      <TableCell className="text-right">{r.volume}</TableCell>
+                      <TableCell className="text-right">{r.pessoas}</TableCell>
+                      <TableCell className={`text-right font-medium ${ok ? "text-success" : "text-destructive"}`}>
+                        {p.toFixed(1)}
+                      </TableCell>
+                      <TableCell>
+                        <Button size="icon" variant="ghost" onClick={() => del.mutate(r.id)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </div>
+    </>
+  );
+}
