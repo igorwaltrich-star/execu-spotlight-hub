@@ -11,6 +11,8 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
+import { Route as AuthenticatedSlaMideaRouteImport } from './routes/_authenticated/sla-midea'
+import { Route as AuthenticatedSlaBoschRouteImport } from './routes/_authenticated/sla-bosch'
 import { Route as AuthenticatedCadastroRouteImport } from './routes/_authenticated/cadastro'
 
 const LoginRoute = LoginRouteImport.update({
@@ -22,6 +24,16 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedSlaMideaRoute = AuthenticatedSlaMideaRouteImport.update({
+  id: '/sla-midea',
+  path: '/sla-midea',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedSlaBoschRoute = AuthenticatedSlaBoschRouteImport.update({
+  id: '/sla-bosch',
+  path: '/sla-bosch',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedCadastroRoute = AuthenticatedCadastroRouteImport.update({
   id: '/cadastro',
   path: '/cadastro',
@@ -32,24 +44,36 @@ export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
   '/cadastro': typeof AuthenticatedCadastroRoute
+  '/sla-bosch': typeof AuthenticatedSlaBoschRoute
+  '/sla-midea': typeof AuthenticatedSlaMideaRoute
 }
 export interface FileRoutesByTo {
   '/': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
   '/cadastro': typeof AuthenticatedCadastroRoute
+  '/sla-bosch': typeof AuthenticatedSlaBoschRoute
+  '/sla-midea': typeof AuthenticatedSlaMideaRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
   '/_authenticated/cadastro': typeof AuthenticatedCadastroRoute
+  '/_authenticated/sla-bosch': typeof AuthenticatedSlaBoschRoute
+  '/_authenticated/sla-midea': typeof AuthenticatedSlaMideaRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/cadastro'
+  fullPaths: '/' | '/login' | '/cadastro' | '/sla-bosch' | '/sla-midea'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/cadastro'
-  id: '__root__' | '/_authenticated' | '/login' | '/_authenticated/cadastro'
+  to: '/' | '/login' | '/cadastro' | '/sla-bosch' | '/sla-midea'
+  id:
+    | '__root__'
+    | '/_authenticated'
+    | '/login'
+    | '/_authenticated/cadastro'
+    | '/_authenticated/sla-bosch'
+    | '/_authenticated/sla-midea'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -73,6 +97,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/sla-midea': {
+      id: '/_authenticated/sla-midea'
+      path: '/sla-midea'
+      fullPath: '/sla-midea'
+      preLoaderRoute: typeof AuthenticatedSlaMideaRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/sla-bosch': {
+      id: '/_authenticated/sla-bosch'
+      path: '/sla-bosch'
+      fullPath: '/sla-bosch'
+      preLoaderRoute: typeof AuthenticatedSlaBoschRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/cadastro': {
       id: '/_authenticated/cadastro'
       path: '/cadastro'
@@ -85,10 +123,14 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteChildren {
   AuthenticatedCadastroRoute: typeof AuthenticatedCadastroRoute
+  AuthenticatedSlaBoschRoute: typeof AuthenticatedSlaBoschRoute
+  AuthenticatedSlaMideaRoute: typeof AuthenticatedSlaMideaRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedCadastroRoute: AuthenticatedCadastroRoute,
+  AuthenticatedSlaBoschRoute: AuthenticatedSlaBoschRoute,
+  AuthenticatedSlaMideaRoute: AuthenticatedSlaMideaRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
