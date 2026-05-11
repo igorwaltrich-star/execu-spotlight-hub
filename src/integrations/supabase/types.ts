@@ -14,7 +14,231 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      config: {
+        Row: {
+          created_at: string
+          fator_sazonalidade: number
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          fator_sazonalidade?: number
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          fator_sazonalidade?: number
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      gargalos: {
+        Row: {
+          created_at: string
+          id: string
+          impacto: string
+          item: string
+          risco: Database["public"]["Enums"]["risco_nivel"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          impacto?: string
+          item: string
+          risco?: Database["public"]["Enums"]["risco_nivel"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          impacto?: string
+          item?: string
+          risco?: Database["public"]["Enums"]["risco_nivel"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      melhorias: {
+        Row: {
+          created_at: string
+          descricao: string
+          id: string
+          tipo: Database["public"]["Enums"]["melhoria_tipo"]
+          titulo: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          descricao?: string
+          id?: string
+          tipo?: Database["public"]["Enums"]["melhoria_tipo"]
+          titulo: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          descricao?: string
+          id?: string
+          tipo?: Database["public"]["Enums"]["melhoria_tipo"]
+          titulo?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      operacional_mensal: {
+        Row: {
+          created_at: string
+          id: string
+          mes: string
+          pessoas: number
+          produtividade: number | null
+          updated_at: string
+          user_id: string
+          volume: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mes: string
+          pessoas?: number
+          produtividade?: number | null
+          updated_at?: string
+          user_id: string
+          volume?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mes?: string
+          pessoas?: number
+          produtividade?: number | null
+          updated_at?: string
+          user_id?: string
+          volume?: number
+        }
+        Relationships: []
+      }
+      plano_acao: {
+        Row: {
+          created_at: string
+          id: string
+          iniciativa: string
+          prazo: string | null
+          responsavel: string
+          status: Database["public"]["Enums"]["acao_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          iniciativa: string
+          prazo?: string | null
+          responsavel?: string
+          status?: Database["public"]["Enums"]["acao_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          iniciativa?: string
+          prazo?: string | null
+          responsavel?: string
+          status?: Database["public"]["Enums"]["acao_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      sla_bosch: {
+        Row: {
+          created_at: string
+          desvios: number
+          dig_conf: number
+          id: string
+          mes: string
+          otcc: number
+          pinho: number
+          start_up: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          desvios?: number
+          dig_conf?: number
+          id?: string
+          mes: string
+          otcc?: number
+          pinho?: number
+          start_up?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          desvios?: number
+          dig_conf?: number
+          id?: string
+          mes?: string
+          otcc?: number
+          pinho?: number
+          start_up?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      sla_midea: {
+        Row: {
+          created_at: string
+          id: string
+          mes: string
+          otcc: number
+          otd: number
+          sotd: number
+          start_up: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mes: string
+          otcc?: number
+          otd?: number
+          sotd?: number
+          start_up?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mes?: string
+          otcc?: number
+          otd?: number
+          sotd?: number
+          start_up?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +247,9 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      acao_status: "andamento" | "concluido" | "atrasado"
+      melhoria_tipo: "atencao" | "oportunidade"
+      risco_nivel: "alto" | "medio" | "baixo"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +376,10 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      acao_status: ["andamento", "concluido", "atrasado"],
+      melhoria_tipo: ["atencao", "oportunidade"],
+      risco_nivel: ["alto", "medio", "baixo"],
+    },
   },
 } as const
