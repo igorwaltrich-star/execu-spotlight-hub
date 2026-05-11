@@ -13,6 +13,9 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedSlaMideaRouteImport } from './routes/_authenticated/sla-midea'
 import { Route as AuthenticatedSlaBoschRouteImport } from './routes/_authenticated/sla-bosch'
+import { Route as AuthenticatedPlanoAcaoRouteImport } from './routes/_authenticated/plano-acao'
+import { Route as AuthenticatedMelhoriasRouteImport } from './routes/_authenticated/melhorias'
+import { Route as AuthenticatedDiagnosticoRouteImport } from './routes/_authenticated/diagnostico'
 import { Route as AuthenticatedCadastroRouteImport } from './routes/_authenticated/cadastro'
 
 const LoginRoute = LoginRouteImport.update({
@@ -34,6 +37,22 @@ const AuthenticatedSlaBoschRoute = AuthenticatedSlaBoschRouteImport.update({
   path: '/sla-bosch',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedPlanoAcaoRoute = AuthenticatedPlanoAcaoRouteImport.update({
+  id: '/plano-acao',
+  path: '/plano-acao',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedMelhoriasRoute = AuthenticatedMelhoriasRouteImport.update({
+  id: '/melhorias',
+  path: '/melhorias',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedDiagnosticoRoute =
+  AuthenticatedDiagnosticoRouteImport.update({
+    id: '/diagnostico',
+    path: '/diagnostico',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedCadastroRoute = AuthenticatedCadastroRouteImport.update({
   id: '/cadastro',
   path: '/cadastro',
@@ -44,6 +63,9 @@ export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
   '/cadastro': typeof AuthenticatedCadastroRoute
+  '/diagnostico': typeof AuthenticatedDiagnosticoRoute
+  '/melhorias': typeof AuthenticatedMelhoriasRoute
+  '/plano-acao': typeof AuthenticatedPlanoAcaoRoute
   '/sla-bosch': typeof AuthenticatedSlaBoschRoute
   '/sla-midea': typeof AuthenticatedSlaMideaRoute
 }
@@ -51,6 +73,9 @@ export interface FileRoutesByTo {
   '/': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
   '/cadastro': typeof AuthenticatedCadastroRoute
+  '/diagnostico': typeof AuthenticatedDiagnosticoRoute
+  '/melhorias': typeof AuthenticatedMelhoriasRoute
+  '/plano-acao': typeof AuthenticatedPlanoAcaoRoute
   '/sla-bosch': typeof AuthenticatedSlaBoschRoute
   '/sla-midea': typeof AuthenticatedSlaMideaRoute
 }
@@ -59,19 +84,41 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
   '/_authenticated/cadastro': typeof AuthenticatedCadastroRoute
+  '/_authenticated/diagnostico': typeof AuthenticatedDiagnosticoRoute
+  '/_authenticated/melhorias': typeof AuthenticatedMelhoriasRoute
+  '/_authenticated/plano-acao': typeof AuthenticatedPlanoAcaoRoute
   '/_authenticated/sla-bosch': typeof AuthenticatedSlaBoschRoute
   '/_authenticated/sla-midea': typeof AuthenticatedSlaMideaRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/cadastro' | '/sla-bosch' | '/sla-midea'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/cadastro'
+    | '/diagnostico'
+    | '/melhorias'
+    | '/plano-acao'
+    | '/sla-bosch'
+    | '/sla-midea'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/cadastro' | '/sla-bosch' | '/sla-midea'
+  to:
+    | '/'
+    | '/login'
+    | '/cadastro'
+    | '/diagnostico'
+    | '/melhorias'
+    | '/plano-acao'
+    | '/sla-bosch'
+    | '/sla-midea'
   id:
     | '__root__'
     | '/_authenticated'
     | '/login'
     | '/_authenticated/cadastro'
+    | '/_authenticated/diagnostico'
+    | '/_authenticated/melhorias'
+    | '/_authenticated/plano-acao'
     | '/_authenticated/sla-bosch'
     | '/_authenticated/sla-midea'
   fileRoutesById: FileRoutesById
@@ -111,6 +158,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSlaBoschRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/plano-acao': {
+      id: '/_authenticated/plano-acao'
+      path: '/plano-acao'
+      fullPath: '/plano-acao'
+      preLoaderRoute: typeof AuthenticatedPlanoAcaoRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/melhorias': {
+      id: '/_authenticated/melhorias'
+      path: '/melhorias'
+      fullPath: '/melhorias'
+      preLoaderRoute: typeof AuthenticatedMelhoriasRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/diagnostico': {
+      id: '/_authenticated/diagnostico'
+      path: '/diagnostico'
+      fullPath: '/diagnostico'
+      preLoaderRoute: typeof AuthenticatedDiagnosticoRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/cadastro': {
       id: '/_authenticated/cadastro'
       path: '/cadastro'
@@ -123,12 +191,18 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteChildren {
   AuthenticatedCadastroRoute: typeof AuthenticatedCadastroRoute
+  AuthenticatedDiagnosticoRoute: typeof AuthenticatedDiagnosticoRoute
+  AuthenticatedMelhoriasRoute: typeof AuthenticatedMelhoriasRoute
+  AuthenticatedPlanoAcaoRoute: typeof AuthenticatedPlanoAcaoRoute
   AuthenticatedSlaBoschRoute: typeof AuthenticatedSlaBoschRoute
   AuthenticatedSlaMideaRoute: typeof AuthenticatedSlaMideaRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedCadastroRoute: AuthenticatedCadastroRoute,
+  AuthenticatedDiagnosticoRoute: AuthenticatedDiagnosticoRoute,
+  AuthenticatedMelhoriasRoute: AuthenticatedMelhoriasRoute,
+  AuthenticatedPlanoAcaoRoute: AuthenticatedPlanoAcaoRoute,
   AuthenticatedSlaBoschRoute: AuthenticatedSlaBoschRoute,
   AuthenticatedSlaMideaRoute: AuthenticatedSlaMideaRoute,
 }
