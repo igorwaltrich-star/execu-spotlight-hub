@@ -6,7 +6,8 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 
-const NAV = [
+type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean };
+const NAV: NavItem[] = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/cadastro", label: "Cadastro Operacional", icon: Database },
   { to: "/sla-midea", label: "SLA Midea", icon: Gauge },
@@ -14,7 +15,7 @@ const NAV = [
   { to: "/diagnostico", label: "Diagnóstico", icon: AlertTriangle },
   { to: "/melhorias", label: "Melhorias", icon: Lightbulb },
   { to: "/plano-acao", label: "Plano de Ação", icon: ListChecks },
-] as const;
+];
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { user, signOut } = useAuth();
@@ -40,7 +41,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             return (
               <Link
                 key={item.to}
-                to={item.to}
+                to={item.to as never}
                 className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
                   active
                     ? "bg-sidebar-primary text-sidebar-primary-foreground"
@@ -58,7 +59,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <Button
             variant="secondary"
             className="w-full justify-start"
-            onClick={async () => { await signOut(); navigate({ to: "/login" }); }}
+            onClick={async () => { await signOut(); navigate({ to: "/login" as never }); }}
           >
             <LogOut className="h-4 w-4 mr-2" /> Sair
           </Button>
