@@ -127,6 +127,7 @@ function DashboardPage() {
 
   const [filtroGrupo, setFiltroGrupo] = useState<"all" | "midea" | "bosch">("all");
   const [filtroMes, setFiltroMes] = useState<string>("all");
+  const [filtroUnidade, setFiltroUnidade] = useState<"all" | UnidadeKey>("all");
 
   const opAll = op.data ?? [];
 
@@ -164,12 +165,15 @@ function DashboardPage() {
 
   // Aggregate per month for filtered trend charts (sum volume, sum FTE, real productivity)
   const aggByMonth = (rows: OpRow[]) => {
-    const map = new Map<string, { mes: string; volume: number; pessoas: number }>();
+    const map = new Map<string, { mes: string; volume: number; pessoas: number; volumeProd: number }>();
     for (const r of rows) {
       const k = r.mes;
-      const cur = map.get(k) ?? { mes: k, volume: 0, pessoas: 0 };
+      const fte = fteOf(r);
+      const cur = map.get(k) ?? { mes: k, volume: 0, pessoas: 0, volumeProd: 0 };
       cur.volume += r.volume;
-      cur.pessoas += fteOf(r);
+      cur.pessoas += fte;
+      // Só conta no cálculo de produtividade o volume cujo FTE foi cadastrado
+      if (fte > 0) cur.volumeProd += r.volume;
       map.set(k, cur);
     }
     return [...map.values()]
@@ -178,7 +182,7 @@ function DashboardPage() {
         mes: fmtMes(r.mes),
         volume: r.volume,
         pessoas: Number(r.pessoas.toFixed(1)),
-        produtividade: r.pessoas > 0 ? r.volume / r.pessoas : 0,
+        produtividade: r.pessoas > 0 ? Number((r.volumeProd / r.pessoas).toFixed(1)) : 0,
       }));
   };
 
@@ -193,8 +197,8 @@ function DashboardPage() {
     return { ...u, volume, pessoas: fteTotal, prod, meses: rows.length };
   });
 
-  const totalizador = (grupo: "midea" | "bosch") => {
-    const items = kpiPorUnidade.filter((k) => k.grupo === grupo);
+  const totalizador = (grupo: "midea" | "bosch", uniFilter: "all" | UnidadeKey = "all") => {
+    const items = kpiPorUnidade.filter((k) => k.grupo === grupo && (uniFilter === "all" || k.key === uniFilter));
     const volume = items.reduce((s, r) => s + r.volume, 0);
     const pessoas = items.reduce((s, r) => s + r.pessoas, 0);
     const prod = pessoas > 0 ? volume / pessoas : 0;
@@ -237,22 +241,66 @@ function DashboardPage() {
     }));
   }, [boschFiltrada]);
 
-  // Projection: moving average × (1 + fator/100) for Jul–Dez
+  // Projeção: Midea cresce 6% ao mês (composto), Bosch soma +200 processos/mês
   const projecao = useMemo(() => {
-    const histVolume = (op.data ?? []).map((r) => r.volume);
-    const avg = histVolume.length ? histVolume.reduce((s, v) => s + v, 0) / histVolume.length : 0;
-    const proj = avg * (1 + fator / 100);
-    const out: { mes: string; historico: number | null; projetado: number | null }[] = [];
+    const rows = op.data ?? [];
+    // Volume por mês para cada grupo
+    const byMonthGroup = new Map<string, { midea: number; bosch: number }>();
+    for (const r of rows) {
+      const g = grupoDe(r.unidade);
+      if (!g) continue;
+      const cur = byMonthGroup.get(r.mes) ?? { midea: 0, bosch: 0 };
+      cur[g] += r.volume;
+      byMonthGroup.set(r.mes, cur);
+    }
+    const meses = [...byMonthGroup.keys()].sort();
+
+    // Histórico mês a mês (índice 0..11 = Jan..Dez)
+    const histMidea: (number | null)[] = Array(12).fill(null);
+    const histBosch: (number | null)[] = Array(12).fill(null);
+    let lastIdx = -1;
+    for (const m of meses) {
+      const idx = new Date(m).getUTCMonth();
+      const v = byMonthGroup.get(m)!;
+      histMidea[idx] = v.midea;
+      histBosch[idx] = v.bosch;
+      if (idx > lastIdx) lastIdx = idx;
+    }
+    // Base = último mês conhecido (ou média se nada cadastrado)
+    const baseMidea = lastIdx >= 0 && histMidea[lastIdx] !== null
+      ? histMidea[lastIdx]!
+      : (rows.filter((r) => grupoDe(r.unidade) === "midea").reduce((s, r) => s + r.volume, 0) / Math.max(1, meses.length));
+    const baseBosch = lastIdx >= 0 && histBosch[lastIdx] !== null
+      ? histBosch[lastIdx]!
+      : (rows.filter((r) => grupoDe(r.unidade) === "bosch").reduce((s, r) => s + r.volume, 0) / Math.max(1, meses.length));
+
+    const startProj = Math.max(lastIdx + 1, 6); // projeta a partir do próximo mês ou Jul
+    const out: { mes: string; historico: number | null; projetado: number | null; midea: number | null; bosch: number | null }[] = [];
+    let mProj = baseMidea;
+    let bProj = baseBosch;
     for (let i = 0; i < 12; i++) {
-      const histRow = (op.data ?? []).find((r) => new Date(r.mes).getUTCMonth() === i);
+      const histTotal = (histMidea[i] ?? 0) + (histBosch[i] ?? 0);
+      const hasHist = histMidea[i] !== null || histBosch[i] !== null;
+      let proj: number | null = null;
+      let mProjVal: number | null = null;
+      let bProjVal: number | null = null;
+      if (i >= startProj) {
+        mProj = mProj * 1.06;
+        bProj = bProj + 200;
+        mProjVal = Math.round(mProj);
+        bProjVal = Math.round(bProj);
+        proj = mProjVal + bProjVal;
+      }
       out.push({
         mes: MESES_PT[i],
-        historico: histRow ? histRow.volume : null,
-        projetado: i >= 6 ? Math.round(proj) : null,
+        historico: hasHist ? histTotal : null,
+        projetado: proj,
+        midea: mProjVal,
+        bosch: bProjVal,
       });
     }
     return out;
-  }, [op.data, fator]);
+  }, [op.data]);
 
   const acaoStats = {
     andamento: (acoes.data ?? []).filter((a) => a.status === "andamento").length,
@@ -290,20 +338,30 @@ function DashboardPage() {
 
       {/* Slide 2 — Indicadores por Carteira (Midea / Bosch) */}
       <Slide>
-        <SlideHeader title="Indicadores por Carteira" subtitle="Volume, equipe e produtividade consolidados por unidade" />
+        <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
+          <div>
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Indicadores por Carteira</h2>
+            <p className="text-muted-foreground mt-1">Volume e produtividade consolidados por unidade</p>
+          </div>
+          <FiltroUnidade value={filtroUnidade} onChange={setFiltroUnidade} />
+        </div>
         <div className="grid grid-cols-1 gap-6 flex-1 min-h-0">
-          <GrupoBlock
-            titulo="Midea"
-            tone="border-primary/40 bg-primary/5"
-            total={totalizador("midea")}
-            unidades={kpiPorUnidade.filter((k) => k.grupo === "midea")}
-          />
-          <GrupoBlock
-            titulo="Bosch"
-            tone="border-accent/40 bg-accent/5"
-            total={totalizador("bosch")}
-            unidades={kpiPorUnidade.filter((k) => k.grupo === "bosch")}
-          />
+          {(filtroUnidade === "all" || grupoDe(filtroUnidade as UnidadeKey) === "midea") && (
+            <GrupoBlock
+              titulo="Midea"
+              tone="border-primary/40 bg-primary/5"
+              total={totalizador("midea", filtroUnidade)}
+              unidades={kpiPorUnidade.filter((k) => k.grupo === "midea" && (filtroUnidade === "all" || k.key === filtroUnidade))}
+            />
+          )}
+          {(filtroUnidade === "all" || grupoDe(filtroUnidade as UnidadeKey) === "bosch") && (
+            <GrupoBlock
+              titulo="Bosch"
+              tone="border-accent/40 bg-accent/5"
+              total={totalizador("bosch", filtroUnidade)}
+              unidades={kpiPorUnidade.filter((k) => k.grupo === "bosch" && (filtroUnidade === "all" || k.key === filtroUnidade))}
+            />
+          )}
         </div>
       </Slide>
 
@@ -418,7 +476,7 @@ function DashboardPage() {
 
       {/* Slide 6 — Projeção 2º semestre */}
       <Slide>
-        <SlideHeader title="Projeção 2º Semestre" subtitle="Média móvel × (1 + fator de sazonalidade)" />
+        <SlideHeader title="Projeção 2º Semestre" subtitle="Midea: +6% ao mês (composto) · Bosch: +200 processos/mês" />
         <div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-0">
           <Card className="flex-1 min-h-0">
             <CardContent className="pt-6 h-[460px]">
@@ -429,29 +487,27 @@ function DashboardPage() {
                   <YAxis />
                   <Tooltip />
                   <Legend />
-                  <Line type="monotone" dataKey="historico" stroke={C1} strokeWidth={3} name="Histórico" connectNulls />
-                  <Line type="monotone" dataKey="projetado" stroke={C2} strokeDasharray="6 4" strokeWidth={3} name="Projetado" connectNulls />
+                  <Line type="monotone" dataKey="historico" stroke={C1} strokeWidth={3} name="Histórico Total" connectNulls />
+                  <Line type="monotone" dataKey="projetado" stroke={C2} strokeDasharray="6 4" strokeWidth={3} name="Projeção Total" connectNulls />
+                  <Line type="monotone" dataKey="midea" stroke={C3} strokeDasharray="4 4" strokeWidth={2} name="Projeção Midea (+6%/mês)" connectNulls />
+                  <Line type="monotone" dataKey="bosch" stroke={CD} strokeDasharray="4 4" strokeWidth={2} name="Projeção Bosch (+200/mês)" connectNulls />
                 </LineChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
           <Card className="lg:w-80">
             <CardHeader>
-              <CardTitle className="text-base">Fator de Sazonalidade</CardTitle>
-              <CardDescription>Ajuste a previsão para o 2º semestre.</CardDescription>
+              <CardTitle className="text-base">Premissas da Projeção</CardTitle>
+              <CardDescription>Regras aplicadas ao 2º semestre.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>% sobre média histórica</Label>
-                <Input
-                  type="number"
-                  step="0.1"
-                  defaultValue={fator}
-                  onBlur={(e) => saveFator.mutate(Number(e.target.value || 0))}
-                />
+            <CardContent className="space-y-3 text-sm">
+              <div className="rounded border p-3">
+                <div className="font-semibold text-foreground">Midea</div>
+                <div className="text-muted-foreground">Crescimento composto de <span className="font-semibold text-foreground">+6% ao mês</span> sobre o último volume conhecido.</div>
               </div>
-              <div className="text-sm text-muted-foreground">
-                Valor atual: <span className="font-semibold text-foreground">{fator > 0 ? "+" : ""}{fator}%</span>
+              <div className="rounded border p-3">
+                <div className="font-semibold text-foreground">Bosch</div>
+                <div className="text-muted-foreground">Acréscimo linear de <span className="font-semibold text-foreground">+200 processos/mês</span>.</div>
               </div>
             </CardContent>
           </Card>
@@ -616,6 +672,24 @@ function FiltroGrupo({
   );
 }
 
+function FiltroUnidade({
+  value, onChange,
+}: { value: "all" | UnidadeKey; onChange: (v: "all" | UnidadeKey) => void }) {
+  return (
+    <Select value={value} onValueChange={(v) => onChange(v as "all" | UnidadeKey)}>
+      <SelectTrigger className="w-56">
+        <SelectValue placeholder="Filtrar operação" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="all">Todas as operações</SelectItem>
+        {UNIDADES.map((u) => (
+          <SelectItem key={u.key} value={u.key}>{u.label}</SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
 type UnidadeKpi = {
   key: UnidadeKey; label: string; grupo: "midea" | "bosch";
   volume: number; pessoas: number; prod: number; meses: number;
@@ -638,7 +712,6 @@ function GrupoBlock({
         </div>
         <div className="flex gap-3">
           <MiniKpi label="Volume Total" value={total.volume.toLocaleString("pt-BR")} />
-          <MiniKpi label="Pessoas (FTE)" value={fmtFte(total.pessoas)} />
           <MiniKpi
             label="Produtividade"
             value={total.prod.toFixed(1)}
@@ -653,9 +726,8 @@ function GrupoBlock({
             return (
               <div key={u.key} className="rounded-lg border bg-card p-4">
                 <div className="text-xs uppercase tracking-wide text-muted-foreground">{u.label}</div>
-                <div className="mt-2 grid grid-cols-3 gap-2">
+                <div className="mt-2 grid grid-cols-2 gap-2">
                   <Stat label="Volume" value={u.volume.toLocaleString("pt-BR")} />
-                  <Stat label="Pessoas" value={fmtFte(u.pessoas)} />
                   <Stat
                     label="Prod."
                     value={u.prod.toFixed(1)}
