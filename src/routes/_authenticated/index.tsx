@@ -127,6 +127,7 @@ function DashboardPage() {
 
   const [filtroGrupo, setFiltroGrupo] = useState<"all" | "midea" | "bosch">("all");
   const [filtroMes, setFiltroMes] = useState<string>("all");
+  const [filtroUnidade, setFiltroUnidade] = useState<"all" | UnidadeKey>("all");
 
   const opAll = op.data ?? [];
 
