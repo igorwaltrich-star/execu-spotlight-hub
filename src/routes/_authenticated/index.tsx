@@ -235,6 +235,13 @@ function DashboardPage() {
 
   return (
     <div className="bg-gradient-to-b from-background via-background to-muted/30">
+      <div className="sticky top-0 z-30 border-b border-border bg-background/85 backdrop-blur px-8 py-3 flex items-center justify-between gap-4 flex-wrap">
+        <div className="text-sm text-muted-foreground">
+          Filtro de período {filtroMes !== "all" && <span className="ml-2 font-medium text-foreground">{fmtMes(filtroMes)}</span>}
+        </div>
+        <FiltroMes value={filtroMes} onChange={setFiltroMes} meses={mesesDisponiveis} />
+      </div>
+
       {/* Slide 1 — Capa + KPIs */}
       <Slide tone="primary">
         <div className="flex flex-col items-start justify-center h-full max-w-6xl mx-auto w-full">
@@ -247,7 +254,7 @@ function DashboardPage() {
           </p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-12 w-full">
             <Kpi icon={TrendingUp} label="Volume Total" value={totalVolume.toLocaleString("pt-BR")} />
-            <Kpi icon={Users} label="Equipe (média)" value={op.data?.length ? Math.round(totalPessoas / op.data.length).toString() : "0"} />
+            <Kpi icon={Users} label="Equipe (média)" value={opData.length ? Math.round(totalPessoas / opData.length).toString() : "0"} />
             <Kpi icon={Gauge} label="Produtividade média" value={avgProd.toFixed(1)} sub={`Meta ${META_PRODUTIVIDADE}`} good={avgProd >= META_PRODUTIVIDADE} />
             <Kpi icon={Target} label="SLA médio" value={`${slaMedio.toFixed(1)}%`} sub={`Meta ${META_SLA}%`} good={slaMedio >= META_SLA} />
           </div>
