@@ -284,7 +284,7 @@ function DashboardPage() {
           </p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-12 w-full">
             <Kpi icon={TrendingUp} label="Volume Total" value={totalVolume.toLocaleString("pt-BR")} />
-            <Kpi icon={Users} label="Equipe (média)" value={opData.length ? Math.round(totalPessoas / opData.length).toString() : "0"} />
+            <Kpi icon={Users} label="Equipe (FTE médio)" value={fmtFte(avgPessoas)} />
             <Kpi icon={Gauge} label="Produtividade média" value={avgProd.toFixed(1)} sub={`Meta ${META_PRODUTIVIDADE}`} good={avgProd >= META_PRODUTIVIDADE} />
             <Kpi icon={Target} label="SLA médio" value={`${slaMedio.toFixed(1)}%`} sub={`Meta ${META_SLA}%`} good={slaMedio >= META_SLA} />
           </div>
