@@ -24,6 +24,10 @@ const norm = (s: string) =>
     .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
     .replace(/\s+/g, " ");
 
+// Strip prefixes like "A. ", "B) ", "1 - " from cost-center labels
+const stripPrefix = (s: string) =>
+  s.replace(/^\s*[a-z0-9]{1,3}\s*[\.\)\-:]\s*/i, "").trim();
+
 const UNIDADE_BY_LABEL: Record<string, UnidadeKey> = Object.fromEntries(
   UNIDADES.flatMap((u) => [
     [norm(u.label), u.key],
@@ -32,6 +36,18 @@ const UNIDADE_BY_LABEL: Record<string, UnidadeKey> = Object.fromEntries(
   ])
 ) as Record<string, UnidadeKey>;
 
+function resolveUnidade(raw: string): UnidadeKey | undefined {
+  const a = norm(raw);
+  if (UNIDADE_BY_LABEL[a]) return UNIDADE_BY_LABEL[a];
+  const b = norm(stripPrefix(raw));
+  return UNIDADE_BY_LABEL[b] ?? UNIDADE_BY_LABEL[b.replace(/\s+/g, "")];
+}
+
+const MES_FULL_PT: Record<string, number> = {
+  janeiro: 1, fevereiro: 2, marco: 3, abril: 4, maio: 5, junho: 6,
+  julho: 7, agosto: 8, setembro: 9, outubro: 10, novembro: 11, dezembro: 12,
+};
+
 function parsePeriodo(v: unknown): string | null {
   if (v == null || v === "") return null;
   if (v instanceof Date) {
@@ -39,7 +55,6 @@ function parsePeriodo(v: unknown): string | null {
     return `${y}-${m}-01`;
   }
   if (typeof v === "number") {
-    // Excel serial date
     const d = XLSX.SSF.parse_date_code(v);
     if (d) return `${d.y}-${String(d.m).padStart(2, "0")}-01`;
   }
@@ -53,9 +68,16 @@ function parsePeriodo(v: unknown): string | null {
     const yy = Number(m[2]); const yyyy = yy < 100 ? 2000 + yy : yy;
     return `${yyyy}-${m[1].padStart(2, "0")}-01`;
   }
-  m = s.match(/^([a-zç]{3,})[\/\-\s](\d{2,4})$/i);
+  // "janeiro-26", "janeiro/2026", "janeiro 26"
+  m = s.match(/^([a-zçãéêíóôú]+)[\/\-\s](\d{2,4})$/i);
   if (m) {
-    const idx = MESES_PT.findIndex((mn) => norm(mn) === norm(m![1]).slice(0, 3));
+    const key = norm(m[1]);
+    const full = MES_FULL_PT[key];
+    if (full) {
+      const yy = Number(m[2]); const yyyy = yy < 100 ? 2000 + yy : yy;
+      return `${yyyy}-${String(full).padStart(2, "0")}-01`;
+    }
+    const idx = MESES_PT.findIndex((mn) => norm(mn) === key.slice(0, 3));
     if (idx >= 0) {
       const yy = Number(m[2]); const yyyy = yy < 100 ? 2000 + yy : yy;
       return `${yyyy}-${String(idx + 1).padStart(2, "0")}-01`;
@@ -73,6 +95,7 @@ type Row = {
   nome: string;
   unidade: UnidadeKey;
   mes: string;
+  tempo: number;
   ausencias: number;
   fte: number | null;
 };
@@ -99,26 +122,30 @@ export function CadastroColaboradoresView() {
   const [nome, setNome] = useState("");
   const [unidade, setUnidade] = useState<UnidadeKey | "">("");
   const [mes, setMes] = useState("");
+  const [tempo, setTempo] = useState<number | "">(30);
   const [ausencias, setAusencias] = useState<number | "">(0);
 
   const insert = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error("Não autenticado");
       if (!nome || !unidade || !mes) throw new Error("Preencha nome, operação e período");
+      const tmp = Number(tempo || 0);
       const aus = Number(ausencias || 0);
-      if (aus < 0 || aus > 30) throw new Error("Ausências devem estar entre 0 e 30");
+      if (tmp < 0 || tmp > 31) throw new Error("Tempo deve estar entre 0 e 31 dias");
+      if (aus < 0 || aus > 31) throw new Error("Ausências devem estar entre 0 e 31 dias");
       const { error } = await supabase.from("colaboradores").insert({
         user_id: user.id,
         nome,
         unidade,
         mes: `${mes}-01`,
+        tempo: tmp,
         ausencias: aus,
       });
       if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Colaborador cadastrado");
-      setNome(""); setUnidade(""); setMes(""); setAusencias(0);
+      setNome(""); setUnidade(""); setMes(""); setTempo(30); setAusencias(0);
       qc.invalidateQueries({ queryKey });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -143,26 +170,32 @@ export function CadastroColaboradoresView() {
       const rowsRaw = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: "" });
       if (!rowsRaw.length) throw new Error("Planilha vazia");
 
-      const records: Array<{ user_id: string; nome: string; unidade: UnidadeKey; mes: string; ausencias: number }> = [];
+      const records: Array<{ user_id: string; nome: string; unidade: UnidadeKey; mes: string; tempo: number; ausencias: number }> = [];
       const erros: string[] = [];
 
       rowsRaw.forEach((r, i) => {
         const map: Record<string, unknown> = {};
         for (const k of Object.keys(r)) map[norm(k)] = r[k];
         const nome = String(map["colaborador"] ?? map["nome"] ?? "").trim();
-        const opRaw = String(map["operacao"] ?? map["unidade"] ?? "").trim();
+        const opRaw = String(
+          map["centro de custo (operacao)"] ?? map["centro de custo"] ??
+          map["operacao"] ?? map["unidade"] ?? ""
+        ).trim();
+        const tempoRaw = map["tempo (dias)"] ?? map["tempo"] ?? 30;
         const ausRaw = map["ausencias (dias)"] ?? map["ausencias"] ?? 0;
         const perRaw = map["periodo mes"] ?? map["periodo"] ?? map["mes"];
 
         if (!nome) { erros.push(`Linha ${i + 2}: colaborador vazio`); return; }
-        const unidade = UNIDADE_BY_LABEL[norm(opRaw)];
+        const unidade = resolveUnidade(opRaw);
         if (!unidade) { erros.push(`Linha ${i + 2}: operação inválida (${opRaw})`); return; }
         const mes = parsePeriodo(perRaw);
         if (!mes) { erros.push(`Linha ${i + 2}: período inválido (${perRaw})`); return; }
+        const tmp = Number(tempoRaw || 0);
+        if (isNaN(tmp) || tmp < 0 || tmp > 31) { erros.push(`Linha ${i + 2}: tempo inválido`); return; }
         const aus = Number(ausRaw || 0);
-        if (isNaN(aus) || aus < 0 || aus > 30) { erros.push(`Linha ${i + 2}: ausências inválidas`); return; }
+        if (isNaN(aus) || aus < 0 || aus > 31) { erros.push(`Linha ${i + 2}: ausências inválidas`); return; }
 
-        records.push({ user_id: user.id, nome, unidade, mes, ausencias: aus });
+        records.push({ user_id: user.id, nome, unidade, mes, tempo: tmp, ausencias: aus });
       });
 
       if (!records.length) throw new Error("Nenhuma linha válida. " + erros.slice(0, 3).join("; "));
@@ -183,10 +216,11 @@ export function CadastroColaboradoresView() {
   });
 
   function downloadTemplate() {
-    const headers = ["COLABORADOR", "OPERAÇÃO", "AUSÊNCIAS (DIAS)", "PERÍODO MES"];
+    const headers = ["COLABORADOR", "CENTRO DE CUSTO (OPERAÇÃO)", "TEMPO (DIAS)", "AUSÊNCIAS (DIAS)", "PERÍODO MES"];
     const exemplo = [
-      ["João da Silva", "Midea SC", 2, "2026-05"],
-      ["Maria Souza", "Bosch HC", 0, "2026-05"],
+      ["MARIA VITÓRIA", "A. MIDEA SC", 30, 6, "janeiro-26"],
+      ["João da Silva", "Midea SC", 30, 2, "2026-05"],
+      ["Pedro Souza", "Bosch HC", 15, 0, "2026-05"],
     ];
     const ws = XLSX.utils.aoa_to_sheet([headers, ...exemplo]);
     const wb = XLSX.utils.book_new();
@@ -198,14 +232,18 @@ export function CadastroColaboradoresView() {
     <>
       <PageHeader
         title="Cadastro de Colaboradores"
-        description="Padrão Mês Comercial (30 dias). Proporção de Uso (FTE) = (30 − Ausências) / 30."
+        description="Mês comercial (30 dias). FTE = (Tempo no centro de custo − Ausências) / 30."
       />
       <div className="p-8 space-y-6">
         <Card>
           <CardHeader className="flex flex-row items-start justify-between gap-4">
             <div>
               <CardTitle>Novo colaborador</CardTitle>
-              <CardDescription>Informe ausências do mês (faltas, férias ou afastamento) em dias.</CardDescription>
+              <CardDescription>
+                <strong>Tempo</strong>: dias trabalhados no centro de custo no mês.
+                {" "}
+                <strong>Ausências</strong>: férias, folgas e afastamentos (em dias).
+              </CardDescription>
             </div>
             <div className="flex gap-2">
               <Button type="button" variant="outline" size="sm" onClick={downloadTemplate}>
@@ -234,10 +272,10 @@ export function CadastroColaboradoresView() {
           </CardHeader>
           <CardContent>
             <form
-              className="grid grid-cols-1 md:grid-cols-5 gap-4"
+              className="grid grid-cols-1 md:grid-cols-6 gap-4"
               onSubmit={(e) => { e.preventDefault(); insert.mutate(); }}
             >
-              <div className="space-y-2">
+              <div className="space-y-2 md:col-span-2">
                 <Label>Colaborador</Label>
                 <Input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome completo" required />
               </div>
@@ -257,16 +295,25 @@ export function CadastroColaboradoresView() {
                 <Input type="month" value={mes} onChange={(e) => setMes(e.target.value)} required />
               </div>
               <div className="space-y-2">
+                <Label>Tempo (dias)</Label>
+                <Input
+                  type="number" min={0} max={31}
+                  value={tempo}
+                  onChange={(e) => setTempo(e.target.value === "" ? "" : Number(e.target.value))}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
                 <Label>Ausências (dias)</Label>
                 <Input
-                  type="number" min={0} max={30}
+                  type="number" min={0} max={31}
                   value={ausencias}
                   onChange={(e) => setAusencias(e.target.value === "" ? "" : Number(e.target.value))}
                   required
                 />
               </div>
-              <div className="flex items-end">
-                <Button type="submit" className="w-full" disabled={insert.isPending}>Salvar</Button>
+              <div className="md:col-span-6 flex justify-end">
+                <Button type="submit" disabled={insert.isPending}>Salvar</Button>
               </div>
             </form>
             <p className="text-xs text-muted-foreground mt-3">
@@ -284,6 +331,7 @@ export function CadastroColaboradoresView() {
                   <TableHead>Colaborador</TableHead>
                   <TableHead>Operação</TableHead>
                   <TableHead>Período</TableHead>
+                  <TableHead className="text-right">Tempo</TableHead>
                   <TableHead className="text-right">Ausências</TableHead>
                   <TableHead className="text-right">FTE</TableHead>
                   <TableHead className="w-12" />
@@ -291,7 +339,7 @@ export function CadastroColaboradoresView() {
               </TableHeader>
               <TableBody>
                 {rows.length === 0 && (
-                  <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Sem colaboradores.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Sem colaboradores.</TableCell></TableRow>
                 )}
                 {rows.map((r) => {
                   const fte = Number(r.fte ?? 0);
@@ -300,6 +348,7 @@ export function CadastroColaboradoresView() {
                       <TableCell className="font-medium">{r.nome}</TableCell>
                       <TableCell>{UNIDADE_LABEL[r.unidade] ?? r.unidade}</TableCell>
                       <TableCell>{fmtMes(r.mes)}</TableCell>
+                      <TableCell className="text-right">{r.tempo}</TableCell>
                       <TableCell className="text-right">{r.ausencias}</TableCell>
                       <TableCell className="text-right font-medium">{fte.toFixed(2)}</TableCell>
                       <TableCell>
