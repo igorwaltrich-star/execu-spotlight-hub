@@ -728,9 +728,8 @@ function GrupoBlock({
             return (
               <div key={u.key} className="rounded-lg border bg-card p-4">
                 <div className="text-xs uppercase tracking-wide text-muted-foreground">{u.label}</div>
-                <div className="mt-2 grid grid-cols-3 gap-2">
+                <div className="mt-2 grid grid-cols-2 gap-2">
                   <Stat label="Volume" value={u.volume.toLocaleString("pt-BR")} />
-                  <Stat label="Pessoas" value={fmtFte(u.pessoas)} />
                   <Stat
                     label="Prod."
                     value={u.prod.toFixed(1)}
