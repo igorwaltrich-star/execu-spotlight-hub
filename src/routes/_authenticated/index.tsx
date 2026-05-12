@@ -9,7 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { fmtMes, MESES_PT, META_PRODUTIVIDADE, META_SLA } from "@/lib/constants";
+import { fmtMes, MESES_PT, META_PRODUTIVIDADE, META_SLA, UNIDADES, UNIDADE_LABEL, type UnidadeKey } from "@/lib/constants";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid,
   BarChart, Bar, ReferenceLine, Legend, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
@@ -26,7 +27,7 @@ const C2 = "var(--color-accent)";
 const C3 = "var(--color-success)";
 const CD = "var(--color-destructive)";
 
-type OpRow = { id: string; mes: string; volume: number; pessoas: number; produtividade: number | null };
+type OpRow = { id: string; mes: string; volume: number; pessoas: number; produtividade: number | null; unidade: UnidadeKey };
 type SlaMidea = { mes: string; start_up: number; otcc: number; otd: number; sotd: number };
 type SlaBosch = { mes: string; dig_conf: number; start_up: number; otcc: number; desvios: number; pinho: number };
 type Gargalo = { id: string; item: string; impacto: string; risco: "alto" | "medio" | "baixo" };
