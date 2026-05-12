@@ -674,6 +674,24 @@ function FiltroGrupo({
   );
 }
 
+function FiltroUnidade({
+  value, onChange,
+}: { value: "all" | UnidadeKey; onChange: (v: "all" | UnidadeKey) => void }) {
+  return (
+    <Select value={value} onValueChange={(v) => onChange(v as "all" | UnidadeKey)}>
+      <SelectTrigger className="w-56">
+        <SelectValue placeholder="Filtrar operação" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="all">Todas as operações</SelectItem>
+        {UNIDADES.map((u) => (
+          <SelectItem key={u.key} value={u.key}>{u.label}</SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
 type UnidadeKpi = {
   key: UnidadeKey; label: string; grupo: "midea" | "bosch";
   volume: number; pessoas: number; prod: number; meses: number;
