@@ -143,20 +143,36 @@ function DashboardPage() {
 
   const matchMes = (m: string) => filtroMes === "all" || m === filtroMes;
 
+  // Build FTE lookup per (unidade|mes) from colaboradores (sum of FTE)
+  const fteMap = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const c of colab.data ?? []) {
+      const k = `${c.unidade}|${c.mes}`;
+      m.set(k, (m.get(k) ?? 0) + Number(c.fte ?? 0));
+    }
+    return m;
+  }, [colab.data]);
+
+  // Returns FTE for a row; falls back to legacy headcount if no colaboradores cadastrados
+  const fteOf = (r: OpRow) => {
+    const v = fteMap.get(`${r.unidade}|${r.mes}`);
+    return v !== undefined ? v : r.pessoas;
+  };
+
   const opData = opAll.filter((r) => matchMes(r.mes));
 
   const opFiltrado = opData.filter((r) =>
     filtroGrupo === "all" ? true : grupoDe(r.unidade) === filtroGrupo
   );
 
-  // Aggregate per month for filtered trend charts (sum volume, sum pessoas, weighted productivity)
+  // Aggregate per month for filtered trend charts (sum volume, sum FTE, real productivity)
   const aggByMonth = (rows: OpRow[]) => {
     const map = new Map<string, { mes: string; volume: number; pessoas: number }>();
     for (const r of rows) {
       const k = r.mes;
       const cur = map.get(k) ?? { mes: k, volume: 0, pessoas: 0 };
       cur.volume += r.volume;
-      cur.pessoas += r.pessoas;
+      cur.pessoas += fteOf(r);
       map.set(k, cur);
     }
     return [...map.values()]
@@ -164,34 +180,34 @@ function DashboardPage() {
       .map((r) => ({
         mes: fmtMes(r.mes),
         volume: r.volume,
-        pessoas: r.pessoas,
+        pessoas: Number(r.pessoas.toFixed(1)),
         produtividade: r.pessoas > 0 ? r.volume / r.pessoas : 0,
       }));
   };
 
   const volumeData = aggByMonth(opFiltrado);
 
-  // Per-unit aggregated KPIs (respect month filter)
+  // Per-unit aggregated KPIs (respect month filter) — pessoas = soma de FTE
   const kpiPorUnidade = UNIDADES.map((u) => {
     const rows = opData.filter((r) => r.unidade === u.key);
     const volume = rows.reduce((s, r) => s + r.volume, 0);
-    const pessoas = rows.length ? Math.round(rows.reduce((s, r) => s + r.pessoas, 0) / rows.length) : 0;
-    const prod = pessoas > 0 ? volume / (pessoas * (rows.length || 1)) : 0;
-    return { ...u, volume, pessoas, prod, meses: rows.length };
+    const fteTotal = rows.reduce((s, r) => s + fteOf(r), 0);
+    const prod = fteTotal > 0 ? volume / fteTotal : 0;
+    return { ...u, volume, pessoas: fteTotal, prod, meses: rows.length };
   });
 
   const totalizador = (grupo: "midea" | "bosch") => {
     const items = kpiPorUnidade.filter((k) => k.grupo === grupo);
     const volume = items.reduce((s, r) => s + r.volume, 0);
     const pessoas = items.reduce((s, r) => s + r.pessoas, 0);
-    const totalMeses = items.reduce((s, r) => s + r.meses, 0);
-    const prod = pessoas > 0 && totalMeses > 0 ? volume / (pessoas * (totalMeses / items.length || 1)) : 0;
+    const prod = pessoas > 0 ? volume / pessoas : 0;
     return { volume, pessoas, prod };
   };
 
   const totalVolume = opData.reduce((s, r) => s + r.volume, 0);
   const avgProd = volumeData.length ? volumeData.reduce((s, r) => s + r.produtividade, 0) / volumeData.length : 0;
-  const totalPessoas = opData.reduce((s, r) => s + r.pessoas, 0);
+  const totalPessoasFte = opData.reduce((s, r) => s + fteOf(r), 0);
+  const avgPessoas = volumeData.length ? totalPessoasFte / volumeData.length : 0;
 
   const mideaFiltrada = (midea.data ?? []).filter((r) => matchMes(r.mes));
   const boschFiltrada = (bosch.data ?? []).filter((r) => matchMes(r.mes));
