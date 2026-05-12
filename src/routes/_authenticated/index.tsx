@@ -29,16 +29,20 @@ const C3 = "var(--color-success)";
 const CD = "var(--color-destructive)";
 
 type OpRow = { id: string; mes: string; volume: number; pessoas: number; produtividade: number | null; unidade: UnidadeKey };
+type Colab = { id: string; nome: string; unidade: UnidadeKey; mes: string; ausencias: number; fte: number | null };
 type SlaMidea = { mes: string; start_up: number; otcc: number; otd: number; sotd: number };
 type SlaBosch = { mes: string; dig_conf: number; start_up: number; otcc: number; desvios: number; pinho: number };
 type Gargalo = { id: string; item: string; impacto: string; risco: "alto" | "medio" | "baixo" };
 type Acao = { id: string; iniciativa: string; responsavel: string; prazo: string | null; status: "andamento" | "concluido" | "atrasado" };
+
+const fmtFte = (n: number) => n.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
 function DashboardPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
 
   useRealtimeTable("operacional_mensal", ["operacional_mensal"]);
+  useRealtimeTable("colaboradores", ["colaboradores"]);
   useRealtimeTable("sla_midea", ["sla_midea"]);
   useRealtimeTable("sla_bosch", ["sla_bosch"]);
   useRealtimeTable("gargalos", ["gargalos"]);
@@ -51,6 +55,15 @@ function DashboardPage() {
       const { data, error } = await supabase.from("operacional_mensal").select("*").order("mes");
       if (error) throw error;
       return data as OpRow[];
+    },
+  });
+
+  const colab = useQuery({
+    queryKey: ["colaboradores"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("colaboradores").select("*");
+      if (error) throw error;
+      return data as Colab[];
     },
   });
 
