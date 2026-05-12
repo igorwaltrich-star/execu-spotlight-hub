@@ -22,6 +22,7 @@ export type Database = {
           id: string
           mes: string
           nome: string
+          tempo: number
           unidade: Database["public"]["Enums"]["unidade_carteira"]
           updated_at: string
           user_id: string
@@ -33,6 +34,7 @@ export type Database = {
           id?: string
           mes: string
           nome: string
+          tempo?: number
           unidade: Database["public"]["Enums"]["unidade_carteira"]
           updated_at?: string
           user_id: string
@@ -44,6 +46,7 @@ export type Database = {
           id?: string
           mes?: string
           nome?: string
+          tempo?: number
           unidade?: Database["public"]["Enums"]["unidade_carteira"]
           updated_at?: string
           user_id?: string
