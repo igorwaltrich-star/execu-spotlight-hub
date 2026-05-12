@@ -197,8 +197,8 @@ function DashboardPage() {
     return { ...u, volume, pessoas: fteTotal, prod, meses: rows.length };
   });
 
-  const totalizador = (grupo: "midea" | "bosch") => {
-    const items = kpiPorUnidade.filter((k) => k.grupo === grupo);
+  const totalizador = (grupo: "midea" | "bosch", uniFilter: "all" | UnidadeKey = "all") => {
+    const items = kpiPorUnidade.filter((k) => k.grupo === grupo && (uniFilter === "all" || k.key === uniFilter));
     const volume = items.reduce((s, r) => s + r.volume, 0);
     const pessoas = items.reduce((s, r) => s + r.pessoas, 0);
     const prod = pessoas > 0 ? volume / pessoas : 0;
