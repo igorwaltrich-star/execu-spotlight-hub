@@ -641,7 +641,7 @@ function GrupoBlock({
         </div>
         <div className="flex gap-3">
           <MiniKpi label="Volume Total" value={total.volume.toLocaleString("pt-BR")} />
-          <MiniKpi label="Equipe (média)" value={total.pessoas.toString()} />
+          <MiniKpi label="Pessoas (FTE)" value={fmtFte(total.pessoas)} />
           <MiniKpi
             label="Produtividade"
             value={total.prod.toFixed(1)}
@@ -658,7 +658,7 @@ function GrupoBlock({
                 <div className="text-xs uppercase tracking-wide text-muted-foreground">{u.label}</div>
                 <div className="mt-2 grid grid-cols-3 gap-2">
                   <Stat label="Volume" value={u.volume.toLocaleString("pt-BR")} />
-                  <Stat label="Pessoas" value={u.pessoas.toString()} />
+                  <Stat label="Pessoas" value={fmtFte(u.pessoas)} />
                   <Stat
                     label="Prod."
                     value={u.prod.toFixed(1)}
