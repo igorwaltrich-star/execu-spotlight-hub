@@ -241,22 +241,66 @@ function DashboardPage() {
     }));
   }, [boschFiltrada]);
 
-  // Projection: moving average × (1 + fator/100) for Jul–Dez
+  // Projeção: Midea cresce 6% ao mês (composto), Bosch soma +200 processos/mês
   const projecao = useMemo(() => {
-    const histVolume = (op.data ?? []).map((r) => r.volume);
-    const avg = histVolume.length ? histVolume.reduce((s, v) => s + v, 0) / histVolume.length : 0;
-    const proj = avg * (1 + fator / 100);
-    const out: { mes: string; historico: number | null; projetado: number | null }[] = [];
+    const rows = op.data ?? [];
+    // Volume por mês para cada grupo
+    const byMonthGroup = new Map<string, { midea: number; bosch: number }>();
+    for (const r of rows) {
+      const g = grupoDe(r.unidade);
+      if (!g) continue;
+      const cur = byMonthGroup.get(r.mes) ?? { midea: 0, bosch: 0 };
+      cur[g] += r.volume;
+      byMonthGroup.set(r.mes, cur);
+    }
+    const meses = [...byMonthGroup.keys()].sort();
+
+    // Histórico mês a mês (índice 0..11 = Jan..Dez)
+    const histMidea: (number | null)[] = Array(12).fill(null);
+    const histBosch: (number | null)[] = Array(12).fill(null);
+    let lastIdx = -1;
+    for (const m of meses) {
+      const idx = new Date(m).getUTCMonth();
+      const v = byMonthGroup.get(m)!;
+      histMidea[idx] = v.midea;
+      histBosch[idx] = v.bosch;
+      if (idx > lastIdx) lastIdx = idx;
+    }
+    // Base = último mês conhecido (ou média se nada cadastrado)
+    const baseMidea = lastIdx >= 0 && histMidea[lastIdx] !== null
+      ? histMidea[lastIdx]!
+      : (rows.filter((r) => grupoDe(r.unidade) === "midea").reduce((s, r) => s + r.volume, 0) / Math.max(1, meses.length));
+    const baseBosch = lastIdx >= 0 && histBosch[lastIdx] !== null
+      ? histBosch[lastIdx]!
+      : (rows.filter((r) => grupoDe(r.unidade) === "bosch").reduce((s, r) => s + r.volume, 0) / Math.max(1, meses.length));
+
+    const startProj = Math.max(lastIdx + 1, 6); // projeta a partir do próximo mês ou Jul
+    const out: { mes: string; historico: number | null; projetado: number | null; midea: number | null; bosch: number | null }[] = [];
+    let mProj = baseMidea;
+    let bProj = baseBosch;
     for (let i = 0; i < 12; i++) {
-      const histRow = (op.data ?? []).find((r) => new Date(r.mes).getUTCMonth() === i);
+      const histTotal = (histMidea[i] ?? 0) + (histBosch[i] ?? 0);
+      const hasHist = histMidea[i] !== null || histBosch[i] !== null;
+      let proj: number | null = null;
+      let mProjVal: number | null = null;
+      let bProjVal: number | null = null;
+      if (i >= startProj) {
+        mProj = mProj * 1.06;
+        bProj = bProj + 200;
+        mProjVal = Math.round(mProj);
+        bProjVal = Math.round(bProj);
+        proj = mProjVal + bProjVal;
+      }
       out.push({
         mes: MESES_PT[i],
-        historico: histRow ? histRow.volume : null,
-        projetado: i >= 6 ? Math.round(proj) : null,
+        historico: hasHist ? histTotal : null,
+        projetado: proj,
+        midea: mProjVal,
+        bosch: bProjVal,
       });
     }
     return out;
-  }, [op.data, fator]);
+  }, [op.data]);
 
   const acaoStats = {
     andamento: (acoes.data ?? []).filter((a) => a.status === "andamento").length,
