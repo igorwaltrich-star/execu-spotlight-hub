@@ -105,6 +105,7 @@ export type Database = {
           mes: string
           pessoas: number
           produtividade: number | null
+          unidade: Database["public"]["Enums"]["unidade_carteira"]
           updated_at: string
           user_id: string
           volume: number
@@ -115,6 +116,7 @@ export type Database = {
           mes: string
           pessoas?: number
           produtividade?: number | null
+          unidade?: Database["public"]["Enums"]["unidade_carteira"]
           updated_at?: string
           user_id: string
           volume?: number
@@ -125,6 +127,7 @@ export type Database = {
           mes?: string
           pessoas?: number
           produtividade?: number | null
+          unidade?: Database["public"]["Enums"]["unidade_carteira"]
           updated_at?: string
           user_id?: string
           volume?: number
@@ -250,6 +253,13 @@ export type Database = {
       acao_status: "andamento" | "concluido" | "atrasado"
       melhoria_tipo: "atencao" | "oportunidade"
       risco_nivel: "alto" | "medio" | "baixo"
+      unidade_carteira:
+        | "midea_sc"
+        | "midea_am"
+        | "midea_rs"
+        | "midea_mg"
+        | "bosch"
+        | "bosch_hc"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -380,6 +390,14 @@ export const Constants = {
       acao_status: ["andamento", "concluido", "atrasado"],
       melhoria_tipo: ["atencao", "oportunidade"],
       risco_nivel: ["alto", "medio", "baixo"],
+      unidade_carteira: [
+        "midea_sc",
+        "midea_am",
+        "midea_rs",
+        "midea_mg",
+        "bosch",
+        "bosch_hc",
+      ],
     },
   },
 } as const

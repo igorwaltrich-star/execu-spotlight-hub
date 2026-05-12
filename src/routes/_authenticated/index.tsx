@@ -9,7 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { fmtMes, MESES_PT, META_PRODUTIVIDADE, META_SLA } from "@/lib/constants";
+import { fmtMes, MESES_PT, META_PRODUTIVIDADE, META_SLA, UNIDADES, UNIDADE_LABEL, type UnidadeKey } from "@/lib/constants";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid,
   BarChart, Bar, ReferenceLine, Legend, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
@@ -26,7 +27,7 @@ const C2 = "var(--color-accent)";
 const C3 = "var(--color-success)";
 const CD = "var(--color-destructive)";
 
-type OpRow = { id: string; mes: string; volume: number; pessoas: number; produtividade: number | null };
+type OpRow = { id: string; mes: string; volume: number; pessoas: number; produtividade: number | null; unidade: UnidadeKey };
 type SlaMidea = { mes: string; start_up: number; otcc: number; otd: number; sotd: number };
 type SlaBosch = { mes: string; dig_conf: number; start_up: number; otcc: number; desvios: number; pinho: number };
 type Gargalo = { id: string; item: string; impacto: string; risco: "alto" | "medio" | "baixo" };
@@ -110,13 +111,59 @@ function DashboardPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["config"] }),
   });
 
-  const volumeData = (op.data ?? []).map((r) => ({
-    mes: fmtMes(r.mes), volume: r.volume, produtividade: Number(r.produtividade ?? 0), pessoas: r.pessoas,
-  }));
+  const [filtroGrupo, setFiltroGrupo] = useState<"all" | "midea" | "bosch">("all");
 
-  const totalVolume = (op.data ?? []).reduce((s, r) => s + r.volume, 0);
+  const opData = op.data ?? [];
+
+  const grupoDe = (u: UnidadeKey) => UNIDADES.find((x) => x.key === u)?.grupo;
+
+  const opFiltrado = opData.filter((r) =>
+    filtroGrupo === "all" ? true : grupoDe(r.unidade) === filtroGrupo
+  );
+
+  // Aggregate per month for filtered trend charts (sum volume, sum pessoas, weighted productivity)
+  const aggByMonth = (rows: OpRow[]) => {
+    const map = new Map<string, { mes: string; volume: number; pessoas: number }>();
+    for (const r of rows) {
+      const k = r.mes;
+      const cur = map.get(k) ?? { mes: k, volume: 0, pessoas: 0 };
+      cur.volume += r.volume;
+      cur.pessoas += r.pessoas;
+      map.set(k, cur);
+    }
+    return [...map.values()]
+      .sort((a, b) => a.mes.localeCompare(b.mes))
+      .map((r) => ({
+        mes: fmtMes(r.mes),
+        volume: r.volume,
+        pessoas: r.pessoas,
+        produtividade: r.pessoas > 0 ? r.volume / r.pessoas : 0,
+      }));
+  };
+
+  const volumeData = aggByMonth(opFiltrado);
+
+  // Per-unit aggregated KPIs (across all months registered)
+  const kpiPorUnidade = UNIDADES.map((u) => {
+    const rows = opData.filter((r) => r.unidade === u.key);
+    const volume = rows.reduce((s, r) => s + r.volume, 0);
+    const pessoas = rows.length ? Math.round(rows.reduce((s, r) => s + r.pessoas, 0) / rows.length) : 0;
+    const prod = pessoas > 0 ? volume / (pessoas * (rows.length || 1)) : 0;
+    return { ...u, volume, pessoas, prod, meses: rows.length };
+  });
+
+  const totalizador = (grupo: "midea" | "bosch") => {
+    const items = kpiPorUnidade.filter((k) => k.grupo === grupo);
+    const volume = items.reduce((s, r) => s + r.volume, 0);
+    const pessoas = items.reduce((s, r) => s + r.pessoas, 0);
+    const totalMeses = items.reduce((s, r) => s + r.meses, 0);
+    const prod = pessoas > 0 && totalMeses > 0 ? volume / (pessoas * (totalMeses / items.length || 1)) : 0;
+    return { volume, pessoas, prod };
+  };
+
+  const totalVolume = opData.reduce((s, r) => s + r.volume, 0);
   const avgProd = volumeData.length ? volumeData.reduce((s, r) => s + r.produtividade, 0) / volumeData.length : 0;
-  const totalPessoas = (op.data ?? []).reduce((s, r) => s + r.pessoas, 0);
+  const totalPessoas = opData.reduce((s, r) => s + r.pessoas, 0);
 
   const allSla = [
     ...(midea.data ?? []).flatMap((r) => [r.start_up, r.otcc, r.otd, r.sotd]),
@@ -190,9 +237,34 @@ function DashboardPage() {
         </div>
       </Slide>
 
-      {/* Slide 2 — Tendência de Volume */}
+      {/* Slide 2 — Indicadores por Carteira (Midea / Bosch) */}
       <Slide>
-        <SlideHeader title="Tendência de Volume" subtitle="Volume mensal de processos" />
+        <SlideHeader title="Indicadores por Carteira" subtitle="Volume, equipe e produtividade consolidados por unidade" />
+        <div className="grid grid-cols-1 gap-6 flex-1 min-h-0">
+          <GrupoBlock
+            titulo="Midea"
+            tone="border-primary/40 bg-primary/5"
+            total={totalizador("midea")}
+            unidades={kpiPorUnidade.filter((k) => k.grupo === "midea")}
+          />
+          <GrupoBlock
+            titulo="Bosch"
+            tone="border-accent/40 bg-accent/5"
+            total={totalizador("bosch")}
+            unidades={kpiPorUnidade.filter((k) => k.grupo === "bosch")}
+          />
+        </div>
+      </Slide>
+
+      {/* Slide 3 — Tendência de Volume */}
+      <Slide>
+        <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
+          <div>
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Tendência de Volume</h2>
+            <p className="text-muted-foreground mt-1">Volume mensal de processos</p>
+          </div>
+          <FiltroGrupo value={filtroGrupo} onChange={setFiltroGrupo} />
+        </div>
         <Card className="flex-1 min-h-0">
           <CardContent className="pt-6 h-[460px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -214,9 +286,15 @@ function DashboardPage() {
         </Card>
       </Slide>
 
-      {/* Slide 3 — Produtividade vs Meta */}
+      {/* Slide 4 — Produtividade vs Meta */}
       <Slide>
-        <SlideHeader title={`Produtividade Mensal — Meta ${META_PRODUTIVIDADE} processos/pessoa`} subtitle="Barras vermelhas indicam meses abaixo da meta" />
+        <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
+          <div>
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">{`Produtividade Mensal — Meta ${META_PRODUTIVIDADE} processos/pessoa`}</h2>
+            <p className="text-muted-foreground mt-1">Barras vermelhas indicam meses abaixo da meta</p>
+          </div>
+          <FiltroGrupo value={filtroGrupo} onChange={setFiltroGrupo} />
+        </div>
         <Card className="flex-1 min-h-0">
           <CardContent className="pt-6 h-[460px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -453,4 +531,92 @@ function StatCard({ label, value, tone, icon: Icon }: { label: string; value: nu
 
 function Empty({ msg }: { msg: string }) {
   return <div className="h-full grid place-items-center text-muted-foreground text-sm">{msg}</div>;
+}
+
+function FiltroGrupo({
+  value, onChange,
+}: { value: "all" | "midea" | "bosch"; onChange: (v: "all" | "midea" | "bosch") => void }) {
+  return (
+    <Tabs value={value} onValueChange={(v) => onChange(v as "all" | "midea" | "bosch")}>
+      <TabsList>
+        <TabsTrigger value="all">Toda a Operação</TabsTrigger>
+        <TabsTrigger value="midea">Apenas Midea</TabsTrigger>
+        <TabsTrigger value="bosch">Apenas Bosch</TabsTrigger>
+      </TabsList>
+    </Tabs>
+  );
+}
+
+type UnidadeKpi = {
+  key: UnidadeKey; label: string; grupo: "midea" | "bosch";
+  volume: number; pessoas: number; prod: number; meses: number;
+};
+
+function GrupoBlock({
+  titulo, tone, total, unidades,
+}: {
+  titulo: string;
+  tone: string;
+  total: { volume: number; pessoas: number; prod: number };
+  unidades: UnidadeKpi[];
+}) {
+  return (
+    <Card className={`border-2 ${tone}`}>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle className="text-2xl">{titulo}</CardTitle>
+          <CardDescription>Totalizador consolidado das unidades</CardDescription>
+        </div>
+        <div className="flex gap-3">
+          <MiniKpi label="Volume Total" value={total.volume.toLocaleString("pt-BR")} />
+          <MiniKpi label="Equipe (média)" value={total.pessoas.toString()} />
+          <MiniKpi
+            label="Produtividade"
+            value={total.prod.toFixed(1)}
+            good={total.prod >= META_PRODUTIVIDADE}
+          />
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {unidades.map((u) => {
+            const ok = u.prod >= META_PRODUTIVIDADE;
+            return (
+              <div key={u.key} className="rounded-lg border bg-card p-4">
+                <div className="text-xs uppercase tracking-wide text-muted-foreground">{u.label}</div>
+                <div className="mt-2 grid grid-cols-3 gap-2">
+                  <Stat label="Volume" value={u.volume.toLocaleString("pt-BR")} />
+                  <Stat label="Pessoas" value={u.pessoas.toString()} />
+                  <Stat
+                    label="Prod."
+                    value={u.prod.toFixed(1)}
+                    className={u.meses === 0 ? "text-muted-foreground" : ok ? "text-success" : "text-destructive"}
+                  />
+                </div>
+                {u.meses === 0 && <div className="text-[11px] text-muted-foreground mt-2">Sem cadastros</div>}
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function MiniKpi({ label, value, good }: { label: string; value: string; good?: boolean }) {
+  return (
+    <div className="rounded-md bg-card border px-3 py-2 text-right min-w-24">
+      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</div>
+      <div className={`text-lg font-bold ${good === false ? "text-destructive" : good === true ? "text-success" : ""}`}>{value}</div>
+    </div>
+  );
+}
+
+function Stat({ label, value, className }: { label: string; value: string; className?: string }) {
+  return (
+    <div>
+      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</div>
+      <div className={`text-sm font-semibold ${className ?? ""}`}>{value}</div>
+    </div>
+  );
 }

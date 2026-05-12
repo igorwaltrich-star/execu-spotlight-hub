@@ -10,9 +10,12 @@ import { Label } from "@/components/ui/label";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { fmtMes, META_PRODUTIVIDADE } from "@/lib/constants";
+import { fmtMes, META_PRODUTIVIDADE, UNIDADES, UNIDADE_LABEL, type UnidadeKey } from "@/lib/constants";
 
 export function PageHeader({ title, description }: { title: string; description?: string }) {
   return (
@@ -25,7 +28,10 @@ export function PageHeader({ title, description }: { title: string; description?
   );
 }
 
-type Row = { id: string; mes: string; volume: number; pessoas: number; produtividade: number | null };
+type Row = {
+  id: string; mes: string; volume: number; pessoas: number;
+  produtividade: number | null; unidade: UnidadeKey;
+};
 
 export function CadastroOperacionalView() {
   const { user } = useAuth();
@@ -45,6 +51,7 @@ export function CadastroOperacionalView() {
     },
   });
 
+  const [unidade, setUnidade] = useState<UnidadeKey | "">("");
   const [mes, setMes] = useState("");
   const [volume, setVolume] = useState<number | "">("");
   const [pessoas, setPessoas] = useState<number | "">("");
@@ -52,18 +59,24 @@ export function CadastroOperacionalView() {
   const upsert = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error("Não autenticado");
-      if (!mes || volume === "" || pessoas === "") throw new Error("Preencha todos os campos");
+      if (!unidade || !mes || volume === "" || pessoas === "") throw new Error("Preencha todos os campos");
       const { error } = await supabase
         .from("operacional_mensal")
         .upsert(
-          { user_id: user.id, mes: `${mes}-01`, volume: Number(volume), pessoas: Number(pessoas) },
-          { onConflict: "user_id,mes" }
+          {
+            user_id: user.id,
+            unidade,
+            mes: `${mes}-01`,
+            volume: Number(volume),
+            pessoas: Number(pessoas),
+          },
+          { onConflict: "user_id,mes,unidade" }
         );
       if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Registro salvo");
-      setMes(""); setVolume(""); setPessoas("");
+      setMes(""); setVolume(""); setPessoas(""); setUnidade("");
       qc.invalidateQueries({ queryKey });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -81,19 +94,30 @@ export function CadastroOperacionalView() {
     <>
       <PageHeader
         title="Cadastro Operacional"
-        description={`Volume mensal e equipe. Meta de produtividade: ${META_PRODUTIVIDADE} processos/pessoa.`}
+        description={`Volume mensal por carteira/unidade. Meta de produtividade: ${META_PRODUTIVIDADE} processos/pessoa.`}
       />
       <div className="p-8 space-y-6">
         <Card>
           <CardHeader>
             <CardTitle>Novo registro mensal</CardTitle>
-            <CardDescription>Atualiza automaticamente se o mês já existir.</CardDescription>
+            <CardDescription>Selecione a carteira/unidade. Atualiza automaticamente se já existir.</CardDescription>
           </CardHeader>
           <CardContent>
             <form
-              className="grid grid-cols-1 md:grid-cols-4 gap-4"
+              className="grid grid-cols-1 md:grid-cols-5 gap-4"
               onSubmit={(e) => { e.preventDefault(); upsert.mutate(); }}
             >
+              <div className="space-y-2">
+                <Label>Unidade</Label>
+                <Select value={unidade} onValueChange={(v) => setUnidade(v as UnidadeKey)}>
+                  <SelectTrigger><SelectValue placeholder="Selecione…" /></SelectTrigger>
+                  <SelectContent>
+                    {UNIDADES.map((u) => (
+                      <SelectItem key={u.key} value={u.key}>{u.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="space-y-2">
                 <Label>Mês</Label>
                 <Input type="month" value={mes} onChange={(e) => setMes(e.target.value)} required />
@@ -119,6 +143,7 @@ export function CadastroOperacionalView() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Unidade</TableHead>
                   <TableHead>Mês</TableHead>
                   <TableHead className="text-right">Volume</TableHead>
                   <TableHead className="text-right">Pessoas</TableHead>
@@ -128,13 +153,14 @@ export function CadastroOperacionalView() {
               </TableHeader>
               <TableBody>
                 {rows.length === 0 && (
-                  <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Sem registros.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Sem registros.</TableCell></TableRow>
                 )}
                 {rows.map((r) => {
                   const p = Number(r.produtividade ?? 0);
                   const ok = p >= META_PRODUTIVIDADE;
                   return (
                     <TableRow key={r.id}>
+                      <TableCell className="font-medium">{UNIDADE_LABEL[r.unidade] ?? r.unidade}</TableCell>
                       <TableCell>{fmtMes(r.mes)}</TableCell>
                       <TableCell className="text-right">{r.volume}</TableCell>
                       <TableCell className="text-right">{r.pessoas}</TableCell>
