@@ -338,20 +338,30 @@ function DashboardPage() {
 
       {/* Slide 2 — Indicadores por Carteira (Midea / Bosch) */}
       <Slide>
-        <SlideHeader title="Indicadores por Carteira" subtitle="Volume, equipe e produtividade consolidados por unidade" />
+        <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
+          <div>
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Indicadores por Carteira</h2>
+            <p className="text-muted-foreground mt-1">Volume e produtividade consolidados por unidade</p>
+          </div>
+          <FiltroUnidade value={filtroUnidade} onChange={setFiltroUnidade} />
+        </div>
         <div className="grid grid-cols-1 gap-6 flex-1 min-h-0">
-          <GrupoBlock
-            titulo="Midea"
-            tone="border-primary/40 bg-primary/5"
-            total={totalizador("midea")}
-            unidades={kpiPorUnidade.filter((k) => k.grupo === "midea")}
-          />
-          <GrupoBlock
-            titulo="Bosch"
-            tone="border-accent/40 bg-accent/5"
-            total={totalizador("bosch")}
-            unidades={kpiPorUnidade.filter((k) => k.grupo === "bosch")}
-          />
+          {(filtroUnidade === "all" || grupoDe(filtroUnidade as UnidadeKey) === "midea") && (
+            <GrupoBlock
+              titulo="Midea"
+              tone="border-primary/40 bg-primary/5"
+              total={totalizador("midea", filtroUnidade)}
+              unidades={kpiPorUnidade.filter((k) => k.grupo === "midea" && (filtroUnidade === "all" || k.key === filtroUnidade))}
+            />
+          )}
+          {(filtroUnidade === "all" || grupoDe(filtroUnidade as UnidadeKey) === "bosch") && (
+            <GrupoBlock
+              titulo="Bosch"
+              tone="border-accent/40 bg-accent/5"
+              total={totalizador("bosch", filtroUnidade)}
+              unidades={kpiPorUnidade.filter((k) => k.grupo === "bosch" && (filtroUnidade === "all" || k.key === filtroUnidade))}
+            />
+          )}
         </div>
       </Slide>
 
