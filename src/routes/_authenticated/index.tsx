@@ -474,46 +474,6 @@ function DashboardPage() {
         </Card>
       </Slide>
 
-      {/* Slide 6 — Projeção 2º semestre */}
-      <Slide>
-        <SlideHeader title="Projeção 2º Semestre" subtitle="Midea: +6% ao mês (composto) · Bosch: +200 processos/mês" />
-        <div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-0">
-          <Card className="flex-1 min-h-0">
-            <CardContent className="pt-6 h-[460px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={projecao}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                  <XAxis dataKey="mes" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Line type="monotone" dataKey="historico" stroke={C1} strokeWidth={3} name="Histórico Total" connectNulls />
-                  <Line type="monotone" dataKey="projetado" stroke={C2} strokeDasharray="6 4" strokeWidth={3} name="Projeção Total" connectNulls />
-                  <Line type="monotone" dataKey="midea" stroke={C3} strokeDasharray="4 4" strokeWidth={2} name="Projeção Midea (+6%/mês)" connectNulls />
-                  <Line type="monotone" dataKey="bosch" stroke={CD} strokeDasharray="4 4" strokeWidth={2} name="Projeção Bosch (+200/mês)" connectNulls />
-                </LineChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-          <Card className="lg:w-80">
-            <CardHeader>
-              <CardTitle className="text-base">Premissas da Projeção</CardTitle>
-              <CardDescription>Regras aplicadas ao 2º semestre.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm">
-              <div className="rounded border p-3">
-                <div className="font-semibold text-foreground">Midea</div>
-                <div className="text-muted-foreground">Crescimento composto de <span className="font-semibold text-foreground">+6% ao mês</span> sobre o último volume conhecido.</div>
-              </div>
-              <div className="rounded border p-3">
-                <div className="font-semibold text-foreground">Bosch</div>
-                <div className="text-muted-foreground">Acréscimo linear de <span className="font-semibold text-foreground">+200 processos/mês</span>.</div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </Slide>
-
       {/* Slide 7 — Riscos */}
       <Slide>
         <SlideHeader title="Gargalos & Riscos" subtitle="Mapeamento de pontos críticos" />
