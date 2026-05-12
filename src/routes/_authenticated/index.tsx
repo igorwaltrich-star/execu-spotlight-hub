@@ -714,7 +714,6 @@ function GrupoBlock({
         </div>
         <div className="flex gap-3">
           <MiniKpi label="Volume Total" value={total.volume.toLocaleString("pt-BR")} />
-          <MiniKpi label="Pessoas (FTE)" value={fmtFte(total.pessoas)} />
           <MiniKpi
             label="Produtividade"
             value={total.prod.toFixed(1)}
