@@ -111,13 +111,59 @@ function DashboardPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["config"] }),
   });
 
-  const volumeData = (op.data ?? []).map((r) => ({
-    mes: fmtMes(r.mes), volume: r.volume, produtividade: Number(r.produtividade ?? 0), pessoas: r.pessoas,
-  }));
+  const [filtroGrupo, setFiltroGrupo] = useState<"all" | "midea" | "bosch">("all");
 
-  const totalVolume = (op.data ?? []).reduce((s, r) => s + r.volume, 0);
+  const opData = op.data ?? [];
+
+  const grupoDe = (u: UnidadeKey) => UNIDADES.find((x) => x.key === u)?.grupo;
+
+  const opFiltrado = opData.filter((r) =>
+    filtroGrupo === "all" ? true : grupoDe(r.unidade) === filtroGrupo
+  );
+
+  // Aggregate per month for filtered trend charts (sum volume, sum pessoas, weighted productivity)
+  const aggByMonth = (rows: OpRow[]) => {
+    const map = new Map<string, { mes: string; volume: number; pessoas: number }>();
+    for (const r of rows) {
+      const k = r.mes;
+      const cur = map.get(k) ?? { mes: k, volume: 0, pessoas: 0 };
+      cur.volume += r.volume;
+      cur.pessoas += r.pessoas;
+      map.set(k, cur);
+    }
+    return [...map.values()]
+      .sort((a, b) => a.mes.localeCompare(b.mes))
+      .map((r) => ({
+        mes: fmtMes(r.mes),
+        volume: r.volume,
+        pessoas: r.pessoas,
+        produtividade: r.pessoas > 0 ? r.volume / r.pessoas : 0,
+      }));
+  };
+
+  const volumeData = aggByMonth(opFiltrado);
+
+  // Per-unit aggregated KPIs (across all months registered)
+  const kpiPorUnidade = UNIDADES.map((u) => {
+    const rows = opData.filter((r) => r.unidade === u.key);
+    const volume = rows.reduce((s, r) => s + r.volume, 0);
+    const pessoas = rows.length ? Math.round(rows.reduce((s, r) => s + r.pessoas, 0) / rows.length) : 0;
+    const prod = pessoas > 0 ? volume / (pessoas * (rows.length || 1)) : 0;
+    return { ...u, volume, pessoas, prod, meses: rows.length };
+  });
+
+  const totalizador = (grupo: "midea" | "bosch") => {
+    const items = kpiPorUnidade.filter((k) => k.grupo === grupo);
+    const volume = items.reduce((s, r) => s + r.volume, 0);
+    const pessoas = items.reduce((s, r) => s + r.pessoas, 0);
+    const totalMeses = items.reduce((s, r) => s + r.meses, 0);
+    const prod = pessoas > 0 && totalMeses > 0 ? volume / (pessoas * (totalMeses / items.length || 1)) : 0;
+    return { volume, pessoas, prod };
+  };
+
+  const totalVolume = opData.reduce((s, r) => s + r.volume, 0);
   const avgProd = volumeData.length ? volumeData.reduce((s, r) => s + r.produtividade, 0) / volumeData.length : 0;
-  const totalPessoas = (op.data ?? []).reduce((s, r) => s + r.pessoas, 0);
+  const totalPessoas = opData.reduce((s, r) => s + r.pessoas, 0);
 
   const allSla = [
     ...(midea.data ?? []).flatMap((r) => [r.start_up, r.otcc, r.otd, r.sotd]),
