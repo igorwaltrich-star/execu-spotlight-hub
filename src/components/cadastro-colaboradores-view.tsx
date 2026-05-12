@@ -202,9 +202,35 @@ export function CadastroColaboradoresView() {
       />
       <div className="p-8 space-y-6">
         <Card>
-          <CardHeader>
-            <CardTitle>Novo colaborador</CardTitle>
-            <CardDescription>Informe ausências do mês (faltas, férias ou afastamento) em dias.</CardDescription>
+          <CardHeader className="flex flex-row items-start justify-between gap-4">
+            <div>
+              <CardTitle>Novo colaborador</CardTitle>
+              <CardDescription>Informe ausências do mês (faltas, férias ou afastamento) em dias.</CardDescription>
+            </div>
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" size="sm" onClick={downloadTemplate}>
+                <Download className="h-4 w-4" /> Modelo
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => fileRef.current?.click()}
+                disabled={bulkInsert.isPending}
+              >
+                <Upload className="h-4 w-4" />
+                {bulkInsert.isPending ? "Importando…" : "Importar planilha"}
+              </Button>
+              <input
+                ref={fileRef}
+                type="file"
+                accept=".xlsx,.xls,.csv"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) bulkInsert.mutate(f);
+                }}
+              />
+            </div>
           </CardHeader>
           <CardContent>
             <form
