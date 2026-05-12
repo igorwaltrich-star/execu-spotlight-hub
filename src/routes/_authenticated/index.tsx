@@ -532,3 +532,91 @@ function StatCard({ label, value, tone, icon: Icon }: { label: string; value: nu
 function Empty({ msg }: { msg: string }) {
   return <div className="h-full grid place-items-center text-muted-foreground text-sm">{msg}</div>;
 }
+
+function FiltroGrupo({
+  value, onChange,
+}: { value: "all" | "midea" | "bosch"; onChange: (v: "all" | "midea" | "bosch") => void }) {
+  return (
+    <Tabs value={value} onValueChange={(v) => onChange(v as "all" | "midea" | "bosch")}>
+      <TabsList>
+        <TabsTrigger value="all">Toda a Operação</TabsTrigger>
+        <TabsTrigger value="midea">Apenas Midea</TabsTrigger>
+        <TabsTrigger value="bosch">Apenas Bosch</TabsTrigger>
+      </TabsList>
+    </Tabs>
+  );
+}
+
+type UnidadeKpi = {
+  key: UnidadeKey; label: string; grupo: "midea" | "bosch";
+  volume: number; pessoas: number; prod: number; meses: number;
+};
+
+function GrupoBlock({
+  titulo, tone, total, unidades,
+}: {
+  titulo: string;
+  tone: string;
+  total: { volume: number; pessoas: number; prod: number };
+  unidades: UnidadeKpi[];
+}) {
+  return (
+    <Card className={`border-2 ${tone}`}>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle className="text-2xl">{titulo}</CardTitle>
+          <CardDescription>Totalizador consolidado das unidades</CardDescription>
+        </div>
+        <div className="flex gap-3">
+          <MiniKpi label="Volume Total" value={total.volume.toLocaleString("pt-BR")} />
+          <MiniKpi label="Equipe (média)" value={total.pessoas.toString()} />
+          <MiniKpi
+            label="Produtividade"
+            value={total.prod.toFixed(1)}
+            good={total.prod >= META_PRODUTIVIDADE}
+          />
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {unidades.map((u) => {
+            const ok = u.prod >= META_PRODUTIVIDADE;
+            return (
+              <div key={u.key} className="rounded-lg border bg-card p-4">
+                <div className="text-xs uppercase tracking-wide text-muted-foreground">{u.label}</div>
+                <div className="mt-2 grid grid-cols-3 gap-2">
+                  <Stat label="Volume" value={u.volume.toLocaleString("pt-BR")} />
+                  <Stat label="Pessoas" value={u.pessoas.toString()} />
+                  <Stat
+                    label="Prod."
+                    value={u.prod.toFixed(1)}
+                    className={u.meses === 0 ? "text-muted-foreground" : ok ? "text-success" : "text-destructive"}
+                  />
+                </div>
+                {u.meses === 0 && <div className="text-[11px] text-muted-foreground mt-2">Sem cadastros</div>}
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function MiniKpi({ label, value, good }: { label: string; value: string; good?: boolean }) {
+  return (
+    <div className="rounded-md bg-card border px-3 py-2 text-right min-w-24">
+      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</div>
+      <div className={`text-lg font-bold ${good === false ? "text-destructive" : good === true ? "text-success" : ""}`}>{value}</div>
+    </div>
+  );
+}
+
+function Stat({ label, value, className }: { label: string; value: string; className?: string }) {
+  return (
+    <div>
+      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</div>
+      <div className={`text-sm font-semibold ${className ?? ""}`}>{value}</div>
+    </div>
+  );
+}
