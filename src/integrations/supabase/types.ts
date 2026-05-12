@@ -14,45 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      colaboradores: {
-        Row: {
-          ausencias: number
-          created_at: string
-          fte: number | null
-          id: string
-          mes: string
-          nome: string
-          tempo: number
-          unidade: Database["public"]["Enums"]["unidade_carteira"]
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          ausencias?: number
-          created_at?: string
-          fte?: number | null
-          id?: string
-          mes: string
-          nome: string
-          tempo?: number
-          unidade: Database["public"]["Enums"]["unidade_carteira"]
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          ausencias?: number
-          created_at?: string
-          fte?: number | null
-          id?: string
-          mes?: string
-          nome?: string
-          tempo?: number
-          unidade?: Database["public"]["Enums"]["unidade_carteira"]
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       config: {
         Row: {
           created_at: string

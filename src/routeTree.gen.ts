@@ -17,7 +17,6 @@ import { Route as AuthenticatedSlaBoschRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedPlanoAcaoRouteImport } from './routes/_authenticated/plano-acao'
 import { Route as AuthenticatedMelhoriasRouteImport } from './routes/_authenticated/melhorias'
 import { Route as AuthenticatedDiagnosticoRouteImport } from './routes/_authenticated/diagnostico'
-import { Route as AuthenticatedColaboradoresRouteImport } from './routes/_authenticated/colaboradores'
 import { Route as AuthenticatedCadastroRouteImport } from './routes/_authenticated/cadastro'
 
 const LoginRoute = LoginRouteImport.update({
@@ -60,12 +59,6 @@ const AuthenticatedDiagnosticoRoute =
     path: '/diagnostico',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
-const AuthenticatedColaboradoresRoute =
-  AuthenticatedColaboradoresRouteImport.update({
-    id: '/colaboradores',
-    path: '/colaboradores',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
 const AuthenticatedCadastroRoute = AuthenticatedCadastroRouteImport.update({
   id: '/cadastro',
   path: '/cadastro',
@@ -76,7 +69,6 @@ export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/login': typeof LoginRoute
   '/cadastro': typeof AuthenticatedCadastroRoute
-  '/colaboradores': typeof AuthenticatedColaboradoresRoute
   '/diagnostico': typeof AuthenticatedDiagnosticoRoute
   '/melhorias': typeof AuthenticatedMelhoriasRoute
   '/plano-acao': typeof AuthenticatedPlanoAcaoRoute
@@ -86,7 +78,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/cadastro': typeof AuthenticatedCadastroRoute
-  '/colaboradores': typeof AuthenticatedColaboradoresRoute
   '/diagnostico': typeof AuthenticatedDiagnosticoRoute
   '/melhorias': typeof AuthenticatedMelhoriasRoute
   '/plano-acao': typeof AuthenticatedPlanoAcaoRoute
@@ -99,7 +90,6 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
   '/_authenticated/cadastro': typeof AuthenticatedCadastroRoute
-  '/_authenticated/colaboradores': typeof AuthenticatedColaboradoresRoute
   '/_authenticated/diagnostico': typeof AuthenticatedDiagnosticoRoute
   '/_authenticated/melhorias': typeof AuthenticatedMelhoriasRoute
   '/_authenticated/plano-acao': typeof AuthenticatedPlanoAcaoRoute
@@ -113,7 +103,6 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/cadastro'
-    | '/colaboradores'
     | '/diagnostico'
     | '/melhorias'
     | '/plano-acao'
@@ -123,7 +112,6 @@ export interface FileRouteTypes {
   to:
     | '/login'
     | '/cadastro'
-    | '/colaboradores'
     | '/diagnostico'
     | '/melhorias'
     | '/plano-acao'
@@ -135,7 +123,6 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/login'
     | '/_authenticated/cadastro'
-    | '/_authenticated/colaboradores'
     | '/_authenticated/diagnostico'
     | '/_authenticated/melhorias'
     | '/_authenticated/plano-acao'
@@ -207,13 +194,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDiagnosticoRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/colaboradores': {
-      id: '/_authenticated/colaboradores'
-      path: '/colaboradores'
-      fullPath: '/colaboradores'
-      preLoaderRoute: typeof AuthenticatedColaboradoresRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
     '/_authenticated/cadastro': {
       id: '/_authenticated/cadastro'
       path: '/cadastro'
@@ -226,7 +206,6 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteChildren {
   AuthenticatedCadastroRoute: typeof AuthenticatedCadastroRoute
-  AuthenticatedColaboradoresRoute: typeof AuthenticatedColaboradoresRoute
   AuthenticatedDiagnosticoRoute: typeof AuthenticatedDiagnosticoRoute
   AuthenticatedMelhoriasRoute: typeof AuthenticatedMelhoriasRoute
   AuthenticatedPlanoAcaoRoute: typeof AuthenticatedPlanoAcaoRoute
@@ -237,7 +216,6 @@ interface AuthenticatedRouteChildren {
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedCadastroRoute: AuthenticatedCadastroRoute,
-  AuthenticatedColaboradoresRoute: AuthenticatedColaboradoresRoute,
   AuthenticatedDiagnosticoRoute: AuthenticatedDiagnosticoRoute,
   AuthenticatedMelhoriasRoute: AuthenticatedMelhoriasRoute,
   AuthenticatedPlanoAcaoRoute: AuthenticatedPlanoAcaoRoute,
