@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { fmtMes, MESES_PT, META_PRODUTIVIDADE, META_SLA, UNIDADES, UNIDADE_LABEL, type UnidadeKey } from "@/lib/constants";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid,
   BarChart, Bar, ReferenceLine, Legend, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
@@ -112,10 +113,24 @@ function DashboardPage() {
   });
 
   const [filtroGrupo, setFiltroGrupo] = useState<"all" | "midea" | "bosch">("all");
+  const [filtroMes, setFiltroMes] = useState<string>("all");
 
-  const opData = op.data ?? [];
+  const opAll = op.data ?? [];
 
   const grupoDe = (u: UnidadeKey) => UNIDADES.find((x) => x.key === u)?.grupo;
+
+  // Distinct months available across all data sources, sorted desc
+  const mesesDisponiveis = useMemo(() => {
+    const set = new Set<string>();
+    for (const r of opAll) set.add(r.mes);
+    for (const r of midea.data ?? []) set.add(r.mes);
+    for (const r of bosch.data ?? []) set.add(r.mes);
+    return [...set].sort((a, b) => b.localeCompare(a));
+  }, [opAll, midea.data, bosch.data]);
+
+  const matchMes = (m: string) => filtroMes === "all" || m === filtroMes;
+
+  const opData = opAll.filter((r) => matchMes(r.mes));
 
   const opFiltrado = opData.filter((r) =>
     filtroGrupo === "all" ? true : grupoDe(r.unidade) === filtroGrupo
@@ -143,7 +158,7 @@ function DashboardPage() {
 
   const volumeData = aggByMonth(opFiltrado);
 
-  // Per-unit aggregated KPIs (across all months registered)
+  // Per-unit aggregated KPIs (respect month filter)
   const kpiPorUnidade = UNIDADES.map((u) => {
     const rows = opData.filter((r) => r.unidade === u.key);
     const volume = rows.reduce((s, r) => s + r.volume, 0);
@@ -165,14 +180,17 @@ function DashboardPage() {
   const avgProd = volumeData.length ? volumeData.reduce((s, r) => s + r.produtividade, 0) / volumeData.length : 0;
   const totalPessoas = opData.reduce((s, r) => s + r.pessoas, 0);
 
+  const mideaFiltrada = (midea.data ?? []).filter((r) => matchMes(r.mes));
+  const boschFiltrada = (bosch.data ?? []).filter((r) => matchMes(r.mes));
+
   const allSla = [
-    ...(midea.data ?? []).flatMap((r) => [r.start_up, r.otcc, r.otd, r.sotd]),
-    ...(bosch.data ?? []).flatMap((r) => [r.dig_conf, r.start_up, r.otcc, r.desvios, r.pinho]),
+    ...mideaFiltrada.flatMap((r) => [r.start_up, r.otcc, r.otd, r.sotd]),
+    ...boschFiltrada.flatMap((r) => [r.dig_conf, r.start_up, r.otcc, r.desvios, r.pinho]),
   ].map(Number);
   const slaMedio = allSla.length ? allSla.reduce((s, n) => s + n, 0) / allSla.length : 0;
 
   const mideaRadar = useMemo(() => {
-    const rows = midea.data ?? [];
+    const rows = mideaFiltrada;
     if (!rows.length) return [];
     const keys = ["start_up", "otcc", "otd", "sotd"] as const;
     return keys.map((k) => ({
@@ -180,10 +198,10 @@ function DashboardPage() {
       valor: rows.reduce((s, r) => s + Number(r[k] || 0), 0) / rows.length,
       meta: META_SLA,
     }));
-  }, [midea.data]);
+  }, [mideaFiltrada]);
 
   const boschBars = useMemo(() => {
-    const rows = bosch.data ?? [];
+    const rows = boschFiltrada;
     if (!rows.length) return [];
     const keys = ["dig_conf", "start_up", "otcc", "desvios", "pinho"] as const;
     const labels: Record<string, string> = { dig_conf: "Dig.Conf.", start_up: "Start-up", otcc: "OTCC", desvios: "Desvios", pinho: "Pinho" };
@@ -191,7 +209,7 @@ function DashboardPage() {
       indicador: labels[k],
       valor: rows.reduce((s, r) => s + Number(r[k] || 0), 0) / rows.length,
     }));
-  }, [bosch.data]);
+  }, [boschFiltrada]);
 
   // Projection: moving average × (1 + fator/100) for Jul–Dez
   const projecao = useMemo(() => {
@@ -218,6 +236,13 @@ function DashboardPage() {
 
   return (
     <div className="bg-gradient-to-b from-background via-background to-muted/30">
+      <div className="sticky top-0 z-30 border-b border-border bg-background/85 backdrop-blur px-8 py-3 flex items-center justify-between gap-4 flex-wrap">
+        <div className="text-sm text-muted-foreground">
+          Filtro de período {filtroMes !== "all" && <span className="ml-2 font-medium text-foreground">{fmtMes(filtroMes)}</span>}
+        </div>
+        <FiltroMes value={filtroMes} onChange={setFiltroMes} meses={mesesDisponiveis} />
+      </div>
+
       {/* Slide 1 — Capa + KPIs */}
       <Slide tone="primary">
         <div className="flex flex-col items-start justify-center h-full max-w-6xl mx-auto w-full">
@@ -230,7 +255,7 @@ function DashboardPage() {
           </p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-12 w-full">
             <Kpi icon={TrendingUp} label="Volume Total" value={totalVolume.toLocaleString("pt-BR")} />
-            <Kpi icon={Users} label="Equipe (média)" value={op.data?.length ? Math.round(totalPessoas / op.data.length).toString() : "0"} />
+            <Kpi icon={Users} label="Equipe (média)" value={opData.length ? Math.round(totalPessoas / opData.length).toString() : "0"} />
             <Kpi icon={Gauge} label="Produtividade média" value={avgProd.toFixed(1)} sub={`Meta ${META_PRODUTIVIDADE}`} good={avgProd >= META_PRODUTIVIDADE} />
             <Kpi icon={Target} label="SLA médio" value={`${slaMedio.toFixed(1)}%`} sub={`Meta ${META_SLA}%`} good={slaMedio >= META_SLA} />
           </div>
@@ -531,6 +556,24 @@ function StatCard({ label, value, tone, icon: Icon }: { label: string; value: nu
 
 function Empty({ msg }: { msg: string }) {
   return <div className="h-full grid place-items-center text-muted-foreground text-sm">{msg}</div>;
+}
+
+function FiltroMes({
+  value, onChange, meses,
+}: { value: string; onChange: (v: string) => void; meses: string[] }) {
+  return (
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger className="w-56">
+        <SelectValue placeholder="Selecione o mês" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="all">Todos os meses</SelectItem>
+        {meses.map((m) => (
+          <SelectItem key={m} value={m}>{fmtMes(m)}</SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
 }
 
 function FiltroGrupo({
