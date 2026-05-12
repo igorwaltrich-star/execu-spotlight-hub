@@ -368,23 +368,28 @@ function DashboardPage() {
         </Card>
       </Slide>
 
-      {/* Slide 5 — Histórico vs Projeção */}
+      {/* Slide 5 — Evolução de Produtividade por Operação */}
       <Slide>
         <div className="mb-6">
-          <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Histórico × Projeção</h2>
-          <p className="text-muted-foreground mt-1">Volume mensal observado e projeção (Midea +6%/mês composto, Bosch +200/mês)</p>
+          <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Evolução da Operação</h2>
+          <p className="text-muted-foreground mt-1">Produtividade mensal por operação (Jan até o mês atual) — meta {META_PRODUTIVIDADE}</p>
         </div>
         <Card className="flex-1 min-h-0">
           <CardContent className="pt-6 h-[460px]">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={projecao}>
+              <LineChart data={evolucaoProd}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
                 <XAxis dataKey="mes" />
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Line type="monotone" dataKey="historico" name="Histórico" stroke={C1} strokeWidth={3} dot={{ r: 4 }} connectNulls={false} />
-                <Line type="monotone" dataKey="projetado" name="Projeção" stroke={C2} strokeWidth={3} strokeDasharray="6 4" dot={{ r: 4 }} connectNulls={false} />
+                <ReferenceLine y={META_PRODUTIVIDADE} stroke={CD} strokeDasharray="6 4" label={{ value: `Meta ${META_PRODUTIVIDADE}`, position: "right", fill: CD }} />
+                {UNIDADES.map((u, i) => {
+                  const palette = [C1, C2, C3, "var(--color-warning)", "var(--color-muted-foreground)", CD];
+                  return (
+                    <Line key={u.key} type="monotone" dataKey={u.key} name={u.label} stroke={palette[i % palette.length]} strokeWidth={2} dot={{ r: 3 }} connectNulls />
+                  );
+                })}
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
