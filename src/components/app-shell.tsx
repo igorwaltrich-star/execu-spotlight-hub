@@ -2,7 +2,7 @@ import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import {
-  LayoutDashboard, Database, Gauge, AlertTriangle, Lightbulb, ListChecks, LogOut, Activity,
+  LayoutDashboard, Database, Gauge, AlertTriangle, Lightbulb, ListChecks, LogOut, Activity, Users,
 } from "lucide-react";
 import type { ReactNode } from "react";
 
@@ -10,6 +10,7 @@ type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; exact?
 const NAV: NavItem[] = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/cadastro", label: "Cadastro Operacional", icon: Database },
+  { to: "/colaboradores", label: "Cadastro de Colaboradores", icon: Users },
   { to: "/sla-midea", label: "SLA Midea", icon: Gauge },
   { to: "/sla-bosch", label: "SLA BOSCH", icon: Gauge },
   { to: "/diagnostico", label: "Diagnóstico", icon: AlertTriangle },

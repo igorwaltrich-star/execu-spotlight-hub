@@ -29,16 +29,20 @@ const C3 = "var(--color-success)";
 const CD = "var(--color-destructive)";
 
 type OpRow = { id: string; mes: string; volume: number; pessoas: number; produtividade: number | null; unidade: UnidadeKey };
+type Colab = { id: string; nome: string; unidade: UnidadeKey; mes: string; ausencias: number; fte: number | null };
 type SlaMidea = { mes: string; start_up: number; otcc: number; otd: number; sotd: number };
 type SlaBosch = { mes: string; dig_conf: number; start_up: number; otcc: number; desvios: number; pinho: number };
 type Gargalo = { id: string; item: string; impacto: string; risco: "alto" | "medio" | "baixo" };
 type Acao = { id: string; iniciativa: string; responsavel: string; prazo: string | null; status: "andamento" | "concluido" | "atrasado" };
+
+const fmtFte = (n: number) => n.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
 function DashboardPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
 
   useRealtimeTable("operacional_mensal", ["operacional_mensal"]);
+  useRealtimeTable("colaboradores", ["colaboradores"]);
   useRealtimeTable("sla_midea", ["sla_midea"]);
   useRealtimeTable("sla_bosch", ["sla_bosch"]);
   useRealtimeTable("gargalos", ["gargalos"]);
@@ -51,6 +55,15 @@ function DashboardPage() {
       const { data, error } = await supabase.from("operacional_mensal").select("*").order("mes");
       if (error) throw error;
       return data as OpRow[];
+    },
+  });
+
+  const colab = useQuery({
+    queryKey: ["colaboradores"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("colaboradores").select("*");
+      if (error) throw error;
+      return data as Colab[];
     },
   });
 
@@ -130,20 +143,36 @@ function DashboardPage() {
 
   const matchMes = (m: string) => filtroMes === "all" || m === filtroMes;
 
+  // Build FTE lookup per (unidade|mes) from colaboradores (sum of FTE)
+  const fteMap = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const c of colab.data ?? []) {
+      const k = `${c.unidade}|${c.mes}`;
+      m.set(k, (m.get(k) ?? 0) + Number(c.fte ?? 0));
+    }
+    return m;
+  }, [colab.data]);
+
+  // Returns FTE for a row; falls back to legacy headcount if no colaboradores cadastrados
+  const fteOf = (r: OpRow) => {
+    const v = fteMap.get(`${r.unidade}|${r.mes}`);
+    return v !== undefined ? v : r.pessoas;
+  };
+
   const opData = opAll.filter((r) => matchMes(r.mes));
 
   const opFiltrado = opData.filter((r) =>
     filtroGrupo === "all" ? true : grupoDe(r.unidade) === filtroGrupo
   );
 
-  // Aggregate per month for filtered trend charts (sum volume, sum pessoas, weighted productivity)
+  // Aggregate per month for filtered trend charts (sum volume, sum FTE, real productivity)
   const aggByMonth = (rows: OpRow[]) => {
     const map = new Map<string, { mes: string; volume: number; pessoas: number }>();
     for (const r of rows) {
       const k = r.mes;
       const cur = map.get(k) ?? { mes: k, volume: 0, pessoas: 0 };
       cur.volume += r.volume;
-      cur.pessoas += r.pessoas;
+      cur.pessoas += fteOf(r);
       map.set(k, cur);
     }
     return [...map.values()]
@@ -151,34 +180,34 @@ function DashboardPage() {
       .map((r) => ({
         mes: fmtMes(r.mes),
         volume: r.volume,
-        pessoas: r.pessoas,
+        pessoas: Number(r.pessoas.toFixed(1)),
         produtividade: r.pessoas > 0 ? r.volume / r.pessoas : 0,
       }));
   };
 
   const volumeData = aggByMonth(opFiltrado);
 
-  // Per-unit aggregated KPIs (respect month filter)
+  // Per-unit aggregated KPIs (respect month filter) — pessoas = soma de FTE
   const kpiPorUnidade = UNIDADES.map((u) => {
     const rows = opData.filter((r) => r.unidade === u.key);
     const volume = rows.reduce((s, r) => s + r.volume, 0);
-    const pessoas = rows.length ? Math.round(rows.reduce((s, r) => s + r.pessoas, 0) / rows.length) : 0;
-    const prod = pessoas > 0 ? volume / (pessoas * (rows.length || 1)) : 0;
-    return { ...u, volume, pessoas, prod, meses: rows.length };
+    const fteTotal = rows.reduce((s, r) => s + fteOf(r), 0);
+    const prod = fteTotal > 0 ? volume / fteTotal : 0;
+    return { ...u, volume, pessoas: fteTotal, prod, meses: rows.length };
   });
 
   const totalizador = (grupo: "midea" | "bosch") => {
     const items = kpiPorUnidade.filter((k) => k.grupo === grupo);
     const volume = items.reduce((s, r) => s + r.volume, 0);
     const pessoas = items.reduce((s, r) => s + r.pessoas, 0);
-    const totalMeses = items.reduce((s, r) => s + r.meses, 0);
-    const prod = pessoas > 0 && totalMeses > 0 ? volume / (pessoas * (totalMeses / items.length || 1)) : 0;
+    const prod = pessoas > 0 ? volume / pessoas : 0;
     return { volume, pessoas, prod };
   };
 
   const totalVolume = opData.reduce((s, r) => s + r.volume, 0);
   const avgProd = volumeData.length ? volumeData.reduce((s, r) => s + r.produtividade, 0) / volumeData.length : 0;
-  const totalPessoas = opData.reduce((s, r) => s + r.pessoas, 0);
+  const totalPessoasFte = opData.reduce((s, r) => s + fteOf(r), 0);
+  const avgPessoas = volumeData.length ? totalPessoasFte / volumeData.length : 0;
 
   const mideaFiltrada = (midea.data ?? []).filter((r) => matchMes(r.mes));
   const boschFiltrada = (bosch.data ?? []).filter((r) => matchMes(r.mes));
@@ -255,7 +284,7 @@ function DashboardPage() {
           </p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-12 w-full">
             <Kpi icon={TrendingUp} label="Volume Total" value={totalVolume.toLocaleString("pt-BR")} />
-            <Kpi icon={Users} label="Equipe (média)" value={opData.length ? Math.round(totalPessoas / opData.length).toString() : "0"} />
+            <Kpi icon={Users} label="Equipe (FTE médio)" value={fmtFte(avgPessoas)} />
             <Kpi icon={Gauge} label="Produtividade média" value={avgProd.toFixed(1)} sub={`Meta ${META_PRODUTIVIDADE}`} good={avgProd >= META_PRODUTIVIDADE} />
             <Kpi icon={Target} label="SLA médio" value={`${slaMedio.toFixed(1)}%`} sub={`Meta ${META_SLA}%`} good={slaMedio >= META_SLA} />
           </div>
@@ -612,7 +641,7 @@ function GrupoBlock({
         </div>
         <div className="flex gap-3">
           <MiniKpi label="Volume Total" value={total.volume.toLocaleString("pt-BR")} />
-          <MiniKpi label="Equipe (média)" value={total.pessoas.toString()} />
+          <MiniKpi label="Pessoas (FTE)" value={fmtFte(total.pessoas)} />
           <MiniKpi
             label="Produtividade"
             value={total.prod.toFixed(1)}
@@ -629,7 +658,7 @@ function GrupoBlock({
                 <div className="text-xs uppercase tracking-wide text-muted-foreground">{u.label}</div>
                 <div className="mt-2 grid grid-cols-3 gap-2">
                   <Stat label="Volume" value={u.volume.toLocaleString("pt-BR")} />
-                  <Stat label="Pessoas" value={u.pessoas.toString()} />
+                  <Stat label="Pessoas" value={fmtFte(u.pessoas)} />
                   <Stat
                     label="Prod."
                     value={u.prod.toFixed(1)}
