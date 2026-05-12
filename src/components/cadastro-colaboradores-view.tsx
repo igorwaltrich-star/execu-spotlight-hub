@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import * as XLSX from "xlsx";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useRealtimeTable } from "@/hooks/use-realtime-table";
@@ -13,10 +14,59 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Trash2 } from "lucide-react";
+import { Trash2, Upload, Download } from "lucide-react";
 import { toast } from "sonner";
-import { fmtMes, UNIDADES, UNIDADE_LABEL, type UnidadeKey } from "@/lib/constants";
+import { fmtMes, UNIDADES, UNIDADE_LABEL, MESES_PT, type UnidadeKey } from "@/lib/constants";
 import { PageHeader } from "@/components/cadastro-operacional-view";
+
+const norm = (s: string) =>
+  s.toString().trim().toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ");
+
+const UNIDADE_BY_LABEL: Record<string, UnidadeKey> = Object.fromEntries(
+  UNIDADES.flatMap((u) => [
+    [norm(u.label), u.key],
+    [norm(u.key), u.key],
+    [norm(u.label.replace(/\s+/g, "")), u.key],
+  ])
+) as Record<string, UnidadeKey>;
+
+function parsePeriodo(v: unknown): string | null {
+  if (v == null || v === "") return null;
+  if (v instanceof Date) {
+    const y = v.getUTCFullYear(); const m = String(v.getUTCMonth() + 1).padStart(2, "0");
+    return `${y}-${m}-01`;
+  }
+  if (typeof v === "number") {
+    // Excel serial date
+    const d = XLSX.SSF.parse_date_code(v);
+    if (d) return `${d.y}-${String(d.m).padStart(2, "0")}-01`;
+  }
+  const s = String(v).trim();
+  let m = s.match(/^(\d{4})-(\d{1,2})(?:-\d{1,2})?$/);
+  if (m) return `${m[1]}-${m[2].padStart(2, "0")}-01`;
+  m = s.match(/^(\d{1,2})[\/\-](\d{4})$/);
+  if (m) return `${m[2]}-${m[1].padStart(2, "0")}-01`;
+  m = s.match(/^(\d{1,2})[\/\-](\d{1,2})$/);
+  if (m) {
+    const yy = Number(m[2]); const yyyy = yy < 100 ? 2000 + yy : yy;
+    return `${yyyy}-${m[1].padStart(2, "0")}-01`;
+  }
+  m = s.match(/^([a-zç]{3,})[\/\-\s](\d{2,4})$/i);
+  if (m) {
+    const idx = MESES_PT.findIndex((mn) => norm(mn) === norm(m![1]).slice(0, 3));
+    if (idx >= 0) {
+      const yy = Number(m[2]); const yyyy = yy < 100 ? 2000 + yy : yy;
+      return `${yyyy}-${String(idx + 1).padStart(2, "0")}-01`;
+    }
+  }
+  const d = new Date(s);
+  if (!isNaN(d.getTime())) {
+    return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-01`;
+  }
+  return null;
+}
 
 type Row = {
   id: string;
@@ -82,6 +132,68 @@ export function CadastroColaboradoresView() {
     onSuccess: () => qc.invalidateQueries({ queryKey }),
   });
 
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const bulkInsert = useMutation({
+    mutationFn: async (file: File) => {
+      if (!user) throw new Error("Não autenticado");
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, { cellDates: true });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rowsRaw = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: "" });
+      if (!rowsRaw.length) throw new Error("Planilha vazia");
+
+      const records: Array<{ user_id: string; nome: string; unidade: UnidadeKey; mes: string; ausencias: number }> = [];
+      const erros: string[] = [];
+
+      rowsRaw.forEach((r, i) => {
+        const map: Record<string, unknown> = {};
+        for (const k of Object.keys(r)) map[norm(k)] = r[k];
+        const nome = String(map["colaborador"] ?? map["nome"] ?? "").trim();
+        const opRaw = String(map["operacao"] ?? map["unidade"] ?? "").trim();
+        const ausRaw = map["ausencias (dias)"] ?? map["ausencias"] ?? 0;
+        const perRaw = map["periodo mes"] ?? map["periodo"] ?? map["mes"];
+
+        if (!nome) { erros.push(`Linha ${i + 2}: colaborador vazio`); return; }
+        const unidade = UNIDADE_BY_LABEL[norm(opRaw)];
+        if (!unidade) { erros.push(`Linha ${i + 2}: operação inválida (${opRaw})`); return; }
+        const mes = parsePeriodo(perRaw);
+        if (!mes) { erros.push(`Linha ${i + 2}: período inválido (${perRaw})`); return; }
+        const aus = Number(ausRaw || 0);
+        if (isNaN(aus) || aus < 0 || aus > 30) { erros.push(`Linha ${i + 2}: ausências inválidas`); return; }
+
+        records.push({ user_id: user.id, nome, unidade, mes, ausencias: aus });
+      });
+
+      if (!records.length) throw new Error("Nenhuma linha válida. " + erros.slice(0, 3).join("; "));
+      const { error } = await supabase.from("colaboradores").insert(records);
+      if (error) throw error;
+      return { ok: records.length, erros };
+    },
+    onSuccess: ({ ok, erros }) => {
+      toast.success(`${ok} colaborador(es) importado(s)`);
+      if (erros.length) toast.warning(`${erros.length} linha(s) ignorada(s)`, { description: erros.slice(0, 5).join("\n") });
+      if (fileRef.current) fileRef.current.value = "";
+      qc.invalidateQueries({ queryKey });
+    },
+    onError: (e: Error) => {
+      toast.error(e.message);
+      if (fileRef.current) fileRef.current.value = "";
+    },
+  });
+
+  function downloadTemplate() {
+    const headers = ["COLABORADOR", "OPERAÇÃO", "AUSÊNCIAS (DIAS)", "PERÍODO MES"];
+    const exemplo = [
+      ["João da Silva", "Midea SC", 2, "2026-05"],
+      ["Maria Souza", "Bosch HC", 0, "2026-05"],
+    ];
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...exemplo]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Colaboradores");
+    XLSX.writeFile(wb, "modelo-colaboradores.xlsx");
+  }
+
   return (
     <>
       <PageHeader
@@ -90,9 +202,35 @@ export function CadastroColaboradoresView() {
       />
       <div className="p-8 space-y-6">
         <Card>
-          <CardHeader>
-            <CardTitle>Novo colaborador</CardTitle>
-            <CardDescription>Informe ausências do mês (faltas, férias ou afastamento) em dias.</CardDescription>
+          <CardHeader className="flex flex-row items-start justify-between gap-4">
+            <div>
+              <CardTitle>Novo colaborador</CardTitle>
+              <CardDescription>Informe ausências do mês (faltas, férias ou afastamento) em dias.</CardDescription>
+            </div>
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" size="sm" onClick={downloadTemplate}>
+                <Download className="h-4 w-4" /> Modelo
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => fileRef.current?.click()}
+                disabled={bulkInsert.isPending}
+              >
+                <Upload className="h-4 w-4" />
+                {bulkInsert.isPending ? "Importando…" : "Importar planilha"}
+              </Button>
+              <input
+                ref={fileRef}
+                type="file"
+                accept=".xlsx,.xls,.csv"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) bulkInsert.mutate(f);
+                }}
+              />
+            </div>
           </CardHeader>
           <CardContent>
             <form
