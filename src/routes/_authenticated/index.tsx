@@ -237,9 +237,34 @@ function DashboardPage() {
         </div>
       </Slide>
 
-      {/* Slide 2 — Tendência de Volume */}
+      {/* Slide 2 — Indicadores por Carteira (Midea / Bosch) */}
       <Slide>
-        <SlideHeader title="Tendência de Volume" subtitle="Volume mensal de processos" />
+        <SlideHeader title="Indicadores por Carteira" subtitle="Volume, equipe e produtividade consolidados por unidade" />
+        <div className="grid grid-cols-1 gap-6 flex-1 min-h-0">
+          <GrupoBlock
+            titulo="Midea"
+            tone="border-primary/40 bg-primary/5"
+            total={totalizador("midea")}
+            unidades={kpiPorUnidade.filter((k) => k.grupo === "midea")}
+          />
+          <GrupoBlock
+            titulo="Bosch"
+            tone="border-accent/40 bg-accent/5"
+            total={totalizador("bosch")}
+            unidades={kpiPorUnidade.filter((k) => k.grupo === "bosch")}
+          />
+        </div>
+      </Slide>
+
+      {/* Slide 3 — Tendência de Volume */}
+      <Slide>
+        <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
+          <div>
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Tendência de Volume</h2>
+            <p className="text-muted-foreground mt-1">Volume mensal de processos</p>
+          </div>
+          <FiltroGrupo value={filtroGrupo} onChange={setFiltroGrupo} />
+        </div>
         <Card className="flex-1 min-h-0">
           <CardContent className="pt-6 h-[460px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -261,9 +286,15 @@ function DashboardPage() {
         </Card>
       </Slide>
 
-      {/* Slide 3 — Produtividade vs Meta */}
+      {/* Slide 4 — Produtividade vs Meta */}
       <Slide>
-        <SlideHeader title={`Produtividade Mensal — Meta ${META_PRODUTIVIDADE} processos/pessoa`} subtitle="Barras vermelhas indicam meses abaixo da meta" />
+        <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
+          <div>
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">{`Produtividade Mensal — Meta ${META_PRODUTIVIDADE} processos/pessoa`}</h2>
+            <p className="text-muted-foreground mt-1">Barras vermelhas indicam meses abaixo da meta</p>
+          </div>
+          <FiltroGrupo value={filtroGrupo} onChange={setFiltroGrupo} />
+        </div>
         <Card className="flex-1 min-h-0">
           <CardContent className="pt-6 h-[460px]">
             <ResponsiveContainer width="100%" height="100%">
