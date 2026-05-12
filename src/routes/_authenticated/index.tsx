@@ -214,50 +214,30 @@ function DashboardPage() {
     }));
   }, [boschFiltrada]);
 
-  // Histórico vs Projeção: Midea +6%/mês composto, Bosch +200/mês linear
-  const projecao = useMemo(() => {
-    const byMonthGroup = new Map<string, { midea: number; bosch: number }>();
+  // Evolução de produtividade por operação (Jan até mês atual)
+  const evolucaoProd = useMemo(() => {
+    const currentMonth = new Date().getUTCMonth();
+    // mes -> unidade -> { volume, pessoas }
+    const map = new Map<number, Map<UnidadeKey, { volume: number; pessoas: number }>>();
     for (const r of opAll) {
-      const g = grupoDe(r.unidade);
-      if (!g) continue;
-      const cur = byMonthGroup.get(r.mes) ?? { midea: 0, bosch: 0 };
-      cur[g] += r.volume;
-      byMonthGroup.set(r.mes, cur);
+      const idx = new Date(r.mes).getUTCMonth();
+      if (idx > currentMonth) continue;
+      const inner = map.get(idx) ?? new Map();
+      const cur = inner.get(r.unidade) ?? { volume: 0, pessoas: 0 };
+      cur.volume += r.volume;
+      cur.pessoas += Number(r.pessoas ?? 0);
+      inner.set(r.unidade, cur);
+      map.set(idx, inner);
     }
-    const meses = [...byMonthGroup.keys()].sort();
-    const histMidea: (number | null)[] = Array(12).fill(null);
-    const histBosch: (number | null)[] = Array(12).fill(null);
-    let lastIdx = -1;
-    for (const m of meses) {
-      const idx = new Date(m).getUTCMonth();
-      const v = byMonthGroup.get(m)!;
-      histMidea[idx] = v.midea;
-      histBosch[idx] = v.bosch;
-      if (idx > lastIdx) lastIdx = idx;
-    }
-    const baseMidea = lastIdx >= 0 && histMidea[lastIdx] !== null ? histMidea[lastIdx]! : 0;
-    const baseBosch = lastIdx >= 0 && histBosch[lastIdx] !== null ? histBosch[lastIdx]! : 0;
-    const startProj = Math.max(lastIdx + 1, 6);
-    const out: { mes: string; historico: number | null; projetado: number | null }[] = [];
-    let mProj = baseMidea;
-    let bProj = baseBosch;
-    for (let i = 0; i < 12; i++) {
-      const histTotal = (histMidea[i] ?? 0) + (histBosch[i] ?? 0);
-      const hasHist = histMidea[i] !== null || histBosch[i] !== null;
-      let proj: number | null = null;
-      if (i >= startProj) {
-        mProj = mProj * 1.06;
-        bProj = bProj + 200;
-        proj = Math.round(mProj + bProj);
-      } else if (hasHist && i === lastIdx) {
-        // ponto de transição: também marca como projetado para conectar a linha
-        proj = histTotal;
+    const out: Array<Record<string, number | string | null>> = [];
+    for (let i = 0; i <= currentMonth; i++) {
+      const row: Record<string, number | string | null> = { mes: MESES_PT[i] };
+      const inner = map.get(i);
+      for (const u of UNIDADES) {
+        const v = inner?.get(u.key);
+        row[u.key] = v && v.pessoas > 0 ? Number((v.volume / v.pessoas).toFixed(1)) : null;
       }
-      out.push({
-        mes: MESES_PT[i],
-        historico: hasHist ? histTotal : null,
-        projetado: proj,
-      });
+      out.push(row);
     }
     return out;
   }, [opAll]);
