@@ -153,11 +153,8 @@ function DashboardPage() {
     return m;
   }, [colab.data]);
 
-  // Returns FTE for a row; falls back to legacy headcount if no colaboradores cadastrados
-  const fteOf = (r: OpRow) => {
-    const v = fteMap.get(`${r.unidade}|${r.mes}`);
-    return v !== undefined ? v : r.pessoas;
-  };
+  // FTE vem exclusivamente da aba Cadastro de Colaboradores
+  const fteOf = (r: OpRow) => fteMap.get(`${r.unidade}|${r.mes}`) ?? 0;
 
   const opData = opAll.filter((r) => matchMes(r.mes));
 
