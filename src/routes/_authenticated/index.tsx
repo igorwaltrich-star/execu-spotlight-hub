@@ -214,50 +214,30 @@ function DashboardPage() {
     }));
   }, [boschFiltrada]);
 
-  // Histórico vs Projeção: Midea +6%/mês composto, Bosch +200/mês linear
-  const projecao = useMemo(() => {
-    const byMonthGroup = new Map<string, { midea: number; bosch: number }>();
+  // Evolução de produtividade por operação (Jan até mês atual)
+  const evolucaoProd = useMemo(() => {
+    const currentMonth = new Date().getUTCMonth();
+    // mes -> unidade -> { volume, pessoas }
+    const map = new Map<number, Map<UnidadeKey, { volume: number; pessoas: number }>>();
     for (const r of opAll) {
-      const g = grupoDe(r.unidade);
-      if (!g) continue;
-      const cur = byMonthGroup.get(r.mes) ?? { midea: 0, bosch: 0 };
-      cur[g] += r.volume;
-      byMonthGroup.set(r.mes, cur);
+      const idx = new Date(r.mes).getUTCMonth();
+      if (idx > currentMonth) continue;
+      const inner = map.get(idx) ?? new Map();
+      const cur = inner.get(r.unidade) ?? { volume: 0, pessoas: 0 };
+      cur.volume += r.volume;
+      cur.pessoas += Number(r.pessoas ?? 0);
+      inner.set(r.unidade, cur);
+      map.set(idx, inner);
     }
-    const meses = [...byMonthGroup.keys()].sort();
-    const histMidea: (number | null)[] = Array(12).fill(null);
-    const histBosch: (number | null)[] = Array(12).fill(null);
-    let lastIdx = -1;
-    for (const m of meses) {
-      const idx = new Date(m).getUTCMonth();
-      const v = byMonthGroup.get(m)!;
-      histMidea[idx] = v.midea;
-      histBosch[idx] = v.bosch;
-      if (idx > lastIdx) lastIdx = idx;
-    }
-    const baseMidea = lastIdx >= 0 && histMidea[lastIdx] !== null ? histMidea[lastIdx]! : 0;
-    const baseBosch = lastIdx >= 0 && histBosch[lastIdx] !== null ? histBosch[lastIdx]! : 0;
-    const startProj = Math.max(lastIdx + 1, 6);
-    const out: { mes: string; historico: number | null; projetado: number | null }[] = [];
-    let mProj = baseMidea;
-    let bProj = baseBosch;
-    for (let i = 0; i < 12; i++) {
-      const histTotal = (histMidea[i] ?? 0) + (histBosch[i] ?? 0);
-      const hasHist = histMidea[i] !== null || histBosch[i] !== null;
-      let proj: number | null = null;
-      if (i >= startProj) {
-        mProj = mProj * 1.06;
-        bProj = bProj + 200;
-        proj = Math.round(mProj + bProj);
-      } else if (hasHist && i === lastIdx) {
-        // ponto de transição: também marca como projetado para conectar a linha
-        proj = histTotal;
+    const out: Array<Record<string, number | string | null>> = [];
+    for (let i = 0; i <= currentMonth; i++) {
+      const row: Record<string, number | string | null> = { mes: MESES_PT[i] };
+      const inner = map.get(i);
+      for (const u of UNIDADES) {
+        const v = inner?.get(u.key);
+        row[u.key] = v && v.pessoas > 0 ? Number((v.volume / v.pessoas).toFixed(1)) : null;
       }
-      out.push({
-        mes: MESES_PT[i],
-        historico: hasHist ? histTotal : null,
-        projetado: proj,
-      });
+      out.push(row);
     }
     return out;
   }, [opAll]);
@@ -388,23 +368,28 @@ function DashboardPage() {
         </Card>
       </Slide>
 
-      {/* Slide 5 — Histórico vs Projeção */}
+      {/* Slide 5 — Evolução de Produtividade por Operação */}
       <Slide>
         <div className="mb-6">
-          <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Histórico × Projeção</h2>
-          <p className="text-muted-foreground mt-1">Volume mensal observado e projeção (Midea +6%/mês composto, Bosch +200/mês)</p>
+          <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Evolução da Operação</h2>
+          <p className="text-muted-foreground mt-1">Produtividade mensal por operação (Jan até o mês atual) — meta {META_PRODUTIVIDADE}</p>
         </div>
         <Card className="flex-1 min-h-0">
           <CardContent className="pt-6 h-[460px]">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={projecao}>
+              <LineChart data={evolucaoProd}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
                 <XAxis dataKey="mes" />
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Line type="monotone" dataKey="historico" name="Histórico" stroke={C1} strokeWidth={3} dot={{ r: 4 }} connectNulls={false} />
-                <Line type="monotone" dataKey="projetado" name="Projeção" stroke={C2} strokeWidth={3} strokeDasharray="6 4" dot={{ r: 4 }} connectNulls={false} />
+                <ReferenceLine y={META_PRODUTIVIDADE} stroke={CD} strokeDasharray="6 4" label={{ value: `Meta ${META_PRODUTIVIDADE}`, position: "right", fill: CD }} />
+                {UNIDADES.map((u, i) => {
+                  const palette = [C1, C2, C3, "var(--color-warning)", "var(--color-muted-foreground)", CD];
+                  return (
+                    <Line key={u.key} type="monotone" dataKey={u.key} name={u.label} stroke={palette[i % palette.length]} strokeWidth={2} dot={{ r: 3 }} connectNulls />
+                  );
+                })}
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
