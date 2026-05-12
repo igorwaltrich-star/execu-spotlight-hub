@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { fmtMes, MESES_PT, META_PRODUTIVIDADE, META_SLA, UNIDADES, UNIDADE_LABEL, type UnidadeKey } from "@/lib/constants";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid,
   BarChart, Bar, ReferenceLine, Legend, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
@@ -555,6 +556,24 @@ function StatCard({ label, value, tone, icon: Icon }: { label: string; value: nu
 
 function Empty({ msg }: { msg: string }) {
   return <div className="h-full grid place-items-center text-muted-foreground text-sm">{msg}</div>;
+}
+
+function FiltroMes({
+  value, onChange, meses,
+}: { value: string; onChange: (v: string) => void; meses: string[] }) {
+  return (
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger className="w-56">
+        <SelectValue placeholder="Selecione o mês" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="all">Todos os meses</SelectItem>
+        {meses.map((m) => (
+          <SelectItem key={m} value={m}>{fmtMes(m)}</SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
 }
 
 function FiltroGrupo({
