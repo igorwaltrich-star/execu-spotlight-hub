@@ -132,6 +132,68 @@ export function CadastroColaboradoresView() {
     onSuccess: () => qc.invalidateQueries({ queryKey }),
   });
 
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const bulkInsert = useMutation({
+    mutationFn: async (file: File) => {
+      if (!user) throw new Error("Não autenticado");
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, { cellDates: true });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rowsRaw = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: "" });
+      if (!rowsRaw.length) throw new Error("Planilha vazia");
+
+      const records: Array<{ user_id: string; nome: string; unidade: UnidadeKey; mes: string; ausencias: number }> = [];
+      const erros: string[] = [];
+
+      rowsRaw.forEach((r, i) => {
+        const map: Record<string, unknown> = {};
+        for (const k of Object.keys(r)) map[norm(k)] = r[k];
+        const nome = String(map["colaborador"] ?? map["nome"] ?? "").trim();
+        const opRaw = String(map["operacao"] ?? map["unidade"] ?? "").trim();
+        const ausRaw = map["ausencias (dias)"] ?? map["ausencias"] ?? 0;
+        const perRaw = map["periodo mes"] ?? map["periodo"] ?? map["mes"];
+
+        if (!nome) { erros.push(`Linha ${i + 2}: colaborador vazio`); return; }
+        const unidade = UNIDADE_BY_LABEL[norm(opRaw)];
+        if (!unidade) { erros.push(`Linha ${i + 2}: operação inválida (${opRaw})`); return; }
+        const mes = parsePeriodo(perRaw);
+        if (!mes) { erros.push(`Linha ${i + 2}: período inválido (${perRaw})`); return; }
+        const aus = Number(ausRaw || 0);
+        if (isNaN(aus) || aus < 0 || aus > 30) { erros.push(`Linha ${i + 2}: ausências inválidas`); return; }
+
+        records.push({ user_id: user.id, nome, unidade, mes, ausencias: aus });
+      });
+
+      if (!records.length) throw new Error("Nenhuma linha válida. " + erros.slice(0, 3).join("; "));
+      const { error } = await supabase.from("colaboradores").insert(records);
+      if (error) throw error;
+      return { ok: records.length, erros };
+    },
+    onSuccess: ({ ok, erros }) => {
+      toast.success(`${ok} colaborador(es) importado(s)`);
+      if (erros.length) toast.warning(`${erros.length} linha(s) ignorada(s)`, { description: erros.slice(0, 5).join("\n") });
+      if (fileRef.current) fileRef.current.value = "";
+      qc.invalidateQueries({ queryKey });
+    },
+    onError: (e: Error) => {
+      toast.error(e.message);
+      if (fileRef.current) fileRef.current.value = "";
+    },
+  });
+
+  function downloadTemplate() {
+    const headers = ["COLABORADOR", "OPERAÇÃO", "AUSÊNCIAS (DIAS)", "PERÍODO MES"];
+    const exemplo = [
+      ["João da Silva", "Midea SC", 2, "2026-05"],
+      ["Maria Souza", "Bosch HC", 0, "2026-05"],
+    ];
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...exemplo]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Colaboradores");
+    XLSX.writeFile(wb, "modelo-colaboradores.xlsx");
+  }
+
   return (
     <>
       <PageHeader
