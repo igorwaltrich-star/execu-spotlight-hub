@@ -165,12 +165,15 @@ function DashboardPage() {
 
   // Aggregate per month for filtered trend charts (sum volume, sum FTE, real productivity)
   const aggByMonth = (rows: OpRow[]) => {
-    const map = new Map<string, { mes: string; volume: number; pessoas: number }>();
+    const map = new Map<string, { mes: string; volume: number; pessoas: number; volumeProd: number }>();
     for (const r of rows) {
       const k = r.mes;
-      const cur = map.get(k) ?? { mes: k, volume: 0, pessoas: 0 };
+      const fte = fteOf(r);
+      const cur = map.get(k) ?? { mes: k, volume: 0, pessoas: 0, volumeProd: 0 };
       cur.volume += r.volume;
-      cur.pessoas += fteOf(r);
+      cur.pessoas += fte;
+      // Só conta no cálculo de produtividade o volume cujo FTE foi cadastrado
+      if (fte > 0) cur.volumeProd += r.volume;
       map.set(k, cur);
     }
     return [...map.values()]
@@ -179,7 +182,7 @@ function DashboardPage() {
         mes: fmtMes(r.mes),
         volume: r.volume,
         pessoas: Number(r.pessoas.toFixed(1)),
-        produtividade: r.pessoas > 0 ? r.volume / r.pessoas : 0,
+        produtividade: r.pessoas > 0 ? Number((r.volumeProd / r.pessoas).toFixed(1)) : 0,
       }));
   };
 
