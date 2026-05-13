@@ -378,9 +378,15 @@ function DashboardPage() {
 
       {/* Slide 5 — Evolução de Produtividade por Operação */}
       <Slide>
-        <div className="mb-6">
-          <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Evolução da Operação</h2>
-          <p className="text-muted-foreground mt-1">Produtividade mensal por operação (Jan até o mês atual) — meta {META_PRODUTIVIDADE}</p>
+        <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
+          <div>
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Evolução da Operação</h2>
+            <p className="text-muted-foreground mt-1">Produtividade mensal por operação (Jan até o mês atual) — meta {META_PRODUTIVIDADE}</p>
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            <FiltroUnidade value={filtroUnidadeEvol} onChange={setFiltroUnidadeEvol} />
+            <FiltroMes value={filtroMesEvol} onChange={setFiltroMesEvol} meses={mesesOp} />
+          </div>
         </div>
         <Card className="flex-1 min-h-0">
           <CardContent className="pt-6 h-[460px]">
@@ -392,7 +398,7 @@ function DashboardPage() {
                 <Tooltip />
                 <Legend />
                 <ReferenceLine y={META_PRODUTIVIDADE} stroke={CD} strokeDasharray="6 4" label={{ value: `Meta ${META_PRODUTIVIDADE}`, position: "right", fill: CD }} />
-                {UNIDADES.map((u, i) => {
+                {UNIDADES.filter((u) => filtroUnidadeEvol === "all" || u.key === filtroUnidadeEvol).map((u, i) => {
                   const palette = [C1, C2, C3, "var(--color-warning)", "var(--color-muted-foreground)", CD];
                   return (
                     <Line key={u.key} type="monotone" dataKey={u.key} name={u.label} stroke={palette[i % palette.length]} strokeWidth={2} dot={{ r: 3 }} connectNulls />
