@@ -107,6 +107,8 @@ function DashboardPage() {
   const [filtroMesCart, setFiltroMesCart] = useState<string>("all");
   const [filtroMesMidea, setFiltroMesMidea] = useState<string>("all");
   const [filtroMesBosch, setFiltroMesBosch] = useState<string>("all");
+  const [filtroUnidadeEvol, setFiltroUnidadeEvol] = useState<"all" | UnidadeKey>("all");
+  const [filtroMesEvol, setFiltroMesEvol] = useState<string>("all");
 
   const matchesMes = (m: string, f: string) => f === "all" || m === f;
 
@@ -217,11 +219,14 @@ function DashboardPage() {
   // Evolução de produtividade por operação (Jan até mês atual)
   const evolucaoProd = useMemo(() => {
     const currentMonth = new Date().getUTCMonth();
+    const mesFiltroIdx = filtroMesEvol === "all" ? null : new Date(filtroMesEvol).getUTCMonth();
     // mes -> unidade -> { volume, pessoas }
     const map = new Map<number, Map<UnidadeKey, { volume: number; pessoas: number }>>();
     for (const r of opAll) {
+      if (filtroUnidadeEvol !== "all" && r.unidade !== filtroUnidadeEvol) continue;
       const idx = new Date(r.mes).getUTCMonth();
       if (idx > currentMonth) continue;
+      if (mesFiltroIdx !== null && idx !== mesFiltroIdx) continue;
       const inner = map.get(idx) ?? new Map();
       const cur = inner.get(r.unidade) ?? { volume: 0, pessoas: 0 };
       cur.volume += r.volume;
@@ -230,17 +235,20 @@ function DashboardPage() {
       map.set(idx, inner);
     }
     const out: Array<Record<string, number | string | null>> = [];
-    for (let i = 0; i <= currentMonth; i++) {
+    const fromIdx = mesFiltroIdx !== null ? mesFiltroIdx : 0;
+    const toIdx = mesFiltroIdx !== null ? mesFiltroIdx : currentMonth;
+    for (let i = fromIdx; i <= toIdx; i++) {
       const row: Record<string, number | string | null> = { mes: MESES_PT[i] };
       const inner = map.get(i);
       for (const u of UNIDADES) {
+        if (filtroUnidadeEvol !== "all" && u.key !== filtroUnidadeEvol) continue;
         const v = inner?.get(u.key);
         row[u.key] = v && v.pessoas > 0 ? Number((v.volume / v.pessoas).toFixed(1)) : null;
       }
       out.push(row);
     }
     return out;
-  }, [opAll]);
+  }, [opAll, filtroUnidadeEvol, filtroMesEvol]);
 
   const acaoStats = {
     andamento: (acoes.data ?? []).filter((a) => a.status === "andamento").length,
@@ -370,9 +378,15 @@ function DashboardPage() {
 
       {/* Slide 5 — Evolução de Produtividade por Operação */}
       <Slide>
-        <div className="mb-6">
-          <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Evolução da Operação</h2>
-          <p className="text-muted-foreground mt-1">Produtividade mensal por operação (Jan até o mês atual) — meta {META_PRODUTIVIDADE}</p>
+        <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
+          <div>
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Evolução da Operação</h2>
+            <p className="text-muted-foreground mt-1">Produtividade mensal por operação (Jan até o mês atual) — meta {META_PRODUTIVIDADE}</p>
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            <FiltroUnidade value={filtroUnidadeEvol} onChange={setFiltroUnidadeEvol} />
+            <FiltroMes value={filtroMesEvol} onChange={setFiltroMesEvol} meses={mesesOp} />
+          </div>
         </div>
         <Card className="flex-1 min-h-0">
           <CardContent className="pt-6 h-[460px]">
@@ -384,7 +398,7 @@ function DashboardPage() {
                 <Tooltip />
                 <Legend />
                 <ReferenceLine y={META_PRODUTIVIDADE} stroke={CD} strokeDasharray="6 4" label={{ value: `Meta ${META_PRODUTIVIDADE}`, position: "right", fill: CD }} />
-                {UNIDADES.map((u, i) => {
+                {UNIDADES.filter((u) => filtroUnidadeEvol === "all" || u.key === filtroUnidadeEvol).map((u, i) => {
                   const palette = [C1, C2, C3, "var(--color-warning)", "var(--color-muted-foreground)", CD];
                   return (
                     <Line key={u.key} type="monotone" dataKey={u.key} name={u.label} stroke={palette[i % palette.length]} strokeWidth={2} dot={{ r: 3 }} connectNulls />
