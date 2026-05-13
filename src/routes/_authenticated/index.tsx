@@ -107,6 +107,8 @@ function DashboardPage() {
   const [filtroMesCart, setFiltroMesCart] = useState<string>("all");
   const [filtroMesMidea, setFiltroMesMidea] = useState<string>("all");
   const [filtroMesBosch, setFiltroMesBosch] = useState<string>("all");
+  const [filtroUnidadeEvol, setFiltroUnidadeEvol] = useState<"all" | UnidadeKey>("all");
+  const [filtroMesEvol, setFiltroMesEvol] = useState<string>("all");
 
   const matchesMes = (m: string, f: string) => f === "all" || m === f;
 
