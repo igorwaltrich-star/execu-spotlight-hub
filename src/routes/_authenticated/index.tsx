@@ -401,15 +401,16 @@ function DashboardPage() {
             <table className="w-full text-sm">
               <thead className="bg-muted">
                 <tr>
-                  <th className="text-left px-4 py-3">Oportunidade</th>
+                  <th className="text-left px-4 py-3">Registro</th>
                   <th className="text-left px-4 py-3">Categoria</th>
                   <th className="text-left px-4 py-3">Status</th>
                   <th className="text-right px-4 py-3">Savings (R$)</th>
+                  <th className="text-right px-4 py-3">Custo extra (R$)</th>
                 </tr>
               </thead>
               <tbody>
                 {(oportunidades.data ?? []).length === 0 && (
-                  <tr><td colSpan={4} className="text-center text-muted-foreground py-8">Sem oportunidades cadastradas.</td></tr>
+                  <tr><td colSpan={5} className="text-center text-muted-foreground py-8">Nenhum registro cadastrado.</td></tr>
                 )}
                 {(oportunidades.data ?? []).map((o) => (
                   <tr key={o.id} className="border-t border-border">
@@ -424,7 +425,8 @@ function DashboardPage() {
                         {o.status === "implementada" ? "Implementada" : o.status === "em_andamento" ? "Em andamento" : "Identificada"}
                       </Badge>
                     </td>
-                    <td className="px-4 py-3 text-right font-semibold">{Number(o.savings).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
+                    <td className="px-4 py-3 text-right font-semibold text-success">{Number(o.savings).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
+                    <td className="px-4 py-3 text-right font-semibold text-destructive">{Number(o.custo_extra ?? 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
                   </tr>
                 ))}
               </tbody>
