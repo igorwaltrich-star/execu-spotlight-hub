@@ -26,6 +26,7 @@ type Row = {
   descricao: string;
   categoria: string;
   savings: number;
+  custo_extra: number;
   status: "identificada" | "em_andamento" | "implementada";
   data: string;
 };
@@ -36,7 +37,7 @@ const STATUS_LABEL: Record<Row["status"], string> = {
   implementada: "Implementada",
 };
 
-const CATEGORIAS = ["Operacional", "Tecnologia", "Processos", "Pessoas", "Comercial"];
+const CATEGORIAS = ["Operacional", "Tecnologia", "Processos", "Pessoas", "Comercial", "Risco"];
 
 function CadastroOportunidadesPage() {
   const { user } = useAuth();
@@ -49,7 +50,7 @@ function CadastroOportunidadesPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("oportunidades")
-        .select("id, titulo, descricao, categoria, savings, status, data")
+        .select("id, titulo, descricao, categoria, savings, custo_extra, status, data")
         .order("data", { ascending: false });
       if (error) throw error;
       return data as Row[];
@@ -60,27 +61,29 @@ function CadastroOportunidadesPage() {
   const [descricao, setDescricao] = useState("");
   const [categoria, setCategoria] = useState("Operacional");
   const [savings, setSavings] = useState<number | "">("");
+  const [custoExtra, setCustoExtra] = useState<number | "">("");
   const [status, setStatus] = useState<Row["status"]>("identificada");
   const [data, setData] = useState(() => new Date().toISOString().slice(0, 10));
 
   const insert = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error("Não autenticado");
-      if (!titulo || savings === "") throw new Error("Preencha título e savings");
+      if (!titulo) throw new Error("Preencha o título");
       const { error } = await supabase.from("oportunidades").insert({
         user_id: user.id,
         titulo,
         descricao,
         categoria,
-        savings: Number(savings),
+        savings: Number(savings || 0),
+        custo_extra: Number(custoExtra || 0),
         status,
         data,
       });
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Oportunidade cadastrada");
-      setTitulo(""); setDescricao(""); setSavings(""); setStatus("identificada");
+      toast.success("Registro cadastrado");
+      setTitulo(""); setDescricao(""); setSavings(""); setCustoExtra(""); setStatus("identificada");
       qc.invalidateQueries({ queryKey });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -95,27 +98,33 @@ function CadastroOportunidadesPage() {
   });
 
   const totalSavings = rows.reduce((s, r) => s + Number(r.savings), 0);
+  const totalCustoExtra = rows.reduce((s, r) => s + Number(r.custo_extra ?? 0), 0);
   const implementadoSavings = rows.filter((r) => r.status === "implementada").reduce((s, r) => s + Number(r.savings), 0);
+  const saldoLiquido = totalSavings - totalCustoExtra;
 
   return (
     <>
       <PageHeader
-        title="Cadastro de Oportunidades & Savings"
-        description="Registre oportunidades de melhoria e savings operacionais identificados, em andamento ou implementados."
+        title="Cadastro de Oportunidades e Riscos"
+        description="Registre oportunidades de melhoria, savings estimados e custos extras gerados (riscos materializados)."
       />
       <div className="p-8 space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card><CardContent className="pt-6">
-            <div className="text-xs uppercase text-muted-foreground">Total de oportunidades</div>
+            <div className="text-xs uppercase text-muted-foreground">Total de registros</div>
             <div className="text-3xl font-bold mt-1">{rows.length}</div>
           </CardContent></Card>
           <Card><CardContent className="pt-6">
             <div className="text-xs uppercase text-muted-foreground">Savings totais (R$)</div>
-            <div className="text-3xl font-bold mt-1">{totalSavings.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</div>
+            <div className="text-3xl font-bold mt-1 text-success">{totalSavings.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</div>
           </CardContent></Card>
           <Card><CardContent className="pt-6">
-            <div className="text-xs uppercase text-muted-foreground">Savings implementados (R$)</div>
-            <div className="text-3xl font-bold mt-1 text-success">{implementadoSavings.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</div>
+            <div className="text-xs uppercase text-muted-foreground">Custos extras (R$)</div>
+            <div className="text-3xl font-bold mt-1 text-destructive">{totalCustoExtra.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</div>
+          </CardContent></Card>
+          <Card><CardContent className="pt-6">
+            <div className="text-xs uppercase text-muted-foreground">Saldo líquido (R$)</div>
+            <div className={`text-3xl font-bold mt-1 ${saldoLiquido >= 0 ? "text-success" : "text-destructive"}`}>{saldoLiquido.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</div>
           </CardContent></Card>
         </div>
 
