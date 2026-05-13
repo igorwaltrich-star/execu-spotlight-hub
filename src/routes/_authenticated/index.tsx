@@ -374,7 +374,7 @@ function DashboardPage() {
 
       {/* Slide — Oportunidades & Savings */}
       <Slide>
-        <SlideHeader title="Oportunidades & Savings Operacionais" subtitle="Iniciativas de melhoria e impacto financeiro estimado" />
+        <SlideHeader title="Oportunidades" subtitle="Iniciativas de melhoria e impacto financeiro estimado" />
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
           <StatCard label="Total" value={oportunidades.data?.length ?? 0} tone="bg-muted text-foreground" />
           <StatCard label="Identificadas" value={oportStats.identificada} tone="bg-card border" />
