@@ -428,15 +428,7 @@ function DashboardPage() {
         </Card>
       </Slide>
 
-      {/* Slide 5 — Evolução de Produtividade por Operação */}
-      <Slide>
-        <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
-          <div>
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Evolução da Operação</h2>
-            <p className="text-muted-foreground mt-1">Produtividade mensal por operação (Jan até o mês atual) — meta {META_PRODUTIVIDADE}</p>
-          </div>
-          <div className="flex gap-2 flex-wrap">
-      </Slide>
+
 
       {/* Slide — Melhorias e Pontos de Atenção */}
       <Slide>
