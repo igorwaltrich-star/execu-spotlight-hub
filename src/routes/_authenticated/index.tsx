@@ -29,7 +29,7 @@ type SlaMidea = { mes: string; start_up: number; otcc: number; otd: number; sotd
 type SlaBosch = { mes: string; dig_conf: number; start_up: number; otcc: number; desvios: number; pinho: number };
 type Gargalo = { id: string; item: string; impacto: string; risco: "alto" | "medio" | "baixo" };
 type Acao = { id: string; iniciativa: string; responsavel: string; prazo: string | null; status: "andamento" | "concluido" | "atrasado" };
-type Oport = { id: string; titulo: string; categoria: string; savings: number; status: "identificada" | "em_andamento" | "implementada" };
+type Oport = { id: string; titulo: string; categoria: string; savings: number; custo_extra: number; status: "identificada" | "em_andamento" | "implementada" };
 type Melhoria = { id: string; titulo: string; descricao: string; tipo: "atencao" | "oportunidade" };
 
 function DashboardPage() {
