@@ -186,7 +186,7 @@ function CadastroOportunidadesPage() {
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>Histórico de oportunidades</CardTitle></CardHeader>
+          <CardHeader><CardTitle>Histórico</CardTitle></CardHeader>
           <CardContent className="p-0">
             <Table>
               <TableHeader>
@@ -196,12 +196,13 @@ function CadastroOportunidadesPage() {
                   <TableHead>Status</TableHead>
                   <TableHead>Data</TableHead>
                   <TableHead className="text-right">Savings (R$)</TableHead>
+                  <TableHead className="text-right">Custo extra (R$)</TableHead>
                   <TableHead className="w-12" />
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {rows.length === 0 && (
-                  <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Sem oportunidades cadastradas.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Nenhum registro.</TableCell></TableRow>
                 )}
                 {rows.map((r) => (
                   <TableRow key={r.id}>
@@ -218,7 +219,8 @@ function CadastroOportunidadesPage() {
                       }>{STATUS_LABEL[r.status]}</Badge>
                     </TableCell>
                     <TableCell>{new Date(r.data).toLocaleDateString("pt-BR")}</TableCell>
-                    <TableCell className="text-right font-medium">{Number(r.savings).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
+                    <TableCell className="text-right font-medium text-success">{Number(r.savings).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
+                    <TableCell className="text-right font-medium text-destructive">{Number(r.custo_extra ?? 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
                     <TableCell>
                       <Button size="icon" variant="ghost" onClick={() => del.mutate(r.id)}>
                         <Trash2 className="h-4 w-4" />
