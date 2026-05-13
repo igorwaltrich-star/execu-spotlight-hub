@@ -342,36 +342,58 @@ function DashboardPage() {
         </Card>
       </Slide>
 
-      {/* Slide 4 — Produtividade vs Meta */}
+      {/* Slide — Oportunidades & Savings */}
       <Slide>
-        <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
-          <div>
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">{`Produtividade Mensal — Meta ${META_PRODUTIVIDADE} processos/pessoa`}</h2>
-            <p className="text-muted-foreground mt-1">Barras vermelhas indicam meses abaixo da meta</p>
-          </div>
-          <div className="flex gap-2 flex-wrap">
-            <FiltroGrupo value={filtroGrupoProd} onChange={setFiltroGrupoProd} />
-            <FiltroMes value={filtroMesProd} onChange={setFiltroMesProd} meses={mesesOp} />
-          </div>
+        <SlideHeader title="Oportunidades & Savings Operacionais" subtitle="Iniciativas de melhoria e impacto financeiro estimado" />
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+          <StatCard label="Total" value={oportunidades.data?.length ?? 0} tone="bg-muted text-foreground" />
+          <StatCard label="Identificadas" value={oportStats.identificada} tone="bg-card border" />
+          <StatCard label="Em andamento" value={oportStats.em_andamento} tone="bg-accent text-accent-foreground" />
+          <StatCard label="Implementadas" value={oportStats.implementada} tone="bg-success text-success-foreground" icon={CheckCircle2} />
         </div>
-        <Card className="flex-1 min-h-0">
-          <CardContent className="pt-6 h-[460px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={prodData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                <XAxis dataKey="mes" />
-                <YAxis />
-                <Tooltip />
-                <ReferenceLine y={META_PRODUTIVIDADE} stroke={CD} strokeDasharray="6 4" label={{ value: `Meta ${META_PRODUTIVIDADE}`, position: "right", fill: CD }} />
-                <Bar dataKey="produtividade" radius={[6, 6, 0, 0]}
-                  fill={C2}
-                  shape={(props: any) => {
-                    const ok = props.payload.produtividade >= META_PRODUTIVIDADE;
-                    return <rect x={props.x} y={props.y} width={props.width} height={props.height} rx={6} fill={ok ? C3 : CD} />;
-                  }}
-                />
-              </BarChart>
-            </ResponsiveContainer>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <Card><CardContent className="pt-6">
+            <div className="text-xs uppercase text-muted-foreground">Savings totais (R$)</div>
+            <div className="text-3xl font-bold mt-1">{savingsTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</div>
+          </CardContent></Card>
+          <Card><CardContent className="pt-6">
+            <div className="text-xs uppercase text-muted-foreground">Savings implementados (R$)</div>
+            <div className="text-3xl font-bold mt-1 text-success">{savingsImplementados.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</div>
+          </CardContent></Card>
+        </div>
+        <Card className="flex-1 min-h-0 overflow-auto">
+          <CardContent className="p-0">
+            <table className="w-full text-sm">
+              <thead className="bg-muted">
+                <tr>
+                  <th className="text-left px-4 py-3">Oportunidade</th>
+                  <th className="text-left px-4 py-3">Categoria</th>
+                  <th className="text-left px-4 py-3">Status</th>
+                  <th className="text-right px-4 py-3">Savings (R$)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(oportunidades.data ?? []).length === 0 && (
+                  <tr><td colSpan={4} className="text-center text-muted-foreground py-8">Sem oportunidades cadastradas.</td></tr>
+                )}
+                {(oportunidades.data ?? []).map((o) => (
+                  <tr key={o.id} className="border-t border-border">
+                    <td className="px-4 py-3 font-medium">{o.titulo}</td>
+                    <td className="px-4 py-3">{o.categoria}</td>
+                    <td className="px-4 py-3">
+                      <Badge className={
+                        o.status === "implementada" ? "bg-success text-success-foreground" :
+                        o.status === "em_andamento" ? "bg-accent text-accent-foreground" :
+                        "bg-muted text-muted-foreground"
+                      }>
+                        {o.status === "implementada" ? "Implementada" : o.status === "em_andamento" ? "Em andamento" : "Identificada"}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-3 text-right font-semibold">{Number(o.savings).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </CardContent>
         </Card>
       </Slide>
