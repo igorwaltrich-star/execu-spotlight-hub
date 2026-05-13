@@ -138,6 +138,7 @@ export type Database = {
         Row: {
           categoria: string
           created_at: string
+          custo_extra: number
           data: string
           descricao: string
           id: string
@@ -150,6 +151,7 @@ export type Database = {
         Insert: {
           categoria?: string
           created_at?: string
+          custo_extra?: number
           data?: string
           descricao?: string
           id?: string
@@ -162,6 +164,7 @@ export type Database = {
         Update: {
           categoria?: string
           created_at?: string
+          custo_extra?: number
           data?: string
           descricao?: string
           id?: string

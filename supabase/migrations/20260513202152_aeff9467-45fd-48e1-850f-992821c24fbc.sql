@@ -1,0 +1,1 @@
+ALTER TABLE public.oportunidades ADD COLUMN IF NOT EXISTS custo_extra numeric NOT NULL DEFAULT 0;

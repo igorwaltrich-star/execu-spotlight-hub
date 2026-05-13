@@ -29,7 +29,7 @@ type SlaMidea = { mes: string; start_up: number; otcc: number; otd: number; sotd
 type SlaBosch = { mes: string; dig_conf: number; start_up: number; otcc: number; desvios: number; pinho: number };
 type Gargalo = { id: string; item: string; impacto: string; risco: "alto" | "medio" | "baixo" };
 type Acao = { id: string; iniciativa: string; responsavel: string; prazo: string | null; status: "andamento" | "concluido" | "atrasado" };
-type Oport = { id: string; titulo: string; categoria: string; savings: number; status: "identificada" | "em_andamento" | "implementada" };
+type Oport = { id: string; titulo: string; categoria: string; savings: number; custo_extra: number; status: "identificada" | "em_andamento" | "implementada" };
 type Melhoria = { id: string; titulo: string; descricao: string; tipo: "atencao" | "oportunidade" };
 
 function DashboardPage() {
@@ -98,7 +98,7 @@ function DashboardPage() {
   const oportunidades = useQuery({
     queryKey: ["oportunidades"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("oportunidades").select("id, titulo, categoria, savings, status").order("data", { ascending: false });
+      const { data, error } = await supabase.from("oportunidades").select("id, titulo, categoria, savings, custo_extra, status").order("data", { ascending: false });
       if (error) throw error;
       return data as Oport[];
     },
@@ -110,7 +110,8 @@ function DashboardPage() {
     implementada: oportRows.filter((o) => o.status === "implementada").length,
   };
   const savingsTotal = oportRows.reduce((s, o) => s + Number(o.savings), 0);
-  const savingsImplementados = oportRows.filter((o) => o.status === "implementada").reduce((s, o) => s + Number(o.savings), 0);
+  const custoExtraTotal = oportRows.reduce((s, o) => s + Number(o.custo_extra ?? 0), 0);
+  const saldoLiquido = savingsTotal - custoExtraTotal;
 
   const opAll = op.data ?? [];
   const grupoDe = (u: UnidadeKey) => UNIDADES.find((x) => x.key === u)?.grupo;
@@ -374,21 +375,25 @@ function DashboardPage() {
 
       {/* Slide — Oportunidades & Savings */}
       <Slide>
-        <SlideHeader title="Oportunidades" subtitle="Iniciativas de melhoria e impacto financeiro estimado" />
+        <SlideHeader title="Oportunidades e Riscos" subtitle="Iniciativas de melhoria, savings estimados e custos extras gerados" />
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
           <StatCard label="Total" value={oportunidades.data?.length ?? 0} tone="bg-muted text-foreground" />
           <StatCard label="Identificadas" value={oportStats.identificada} tone="bg-card border" />
           <StatCard label="Em andamento" value={oportStats.em_andamento} tone="bg-accent text-accent-foreground" />
           <StatCard label="Implementadas" value={oportStats.implementada} tone="bg-success text-success-foreground" icon={CheckCircle2} />
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <Card><CardContent className="pt-6">
             <div className="text-xs uppercase text-muted-foreground">Savings totais (R$)</div>
-            <div className="text-3xl font-bold mt-1">{savingsTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</div>
+            <div className="text-3xl font-bold mt-1 text-success">{savingsTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</div>
           </CardContent></Card>
           <Card><CardContent className="pt-6">
-            <div className="text-xs uppercase text-muted-foreground">Savings implementados (R$)</div>
-            <div className="text-3xl font-bold mt-1 text-success">{savingsImplementados.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</div>
+            <div className="text-xs uppercase text-muted-foreground">Custos extras (R$)</div>
+            <div className="text-3xl font-bold mt-1 text-destructive">{custoExtraTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</div>
+          </CardContent></Card>
+          <Card><CardContent className="pt-6">
+            <div className="text-xs uppercase text-muted-foreground">Saldo líquido (R$)</div>
+            <div className={`text-3xl font-bold mt-1 ${saldoLiquido >= 0 ? "text-success" : "text-destructive"}`}>{saldoLiquido.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</div>
           </CardContent></Card>
         </div>
         <Card className="flex-1 min-h-0 overflow-auto">
@@ -396,15 +401,16 @@ function DashboardPage() {
             <table className="w-full text-sm">
               <thead className="bg-muted">
                 <tr>
-                  <th className="text-left px-4 py-3">Oportunidade</th>
+                  <th className="text-left px-4 py-3">Registro</th>
                   <th className="text-left px-4 py-3">Categoria</th>
                   <th className="text-left px-4 py-3">Status</th>
                   <th className="text-right px-4 py-3">Savings (R$)</th>
+                  <th className="text-right px-4 py-3">Custo extra (R$)</th>
                 </tr>
               </thead>
               <tbody>
                 {(oportunidades.data ?? []).length === 0 && (
-                  <tr><td colSpan={4} className="text-center text-muted-foreground py-8">Sem oportunidades cadastradas.</td></tr>
+                  <tr><td colSpan={5} className="text-center text-muted-foreground py-8">Nenhum registro cadastrado.</td></tr>
                 )}
                 {(oportunidades.data ?? []).map((o) => (
                   <tr key={o.id} className="border-t border-border">
@@ -419,7 +425,8 @@ function DashboardPage() {
                         {o.status === "implementada" ? "Implementada" : o.status === "em_andamento" ? "Em andamento" : "Identificada"}
                       </Badge>
                     </td>
-                    <td className="px-4 py-3 text-right font-semibold">{Number(o.savings).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
+                    <td className="px-4 py-3 text-right font-semibold text-success">{Number(o.savings).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
+                    <td className="px-4 py-3 text-right font-semibold text-destructive">{Number(o.custo_extra ?? 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
                   </tr>
                 ))}
               </tbody>
