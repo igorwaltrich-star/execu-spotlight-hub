@@ -375,21 +375,25 @@ function DashboardPage() {
 
       {/* Slide — Oportunidades & Savings */}
       <Slide>
-        <SlideHeader title="Oportunidades" subtitle="Iniciativas de melhoria e impacto financeiro estimado" />
+        <SlideHeader title="Oportunidades e Riscos" subtitle="Iniciativas de melhoria, savings estimados e custos extras gerados" />
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
           <StatCard label="Total" value={oportunidades.data?.length ?? 0} tone="bg-muted text-foreground" />
           <StatCard label="Identificadas" value={oportStats.identificada} tone="bg-card border" />
           <StatCard label="Em andamento" value={oportStats.em_andamento} tone="bg-accent text-accent-foreground" />
           <StatCard label="Implementadas" value={oportStats.implementada} tone="bg-success text-success-foreground" icon={CheckCircle2} />
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <Card><CardContent className="pt-6">
             <div className="text-xs uppercase text-muted-foreground">Savings totais (R$)</div>
-            <div className="text-3xl font-bold mt-1">{savingsTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</div>
+            <div className="text-3xl font-bold mt-1 text-success">{savingsTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</div>
           </CardContent></Card>
           <Card><CardContent className="pt-6">
-            <div className="text-xs uppercase text-muted-foreground">Savings implementados (R$)</div>
-            <div className="text-3xl font-bold mt-1 text-success">{savingsImplementados.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</div>
+            <div className="text-xs uppercase text-muted-foreground">Custos extras (R$)</div>
+            <div className="text-3xl font-bold mt-1 text-destructive">{custoExtraTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</div>
+          </CardContent></Card>
+          <Card><CardContent className="pt-6">
+            <div className="text-xs uppercase text-muted-foreground">Saldo líquido (R$)</div>
+            <div className={`text-3xl font-bold mt-1 ${saldoLiquido >= 0 ? "text-success" : "text-destructive"}`}>{saldoLiquido.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</div>
           </CardContent></Card>
         </div>
         <Card className="flex-1 min-h-0 overflow-auto">
