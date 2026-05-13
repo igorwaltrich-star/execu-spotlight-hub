@@ -168,7 +168,11 @@ function CadastroOportunidadesPage() {
               </div>
               <div className="space-y-2">
                 <Label>Savings estimados (R$)</Label>
-                <Input type="number" step="0.01" min={0} value={savings} onChange={(e) => setSavings(e.target.value === "" ? "" : Number(e.target.value))} required />
+                <Input type="number" step="0.01" min={0} value={savings} onChange={(e) => setSavings(e.target.value === "" ? "" : Number(e.target.value))} />
+              </div>
+              <div className="space-y-2">
+                <Label>Custos extras gerados (R$)</Label>
+                <Input type="number" step="0.01" min={0} value={custoExtra} onChange={(e) => setCustoExtra(e.target.value === "" ? "" : Number(e.target.value))} />
               </div>
               <div className="space-y-2">
                 <Label>Data</Label>
