@@ -13,7 +13,7 @@ import {
   BarChart, Bar, ReferenceLine, Legend, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
   LineChart, Line,
 } from "recharts";
-import { TrendingUp, Users, Gauge, AlertTriangle, Target, CheckCircle2 } from "lucide-react";
+import { TrendingUp, Users, Gauge, AlertTriangle, Target, CheckCircle2, Lightbulb, AlertCircle } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/")({
   component: DashboardPage,
