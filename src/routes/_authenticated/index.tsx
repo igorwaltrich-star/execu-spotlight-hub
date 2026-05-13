@@ -30,6 +30,7 @@ type SlaBosch = { mes: string; dig_conf: number; start_up: number; otcc: number;
 type Gargalo = { id: string; item: string; impacto: string; risco: "alto" | "medio" | "baixo" };
 type Acao = { id: string; iniciativa: string; responsavel: string; prazo: string | null; status: "andamento" | "concluido" | "atrasado" };
 type Oport = { id: string; titulo: string; categoria: string; savings: number; status: "identificada" | "em_andamento" | "implementada" };
+type Melhoria = { id: string; titulo: string; descricao: string; tipo: "atencao" | "oportunidade" };
 
 function DashboardPage() {
   useRealtimeTable("operacional_mensal", ["operacional_mensal"]);
@@ -37,6 +38,16 @@ function DashboardPage() {
   useRealtimeTable("sla_bosch", ["sla_bosch"]);
   useRealtimeTable("gargalos", ["gargalos"]);
   useRealtimeTable("plano_acao", ["plano_acao"]);
+  useRealtimeTable("melhorias", ["melhorias"]);
+
+  const melhorias = useQuery({
+    queryKey: ["melhorias"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("melhorias").select("id, titulo, descricao, tipo").order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as Melhoria[];
+    },
+  });
 
   const op = useQuery({
     queryKey: ["operacional_mensal"],
