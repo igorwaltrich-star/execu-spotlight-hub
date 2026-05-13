@@ -219,11 +219,14 @@ function DashboardPage() {
   // Evolução de produtividade por operação (Jan até mês atual)
   const evolucaoProd = useMemo(() => {
     const currentMonth = new Date().getUTCMonth();
+    const mesFiltroIdx = filtroMesEvol === "all" ? null : new Date(filtroMesEvol).getUTCMonth();
     // mes -> unidade -> { volume, pessoas }
     const map = new Map<number, Map<UnidadeKey, { volume: number; pessoas: number }>>();
     for (const r of opAll) {
+      if (filtroUnidadeEvol !== "all" && r.unidade !== filtroUnidadeEvol) continue;
       const idx = new Date(r.mes).getUTCMonth();
       if (idx > currentMonth) continue;
+      if (mesFiltroIdx !== null && idx !== mesFiltroIdx) continue;
       const inner = map.get(idx) ?? new Map();
       const cur = inner.get(r.unidade) ?? { volume: 0, pessoas: 0 };
       cur.volume += r.volume;
@@ -232,17 +235,20 @@ function DashboardPage() {
       map.set(idx, inner);
     }
     const out: Array<Record<string, number | string | null>> = [];
-    for (let i = 0; i <= currentMonth; i++) {
+    const fromIdx = mesFiltroIdx !== null ? mesFiltroIdx : 0;
+    const toIdx = mesFiltroIdx !== null ? mesFiltroIdx : currentMonth;
+    for (let i = fromIdx; i <= toIdx; i++) {
       const row: Record<string, number | string | null> = { mes: MESES_PT[i] };
       const inner = map.get(i);
       for (const u of UNIDADES) {
+        if (filtroUnidadeEvol !== "all" && u.key !== filtroUnidadeEvol) continue;
         const v = inner?.get(u.key);
         row[u.key] = v && v.pessoas > 0 ? Number((v.volume / v.pessoas).toFixed(1)) : null;
       }
       out.push(row);
     }
     return out;
-  }, [opAll]);
+  }, [opAll, filtroUnidadeEvol, filtroMesEvol]);
 
   const acaoStats = {
     andamento: (acoes.data ?? []).filter((a) => a.status === "andamento").length,
