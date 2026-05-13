@@ -17,6 +17,7 @@ import { Route as AuthenticatedSlaBoschRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedPlanoAcaoRouteImport } from './routes/_authenticated/plano-acao'
 import { Route as AuthenticatedMelhoriasRouteImport } from './routes/_authenticated/melhorias'
 import { Route as AuthenticatedDiagnosticoRouteImport } from './routes/_authenticated/diagnostico'
+import { Route as AuthenticatedCadastroOportunidadesRouteImport } from './routes/_authenticated/cadastro-oportunidades'
 import { Route as AuthenticatedCadastroRouteImport } from './routes/_authenticated/cadastro'
 
 const LoginRoute = LoginRouteImport.update({
@@ -59,6 +60,12 @@ const AuthenticatedDiagnosticoRoute =
     path: '/diagnostico',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedCadastroOportunidadesRoute =
+  AuthenticatedCadastroOportunidadesRouteImport.update({
+    id: '/cadastro-oportunidades',
+    path: '/cadastro-oportunidades',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedCadastroRoute = AuthenticatedCadastroRouteImport.update({
   id: '/cadastro',
   path: '/cadastro',
@@ -69,6 +76,7 @@ export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/login': typeof LoginRoute
   '/cadastro': typeof AuthenticatedCadastroRoute
+  '/cadastro-oportunidades': typeof AuthenticatedCadastroOportunidadesRoute
   '/diagnostico': typeof AuthenticatedDiagnosticoRoute
   '/melhorias': typeof AuthenticatedMelhoriasRoute
   '/plano-acao': typeof AuthenticatedPlanoAcaoRoute
@@ -78,6 +86,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/cadastro': typeof AuthenticatedCadastroRoute
+  '/cadastro-oportunidades': typeof AuthenticatedCadastroOportunidadesRoute
   '/diagnostico': typeof AuthenticatedDiagnosticoRoute
   '/melhorias': typeof AuthenticatedMelhoriasRoute
   '/plano-acao': typeof AuthenticatedPlanoAcaoRoute
@@ -90,6 +99,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
   '/_authenticated/cadastro': typeof AuthenticatedCadastroRoute
+  '/_authenticated/cadastro-oportunidades': typeof AuthenticatedCadastroOportunidadesRoute
   '/_authenticated/diagnostico': typeof AuthenticatedDiagnosticoRoute
   '/_authenticated/melhorias': typeof AuthenticatedMelhoriasRoute
   '/_authenticated/plano-acao': typeof AuthenticatedPlanoAcaoRoute
@@ -103,6 +113,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/cadastro'
+    | '/cadastro-oportunidades'
     | '/diagnostico'
     | '/melhorias'
     | '/plano-acao'
@@ -112,6 +123,7 @@ export interface FileRouteTypes {
   to:
     | '/login'
     | '/cadastro'
+    | '/cadastro-oportunidades'
     | '/diagnostico'
     | '/melhorias'
     | '/plano-acao'
@@ -123,6 +135,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/login'
     | '/_authenticated/cadastro'
+    | '/_authenticated/cadastro-oportunidades'
     | '/_authenticated/diagnostico'
     | '/_authenticated/melhorias'
     | '/_authenticated/plano-acao'
@@ -194,6 +207,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDiagnosticoRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/cadastro-oportunidades': {
+      id: '/_authenticated/cadastro-oportunidades'
+      path: '/cadastro-oportunidades'
+      fullPath: '/cadastro-oportunidades'
+      preLoaderRoute: typeof AuthenticatedCadastroOportunidadesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/cadastro': {
       id: '/_authenticated/cadastro'
       path: '/cadastro'
@@ -206,6 +226,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteChildren {
   AuthenticatedCadastroRoute: typeof AuthenticatedCadastroRoute
+  AuthenticatedCadastroOportunidadesRoute: typeof AuthenticatedCadastroOportunidadesRoute
   AuthenticatedDiagnosticoRoute: typeof AuthenticatedDiagnosticoRoute
   AuthenticatedMelhoriasRoute: typeof AuthenticatedMelhoriasRoute
   AuthenticatedPlanoAcaoRoute: typeof AuthenticatedPlanoAcaoRoute
@@ -216,6 +237,8 @@ interface AuthenticatedRouteChildren {
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedCadastroRoute: AuthenticatedCadastroRoute,
+  AuthenticatedCadastroOportunidadesRoute:
+    AuthenticatedCadastroOportunidadesRoute,
   AuthenticatedDiagnosticoRoute: AuthenticatedDiagnosticoRoute,
   AuthenticatedMelhoriasRoute: AuthenticatedMelhoriasRoute,
   AuthenticatedPlanoAcaoRoute: AuthenticatedPlanoAcaoRoute,
@@ -235,3 +258,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
