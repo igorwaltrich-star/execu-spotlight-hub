@@ -13,7 +13,7 @@ import {
   BarChart, Bar, ReferenceLine, Legend, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
   LineChart, Line,
 } from "recharts";
-import { TrendingUp, Users, Gauge, AlertTriangle, Target, CheckCircle2 } from "lucide-react";
+import { TrendingUp, Users, Gauge, AlertTriangle, Target, CheckCircle2, Lightbulb, AlertCircle } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/")({
   component: DashboardPage,
@@ -30,6 +30,7 @@ type SlaBosch = { mes: string; dig_conf: number; start_up: number; otcc: number;
 type Gargalo = { id: string; item: string; impacto: string; risco: "alto" | "medio" | "baixo" };
 type Acao = { id: string; iniciativa: string; responsavel: string; prazo: string | null; status: "andamento" | "concluido" | "atrasado" };
 type Oport = { id: string; titulo: string; categoria: string; savings: number; status: "identificada" | "em_andamento" | "implementada" };
+type Melhoria = { id: string; titulo: string; descricao: string; tipo: "atencao" | "oportunidade" };
 
 function DashboardPage() {
   useRealtimeTable("operacional_mensal", ["operacional_mensal"]);
@@ -37,6 +38,16 @@ function DashboardPage() {
   useRealtimeTable("sla_bosch", ["sla_bosch"]);
   useRealtimeTable("gargalos", ["gargalos"]);
   useRealtimeTable("plano_acao", ["plano_acao"]);
+  useRealtimeTable("melhorias", ["melhorias"]);
+
+  const melhorias = useQuery({
+    queryKey: ["melhorias"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("melhorias").select("id, titulo, descricao, tipo").order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as Melhoria[];
+    },
+  });
 
   const op = useQuery({
     queryKey: ["operacional_mensal"],
@@ -415,6 +426,40 @@ function DashboardPage() {
             </table>
           </CardContent>
         </Card>
+      </Slide>
+
+
+
+      {/* Slide — Melhorias e Pontos de Atenção */}
+      <Slide>
+        <SlideHeader title="Melhorias & Pontos de Atenção" subtitle="Itens de atenção e oportunidades identificadas pela operação" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 min-h-0">
+          {(["atencao", "oportunidade"] as const).map((t) => {
+            const items = (melhorias.data ?? []).filter((m) => m.tipo === t);
+            const isAtencao = t === "atencao";
+            const Icon = isAtencao ? AlertCircle : Lightbulb;
+            return (
+              <Card key={t} className="flex flex-col min-h-0">
+                <CardHeader className="flex flex-row items-center justify-between flex-shrink-0">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Icon className={`h-5 w-5 ${isAtencao ? "text-warning" : "text-success"}`} />
+                    {isAtencao ? "Pontos de Atenção" : "Oportunidades"}
+                  </CardTitle>
+                  <Badge variant="secondary">{items.length}</Badge>
+                </CardHeader>
+                <CardContent className="space-y-3 overflow-auto flex-1">
+                  {items.length === 0 && <p className="text-sm text-muted-foreground">Nenhum item cadastrado.</p>}
+                  {items.map((m) => (
+                    <div key={m.id} className="border rounded-md p-3">
+                      <div className="font-medium text-sm">{m.titulo}</div>
+                      {m.descricao && <div className="text-xs text-muted-foreground mt-1">{m.descricao}</div>}
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
       </Slide>
 
       {/* Slide 5 — Evolução de Produtividade por Operação */}
