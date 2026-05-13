@@ -99,7 +99,7 @@ function CadastroOportunidadesPage() {
 
   const totalSavings = rows.reduce((s, r) => s + Number(r.savings), 0);
   const totalCustoExtra = rows.reduce((s, r) => s + Number(r.custo_extra ?? 0), 0);
-  const implementadoSavings = rows.filter((r) => r.status === "implementada").reduce((s, r) => s + Number(r.savings), 0);
+  const saldoLiquido = totalSavings - totalCustoExtra;
   const saldoLiquido = totalSavings - totalCustoExtra;
 
   return (
