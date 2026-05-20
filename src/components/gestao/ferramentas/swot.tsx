@@ -43,11 +43,12 @@ export function Swot() {
   const save = useMutation({
     mutationFn: async () => {
       if (!user || !titulo) throw new Error("Defina um título");
-      const payload: Record<string, unknown> = { user_id: user.id, titulo };
-      for (const q of QUADRANTES) {
-        payload[q.key] = (textos[q.key] ?? "").split("\n").map((l) => l.trim()).filter(Boolean);
-      }
-      const { error } = await supabase.from("swot").insert(payload);
+      const split = (k: string) => (textos[k] ?? "").split("\n").map((l) => l.trim()).filter(Boolean);
+      const { error } = await supabase.from("swot").insert({
+        user_id: user.id, titulo,
+        forcas: split("forcas"), fraquezas: split("fraquezas"),
+        oportunidades: split("oportunidades"), ameacas: split("ameacas"),
+      });
       if (error) throw error;
     },
     onSuccess: () => {

@@ -46,11 +46,12 @@ export function Ishikawa() {
   const save = useMutation({
     mutationFn: async () => {
       if (!user || !efeito) throw new Error("Defina o efeito");
-      const payload: Record<string, unknown> = { user_id: user.id, efeito };
-      for (const c of CATEGORIAS) {
-        payload[c.key] = (textos[c.key] ?? "").split("\n").map((l) => l.trim()).filter(Boolean);
-      }
-      const { error } = await supabase.from("ishikawa").insert(payload);
+      const split = (k: string) => (textos[k] ?? "").split("\n").map((l) => l.trim()).filter(Boolean);
+      const { error } = await supabase.from("ishikawa").insert({
+        user_id: user.id, efeito,
+        metodo: split("metodo"), maquina: split("maquina"), mao_obra: split("mao_obra"),
+        materiais: split("materiais"), medida: split("medida"), meio_ambiente: split("meio_ambiente"),
+      });
       if (error) throw error;
     },
     onSuccess: () => {

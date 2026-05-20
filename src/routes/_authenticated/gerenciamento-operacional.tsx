@@ -19,7 +19,7 @@ function GerenciamentoOperacionalPage() {
     <div className="p-6 space-y-4">
       <PageHeader
         title="Gerenciamento Operacional"
-        subtitle="Performance, equipe e ferramentas de gestão"
+        description="Performance, equipe e ferramentas de gestão"
       />
 
       <Tabs defaultValue="performance" className="w-full">
