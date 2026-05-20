@@ -14,6 +14,156 @@ export type Database = {
   }
   public: {
     Tables: {
+      analises_performance: {
+        Row: {
+          arquivos: Json
+          created_at: string
+          id: string
+          oportunidades: Json
+          pontos_criticos: Json
+          resumo: string
+          titulo: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          arquivos?: Json
+          created_at?: string
+          id?: string
+          oportunidades?: Json
+          pontos_criticos?: Json
+          resumo?: string
+          titulo?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          arquivos?: Json
+          created_at?: string
+          id?: string
+          oportunidades?: Json
+          pontos_criticos?: Json
+          resumo?: string
+          titulo?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      cinco_porques: {
+        Row: {
+          causa_raiz: string
+          created_at: string
+          id: string
+          por_que_1: string
+          por_que_2: string
+          por_que_3: string
+          por_que_4: string
+          por_que_5: string
+          problema: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          causa_raiz?: string
+          created_at?: string
+          id?: string
+          por_que_1?: string
+          por_que_2?: string
+          por_que_3?: string
+          por_que_4?: string
+          por_que_5?: string
+          problema?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          causa_raiz?: string
+          created_at?: string
+          id?: string
+          por_que_1?: string
+          por_que_2?: string
+          por_que_3?: string
+          por_que_4?: string
+          por_que_5?: string
+          problema?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      cinco_w_dois_h: {
+        Row: {
+          created_at: string
+          how: string
+          how_much: number
+          id: string
+          updated_at: string
+          user_id: string
+          what: string
+          when: string | null
+          where: string
+          who: string
+          why: string
+        }
+        Insert: {
+          created_at?: string
+          how?: string
+          how_much?: number
+          id?: string
+          updated_at?: string
+          user_id: string
+          what?: string
+          when?: string | null
+          where?: string
+          who?: string
+          why?: string
+        }
+        Update: {
+          created_at?: string
+          how?: string
+          how_much?: number
+          id?: string
+          updated_at?: string
+          user_id?: string
+          what?: string
+          when?: string | null
+          where?: string
+          who?: string
+          why?: string
+        }
+        Relationships: []
+      }
+      colaboradores: {
+        Row: {
+          area: string
+          cargo: string
+          created_at: string
+          id: string
+          nome: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          area?: string
+          cargo?: string
+          created_at?: string
+          id?: string
+          nome: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          area?: string
+          cargo?: string
+          created_at?: string
+          id?: string
+          nome?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       config: {
         Row: {
           created_at: string
@@ -33,6 +183,75 @@ export type Database = {
           created_at?: string
           fator_sazonalidade?: number
           id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      controle_ferias: {
+        Row: {
+          colaborador_id: string
+          created_at: string
+          id: string
+          periodo_fim: string | null
+          periodo_inicio: string | null
+          previsao_saida: string | null
+          retorno: string | null
+          saldo_dias: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          colaborador_id: string
+          created_at?: string
+          id?: string
+          periodo_fim?: string | null
+          periodo_inicio?: string | null
+          previsao_saida?: string | null
+          retorno?: string | null
+          saldo_dias?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          colaborador_id?: string
+          created_at?: string
+          id?: string
+          periodo_fim?: string | null
+          periodo_inicio?: string | null
+          previsao_saida?: string | null
+          retorno?: string | null
+          saldo_dias?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      escala_home_office: {
+        Row: {
+          colaborador_id: string
+          created_at: string
+          dias_semana: string[]
+          id: string
+          status: Database["public"]["Enums"]["home_office_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          colaborador_id: string
+          created_at?: string
+          dias_semana?: string[]
+          id?: string
+          status?: Database["public"]["Enums"]["home_office_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          colaborador_id?: string
+          created_at?: string
+          dias_semana?: string[]
+          id?: string
+          status?: Database["public"]["Enums"]["home_office_status"]
           updated_at?: string
           user_id?: string
         }
@@ -68,6 +287,78 @@ export type Database = {
         }
         Relationships: []
       }
+      ishikawa: {
+        Row: {
+          created_at: string
+          efeito: string
+          id: string
+          mao_obra: string[]
+          maquina: string[]
+          materiais: string[]
+          medida: string[]
+          meio_ambiente: string[]
+          metodo: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          efeito?: string
+          id?: string
+          mao_obra?: string[]
+          maquina?: string[]
+          materiais?: string[]
+          medida?: string[]
+          meio_ambiente?: string[]
+          metodo?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          efeito?: string
+          id?: string
+          mao_obra?: string[]
+          maquina?: string[]
+          materiais?: string[]
+          medida?: string[]
+          meio_ambiente?: string[]
+          metodo?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      matriz_lideranca: {
+        Row: {
+          colaborador_id: string
+          created_at: string
+          id: string
+          observacoes: string
+          tag: Database["public"]["Enums"]["matriz_lideranca_tag"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          colaborador_id: string
+          created_at?: string
+          id?: string
+          observacoes?: string
+          tag?: Database["public"]["Enums"]["matriz_lideranca_tag"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          colaborador_id?: string
+          created_at?: string
+          id?: string
+          observacoes?: string
+          tag?: Database["public"]["Enums"]["matriz_lideranca_tag"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       melhorias: {
         Row: {
           created_at: string
@@ -93,6 +384,36 @@ export type Database = {
           id?: string
           tipo?: Database["public"]["Enums"]["melhoria_tipo"]
           titulo?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      navy_seal: {
+        Row: {
+          colaborador_id: string
+          created_at: string
+          id: string
+          observacoes: string
+          tag: Database["public"]["Enums"]["navy_seal_tag"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          colaborador_id: string
+          created_at?: string
+          id?: string
+          observacoes?: string
+          tag?: Database["public"]["Enums"]["navy_seal_tag"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          colaborador_id?: string
+          created_at?: string
+          id?: string
+          observacoes?: string
+          tag?: Database["public"]["Enums"]["navy_seal_tag"]
           updated_at?: string
           user_id?: string
         }
@@ -171,6 +492,69 @@ export type Database = {
           savings?: number
           status?: string
           titulo?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      pareto: {
+        Row: {
+          causa: string
+          created_at: string
+          frequencia: number
+          id: string
+          titulo: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          causa: string
+          created_at?: string
+          frequencia?: number
+          id?: string
+          titulo?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          causa?: string
+          created_at?: string
+          frequencia?: number
+          id?: string
+          titulo?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      pdi: {
+        Row: {
+          colaborador_id: string
+          created_at: string
+          id: string
+          meta: string
+          prazo: string | null
+          status: Database["public"]["Enums"]["pdi_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          colaborador_id: string
+          created_at?: string
+          id?: string
+          meta: string
+          prazo?: string | null
+          status?: Database["public"]["Enums"]["pdi_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          colaborador_id?: string
+          created_at?: string
+          id?: string
+          meta?: string
+          prazo?: string | null
+          status?: Database["public"]["Enums"]["pdi_status"]
           updated_at?: string
           user_id?: string
         }
@@ -284,6 +668,42 @@ export type Database = {
         }
         Relationships: []
       }
+      swot: {
+        Row: {
+          ameacas: string[]
+          created_at: string
+          forcas: string[]
+          fraquezas: string[]
+          id: string
+          oportunidades: string[]
+          titulo: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ameacas?: string[]
+          created_at?: string
+          forcas?: string[]
+          fraquezas?: string[]
+          id?: string
+          oportunidades?: string[]
+          titulo?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ameacas?: string[]
+          created_at?: string
+          forcas?: string[]
+          fraquezas?: string[]
+          id?: string
+          oportunidades?: string[]
+          titulo?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -293,7 +713,15 @@ export type Database = {
     }
     Enums: {
       acao_status: "andamento" | "concluido" | "atrasado"
+      home_office_status: "ativo" | "pausado"
+      matriz_lideranca_tag:
+        | "alta_performance"
+        | "zona_desenvolvimento"
+        | "zona_risco"
+        | "zona_desalinhamento"
       melhoria_tipo: "atencao" | "oportunidade"
+      navy_seal_tag: "a_player" | "b_player" | "c_player"
+      pdi_status: "nao_iniciado" | "em_andamento" | "concluido" | "atrasado"
       risco_nivel: "alto" | "medio" | "baixo"
       unidade_carteira:
         | "midea_sc"
@@ -430,7 +858,16 @@ export const Constants = {
   public: {
     Enums: {
       acao_status: ["andamento", "concluido", "atrasado"],
+      home_office_status: ["ativo", "pausado"],
+      matriz_lideranca_tag: [
+        "alta_performance",
+        "zona_desenvolvimento",
+        "zona_risco",
+        "zona_desalinhamento",
+      ],
       melhoria_tipo: ["atencao", "oportunidade"],
+      navy_seal_tag: ["a_player", "b_player", "c_player"],
+      pdi_status: ["nao_iniciado", "em_andamento", "concluido", "atrasado"],
       risco_nivel: ["alto", "medio", "baixo"],
       unidade_carteira: [
         "midea_sc",

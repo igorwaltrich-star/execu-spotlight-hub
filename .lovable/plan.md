@@ -1,85 +1,147 @@
 
-# Dashboard de Performance Operacional — Diretoria
+## Objetivo
 
-## Visão geral
-App TanStack Start com 6 abas, dados persistidos no Lovable Cloud (Supabase), gráficos Recharts atualizados em tempo real. Acesso restrito por login (e-mail/senha) — apenas o proprietário tem acesso. Meta de produtividade fixa: **60 processos/pessoa**.
+Adicionar módulo NOVO e ISOLADO **Gerenciamento Operacional**, sem alterar rotas/componentes/tabelas existentes. Apenas pontos de toque:
 
-## Stack
-- TanStack Start + React 19 + Tailwind v4 + Shadcn/UI
-- Recharts (gráficos), react-hook-form + zod (forms)
-- Lovable Cloud (Supabase) — Auth + Postgres + Realtime
-- React Query para sincronização
+1. `src/components/app-shell.tsx` → append 1 item no array `NAV`.
+2. Migration nova no Supabase (apenas CREATE, nenhum ALTER em tabelas existentes).
+3. `bun add react-dropzone` (dep nova).
 
-## Autenticação (acesso único)
-- Login por **e-mail + senha** via Supabase Auth
-- Página `/login` pública; todas as demais rotas dentro de `_authenticated/`
-- Sem signup público — você cria sua conta uma vez no primeiro acesso (ou eu provisiono via tela de signup oculta) e o restante fica bloqueado
-- RLS em todas as tabelas: apenas linhas do `auth.uid()` proprietário são visíveis/editáveis
-- Sem tabela `profiles` (não há dados de perfil — usuário único)
-- Botão "Sair" no topo
+Todo o resto = arquivos novos.
 
-## Estrutura de rotas
-```
-src/routes/
-  __root.tsx
-  login.tsx
-  _authenticated.tsx              guard: redireciona p/ /login
-  _authenticated/index.tsx        Dashboard Principal (apresentação)
-  _authenticated/cadastro.tsx     Cadastro Operacional mensal
-  _authenticated/sla-midea.tsx
-  _authenticated/sla-bosch.tsx
-  _authenticated/diagnostico.tsx  Gargalos e Riscos
-  _authenticated/melhorias.tsx
-  _authenticated/plano-acao.tsx
-```
+---
 
-## Modelo de dados (Supabase)
-Todas as tabelas têm `user_id uuid references auth.users` + RLS `user_id = auth.uid()`.
-```
-operacional_mensal (id, user_id, mes date, volume int, pessoas int,
-                    produtividade generated = volume/pessoas)
-sla_midea          (id, user_id, mes date, start_up, otcc, otd, sotd numeric)
-sla_bosch          (id, user_id, mes date, dig_conf, start_up, otcc, desvios, pinho numeric)
-gargalos           (id, user_id, item, impacto, risco enum[alto,medio,baixo])
-melhorias          (id, user_id, titulo, descricao, tipo enum[atencao,oportunidade])
-plano_acao         (id, user_id, iniciativa, responsavel, prazo date,
-                    status enum[andamento,concluido,atrasado])
-config             (id, user_id unique, fator_sazonalidade numeric default 0)
+## 1. Rotas e estrutura de arquivos (novos)
+
+```text
+src/routes/_authenticated/
+  gerenciamento-operacional.tsx          ← Tabs principais (7 abas)
+
+src/components/gestao/
+  performance-operacional.tsx            ← Upload + IA (mock)
+  escala-home-office.tsx
+  controle-ferias.tsx
+  matriz-lideranca.tsx
+  navy-seal.tsx
+  pdi.tsx
+  ferramentas-gestao.tsx                 ← Tabs verticais
+  ferramentas/
+    ishikawa.tsx
+    pareto.tsx
+    cinco-porques.tsx
+    cinco-w-dois-h.tsx
+    swot.tsx
+
+src/lib/
+  performance-ia.functions.ts            ← server fn mock (setTimeout 3s)
 ```
 
-## Regras de negócio
-- **Produtividade calculada** = volume / pessoas
-- **Meta de produtividade = 60 processos/pessoa** (constante exibida em todos os gráficos como linha de referência; células < 60 destacadas em vermelho, ≥ 60 em verde)
-- **Meta SLA = 95%** — valores < 95% destacados em vermelho
-- **Projeção 2º semestre**: média móvel de Jan–Abr × (1 + fator_sazonalidade/100) por mês de Jul–Dez, ajustável via slider/input
-- **Realtime**: subscription Supabase → invalida React Query → gráficos atualizam sem refresh
+Item no menu: `{ to: "/gerenciamento-operacional", label: "Gerenciamento Operacional", icon: Briefcase }`, inserido após "Oportunidades e Riscos". Nada existente é tocado.
 
-## Dashboard Principal (modo apresentação)
-Slides verticais com snap-scroll, controles de navegação e fullscreen:
-1. Capa + KPIs (volume total, produtividade média vs meta 60, % SLA geral)
-2. Tendência de Volume (área Jan–Abr/26)
-3. Produtividade mensal (barras com **linha de meta = 60**)
-4. SLA Midea — radar com meta 95%
-5. SLA BOSCH — radar/barras comparativas
-6. Projeção 2º semestre (histórico + projetado, input de sazonalidade)
-7. Gargalos e Riscos (cards por nível)
-8. Plano de Ação (resumo por status)
+---
 
-## Design tokens (src/styles.css, oklch)
-- `--primary` azul marinho
-- `--secondary` cinza profissional
-- `--accent` azul claro
-- `--success` verde (acima da meta)
-- `--destructive` vermelho (abaixo da meta)
-- Tipografia: Inter
+## 2. Aba 1 — Performance Operacional (Upload + IA)
 
-## Entregáveis (ordem de implementação)
-1. Habilitar Lovable Cloud + Auth e-mail/senha
-2. Migrations das 7 tabelas com RLS por `user_id`
-3. Tokens de design + AppShell (sidebar 6 itens + header com logout)
-4. `/login` + guard `_authenticated`
-5. CRUD das 6 abas com forms validados
-6. Dashboard apresentação com gráficos + meta 60 + projeção sazonal
-7. Realtime subscriptions
+- Drag-and-drop com `react-dropzone` aceitando `.xlsx`, `.csv`, `.pdf` (até 10MB). Lista de arquivos aceitos com remover.
+- Botão **"Analisar com IA"** dispara estado `analyzing` → spinner (`Loader2`) + texto "Analisando dados e gerando insights...".
+- Backend: `analyzePerformanceReport` (createServerFn POST) que hoje retorna mock após `await new Promise(r => setTimeout(r, 3000))`. Estrutura de retorno preparada para futura troca pela Edge Function `analyze-performance-report`:
 
-Confirma para eu implementar?
+```ts
+{
+  resumo: string,
+  pontosCriticos: { titulo: string; descricao: string; severidade: "alta"|"media" }[],
+  oportunidades: { titulo: string; descricao: string; acao: string }[],
+}
+```
+
+- Layout de resultados em 3 Cards verticais:
+  - **Resumo Executivo** (texto corrido, ícone `FileText`).
+  - **Pontos Críticos / Gargalos** — lista com `AlertCircle` vermelho (`text-destructive`), Badge de severidade.
+  - **Oportunidades e Plano de Ação** — lista com `Lightbulb`/`CheckCircle2` (`text-success`/`text-primary`).
+- Persistência opcional: salvar cada análise em `analises_performance` (ver migração) para histórico.
+
+Observação: por enquanto NÃO criar Edge Function nem chamar OpenAI — apenas o mock no server fn, conforme pedido.
+
+---
+
+## 3. Demais abas (CRUD shadcn + Supabase)
+
+Cada uma: `Card` + `Table` + `Dialog` de cadastro/edição + `useQuery`/`useMutation` no padrão de `cadastro-oportunidades.tsx`.
+
+- **Escala Home Office**: Colaborador, Dias da Semana (multi-select Seg–Sex), Status (Ativo/Pausado, Badge).
+- **Controle de Férias**: Colaborador, Período Aquisitivo (início/fim), Previsão Saída, Retorno, Saldo de Dias.
+- **Matriz de Liderança**: Grid de cards (ou tabela) com Badge classificatória — cores via tokens: Alta perf→success, Zona desenvolvimento→primary, Zona risco→warning, Zona desalinhamento→destructive.
+- **NavySeal**: idem com A→success, B→secondary, C→destructive.
+- **PDI**: Colaborador, Meta, Prazo, Status (não iniciado/em andamento/concluído/atrasado).
+
+---
+
+## 4. Aba "Ferramentas de Gestão"
+
+`Tabs` em `orientation="vertical"` (lista à esquerda, conteúdo à direita):
+
+- **Ishikawa**: campo Efeito + 6 textareas categorizadas (Método, Máquina, Mão-de-obra, Materiais, Medida, Meio Ambiente), cada uma armazenada como `text[]`.
+- **Pareto**: tabela editável (Causa, Frequência). Espaço com placeholder "Gráfico 80/20" (futuro Recharts) — sem implementar gráfico agora, só o slot preparado.
+- **5 Porquês**: Problema + 5 inputs encadeados + Causa Raiz.
+- **5W2H**: Tabela com colunas What, Why, Where, When (date), Who, How, How Much (numeric).
+- **SWOT**: Grid 2x2 (`grid-cols-2 gap-4`), cada quadrante = Card colorido suave com lista editável.
+
+---
+
+## 5. Banco de Dados (migration única)
+
+Padrão para todas: `id uuid pk`, `user_id uuid not null`, `created_at`, `updated_at`, RLS habilitada + 4 policies `own_*` com `user_id = auth.uid()`, trigger `set_updated_at` (função já existe).
+
+Enums novos (sufixados para não colidir):
+- `home_office_status` (`ativo`, `pausado`)
+- `matriz_lideranca_tag` (`alta_performance`, `zona_desenvolvimento`, `zona_risco`, `zona_desalinhamento`)
+- `navy_seal_tag` (`a_player`, `b_player`, `c_player`)
+- `pdi_status` (`nao_iniciado`, `em_andamento`, `concluido`, `atrasado`)
+
+Tabelas:
+
+| Tabela | Campos de domínio |
+|---|---|
+| `colaboradores` | nome, cargo, area |
+| `escala_home_office` | colaborador_id, dias_semana text[], status |
+| `controle_ferias` | colaborador_id, periodo_inicio, periodo_fim, previsao_saida, retorno, saldo_dias int |
+| `matriz_lideranca` | colaborador_id, tag, observacoes |
+| `navy_seal` | colaborador_id, tag, observacoes |
+| `pdi` | colaborador_id, meta, prazo, status |
+| `analises_performance` | titulo, arquivos jsonb, resumo, pontos_criticos jsonb, oportunidades jsonb |
+| `ishikawa` | efeito, metodo text[], maquina text[], mao_obra text[], materiais text[], medida text[], meio_ambiente text[] |
+| `pareto` | titulo, causa, frequencia numeric |
+| `cinco_porques` | problema, por_que_1..5, causa_raiz |
+| `cinco_w_dois_h` | what, why, where, who, when date, how, how_much numeric |
+| `swot` | titulo, forcas text[], fraquezas text[], oportunidades text[], ameacas text[] |
+
+`colaborador_id` uuid simples (sem FK), seguindo padrão atual.
+
+---
+
+## 6. UI / Design
+
+- 100% shadcn/ui: `Tabs`, `Card`, `Table`, `Badge`, `Dialog`, `Input`, `Select`, `Textarea`, `Button`, `Form`, `Loader2`.
+- Reutiliza tokens semânticos existentes (`--success`, `--warning`, `--destructive`, `--primary`, `--muted`). Nenhuma alteração em `styles.css`.
+- Lucide para ícones: `Briefcase`, `Upload`, `Sparkles`, `AlertCircle`, `Lightbulb`, `CheckCircle2`, `Target`, `Users`, `Calendar`, `Award`.
+
+---
+
+## 7. Garantias de não-regressão
+
+- Zero edição em rotas/dashboards/componentes existentes (exceto append no `app-shell.tsx`).
+- Zero alteração em tabelas/enums existentes.
+- `routeTree.gen.ts` regenera automaticamente.
+- Nenhuma migração mexe em `auth`, `storage`, `realtime`.
+
+---
+
+## 8. Ordem de execução
+
+1. Migration Supabase (aguardar aprovação).
+2. `bun add react-dropzone`.
+3. Server fn mock `performance-ia.functions.ts`.
+4. Componentes em `src/components/gestao/**`.
+5. Rota `gerenciamento-operacional.tsx`.
+6. Append no `app-shell.tsx`.
+7. Verificar build.
