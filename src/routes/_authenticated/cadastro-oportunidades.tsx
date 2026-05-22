@@ -9,8 +9,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -83,7 +96,11 @@ function CadastroOportunidadesPage() {
     },
     onSuccess: () => {
       toast.success("Registro cadastrado");
-      setTitulo(""); setDescricao(""); setSavings(""); setCustoExtra(""); setStatus("identificada");
+      setTitulo("");
+      setDescricao("");
+      setSavings("");
+      setCustoExtra("");
+      setStatus("identificada");
       qc.invalidateQueries({ queryKey });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -109,33 +126,54 @@ function CadastroOportunidadesPage() {
       />
       <div className="p-8 space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card><CardContent className="pt-6">
-            <div className="text-xs uppercase text-muted-foreground">Total de registros</div>
-            <div className="text-3xl font-bold mt-1">{rows.length}</div>
-          </CardContent></Card>
-          <Card><CardContent className="pt-6">
-            <div className="text-xs uppercase text-muted-foreground">Savings totais (R$)</div>
-            <div className="text-3xl font-bold mt-1 text-success">{totalSavings.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</div>
-          </CardContent></Card>
-          <Card><CardContent className="pt-6">
-            <div className="text-xs uppercase text-muted-foreground">Custos extras (R$)</div>
-            <div className="text-3xl font-bold mt-1 text-destructive">{totalCustoExtra.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</div>
-          </CardContent></Card>
-          <Card><CardContent className="pt-6">
-            <div className="text-xs uppercase text-muted-foreground">Saldo líquido (R$)</div>
-            <div className={`text-3xl font-bold mt-1 ${saldoLiquido >= 0 ? "text-success" : "text-destructive"}`}>{saldoLiquido.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</div>
-          </CardContent></Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-xs uppercase text-muted-foreground">Total de registros</div>
+              <div className="text-3xl font-bold mt-1">{rows.length}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-xs uppercase text-muted-foreground">Savings totais (R$)</div>
+              <div className="text-3xl font-bold mt-1 text-success">
+                {totalSavings.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-xs uppercase text-muted-foreground">Custos extras (R$)</div>
+              <div className="text-3xl font-bold mt-1 text-destructive">
+                {totalCustoExtra.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-xs uppercase text-muted-foreground">Saldo líquido (R$)</div>
+              <div
+                className={`text-3xl font-bold mt-1 ${saldoLiquido >= 0 ? "text-success" : "text-destructive"}`}
+              >
+                {saldoLiquido.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         <Card>
           <CardHeader>
             <CardTitle>Nova oportunidade</CardTitle>
-            <CardDescription>Registre uma nova oportunidade de melhoria com savings estimados.</CardDescription>
+            <CardDescription>
+              Registre uma nova oportunidade de melhoria com savings estimados.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <form
               className="grid grid-cols-1 md:grid-cols-2 gap-4"
-              onSubmit={(e) => { e.preventDefault(); insert.mutate(); }}
+              onSubmit={(e) => {
+                e.preventDefault();
+                insert.mutate();
+              }}
             >
               <div className="space-y-2 md:col-span-2">
                 <Label>Título</Label>
@@ -143,21 +181,33 @@ function CadastroOportunidadesPage() {
               </div>
               <div className="space-y-2 md:col-span-2">
                 <Label>Descrição</Label>
-                <Textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} rows={3} />
+                <Textarea
+                  value={descricao}
+                  onChange={(e) => setDescricao(e.target.value)}
+                  rows={3}
+                />
               </div>
               <div className="space-y-2">
                 <Label>Categoria</Label>
                 <Select value={categoria} onValueChange={setCategoria}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
-                    {CATEGORIAS.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    {CATEGORIAS.map((c) => (
+                      <SelectItem key={c} value={c}>
+                        {c}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
                 <Label>Status</Label>
                 <Select value={status} onValueChange={(v) => setStatus(v as Row["status"])}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="identificada">Identificada</SelectItem>
                     <SelectItem value="em_andamento">Em andamento</SelectItem>
@@ -167,25 +217,48 @@ function CadastroOportunidadesPage() {
               </div>
               <div className="space-y-2">
                 <Label>Savings estimados (R$)</Label>
-                <Input type="number" step="0.01" min={0} value={savings} onChange={(e) => setSavings(e.target.value === "" ? "" : Number(e.target.value))} />
+                <Input
+                  type="number"
+                  step="0.01"
+                  min={0}
+                  value={savings}
+                  onChange={(e) => setSavings(e.target.value === "" ? "" : Number(e.target.value))}
+                />
               </div>
               <div className="space-y-2">
                 <Label>Custos extras gerados (R$)</Label>
-                <Input type="number" step="0.01" min={0} value={custoExtra} onChange={(e) => setCustoExtra(e.target.value === "" ? "" : Number(e.target.value))} />
+                <Input
+                  type="number"
+                  step="0.01"
+                  min={0}
+                  value={custoExtra}
+                  onChange={(e) =>
+                    setCustoExtra(e.target.value === "" ? "" : Number(e.target.value))
+                  }
+                />
               </div>
               <div className="space-y-2">
                 <Label>Data</Label>
-                <Input type="date" value={data} onChange={(e) => setData(e.target.value)} required />
+                <Input
+                  type="date"
+                  value={data}
+                  onChange={(e) => setData(e.target.value)}
+                  required
+                />
               </div>
               <div className="md:col-span-2">
-                <Button type="submit" disabled={insert.isPending}>Cadastrar</Button>
+                <Button type="submit" disabled={insert.isPending}>
+                  Cadastrar
+                </Button>
               </div>
             </form>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>Histórico</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>Histórico</CardTitle>
+          </CardHeader>
           <CardContent className="p-0">
             <Table>
               <TableHeader>
@@ -201,25 +274,43 @@ function CadastroOportunidadesPage() {
               </TableHeader>
               <TableBody>
                 {rows.length === 0 && (
-                  <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Nenhum registro.</TableCell></TableRow>
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                      Nenhum registro.
+                    </TableCell>
+                  </TableRow>
                 )}
                 {rows.map((r) => (
                   <TableRow key={r.id}>
                     <TableCell className="font-medium">
                       <div>{r.titulo}</div>
-                      {r.descricao && <div className="text-xs text-muted-foreground">{r.descricao}</div>}
+                      {r.descricao && (
+                        <div className="text-xs text-muted-foreground">{r.descricao}</div>
+                      )}
                     </TableCell>
                     <TableCell>{r.categoria}</TableCell>
                     <TableCell>
-                      <Badge className={
-                        r.status === "implementada" ? "bg-success text-success-foreground" :
-                        r.status === "em_andamento" ? "bg-accent text-accent-foreground" :
-                        "bg-muted text-muted-foreground"
-                      }>{STATUS_LABEL[r.status]}</Badge>
+                      <Badge
+                        className={
+                          r.status === "implementada"
+                            ? "bg-success text-success-foreground"
+                            : r.status === "em_andamento"
+                              ? "bg-accent text-accent-foreground"
+                              : "bg-muted text-muted-foreground"
+                        }
+                      >
+                        {STATUS_LABEL[r.status]}
+                      </Badge>
                     </TableCell>
                     <TableCell>{new Date(r.data).toLocaleDateString("pt-BR")}</TableCell>
-                    <TableCell className="text-right font-medium text-success">{Number(r.savings).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
-                    <TableCell className="text-right font-medium text-destructive">{Number(r.custo_extra ?? 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
+                    <TableCell className="text-right font-medium text-success">
+                      {Number(r.savings).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                    </TableCell>
+                    <TableCell className="text-right font-medium text-destructive">
+                      {Number(r.custo_extra ?? 0).toLocaleString("pt-BR", {
+                        minimumFractionDigits: 2,
+                      })}
+                    </TableCell>
                     <TableCell>
                       <Button size="icon" variant="ghost" onClick={() => del.mutate(r.id)}>
                         <Trash2 className="h-4 w-4" />

@@ -7,8 +7,20 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -32,7 +44,10 @@ export function NavySeal() {
   const { data: rows = [] } = useQuery({
     queryKey: ["navy_seal"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("navy_seal").select("id, colaborador_id, tag, observacoes").order("created_at", { ascending: false });
+      const { data, error } = await supabase
+        .from("navy_seal")
+        .select("id, colaborador_id, tag, observacoes")
+        .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as Row[];
     },
@@ -40,7 +55,9 @@ export function NavySeal() {
 
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<{ colaborador_id: string; tag: Tag; observacoes: string }>({
-    colaborador_id: "", tag: "b_player", observacoes: "",
+    colaborador_id: "",
+    tag: "b_player",
+    observacoes: "",
   });
 
   const add = useMutation({
@@ -52,7 +69,8 @@ export function NavySeal() {
     onSuccess: () => {
       toast.success("Classificação salva");
       qc.invalidateQueries({ queryKey: ["navy_seal"] });
-      setOpen(false); setForm({ colaborador_id: "", tag: "b_player", observacoes: "" });
+      setOpen(false);
+      setForm({ colaborador_id: "", tag: "b_player", observacoes: "" });
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Erro"),
   });
@@ -73,28 +91,60 @@ export function NavySeal() {
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>NavySeal — Classificação de Talentos</CardTitle>
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button size="sm"><Plus className="h-4 w-4 mr-1" />Classificar</Button></DialogTrigger>
+          <DialogTrigger asChild>
+            <Button size="sm">
+              <Plus className="h-4 w-4 mr-1" />
+              Classificar
+            </Button>
+          </DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>Classificar talento</DialogTitle></DialogHeader>
+            <DialogHeader>
+              <DialogTitle>Classificar talento</DialogTitle>
+            </DialogHeader>
             <div className="space-y-3">
               <div>
                 <Label>Colaborador</Label>
-                <Select value={form.colaborador_id} onValueChange={(v) => setForm({ ...form, colaborador_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>{colabs.map((c) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}</SelectContent>
+                <Select
+                  value={form.colaborador_id}
+                  onValueChange={(v) => setForm({ ...form, colaborador_id: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {colabs.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
                 </Select>
               </div>
               <div>
                 <Label>Classificação</Label>
                 <Select value={form.tag} onValueChange={(v) => setForm({ ...form, tag: v as Tag })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
-                    {(Object.keys(TAG_META) as Tag[]).map((t) => <SelectItem key={t} value={t}>{TAG_META[t].label}</SelectItem>)}
+                    {(Object.keys(TAG_META) as Tag[]).map((t) => (
+                      <SelectItem key={t} value={t}>
+                        {TAG_META[t].label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
-              <div><Label>Observações</Label><Textarea value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} /></div>
-              <Button onClick={() => add.mutate()} disabled={add.isPending} className="w-full">Salvar</Button>
+              <div>
+                <Label>Observações</Label>
+                <Textarea
+                  value={form.observacoes}
+                  onChange={(e) => setForm({ ...form, observacoes: e.target.value })}
+                />
+              </div>
+              <Button onClick={() => add.mutate()} disabled={add.isPending} className="w-full">
+                Salvar
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -113,9 +163,13 @@ export function NavySeal() {
                   <div key={r.id} className="p-3 rounded-md border bg-card">
                     <div className="flex items-center justify-between">
                       <span className="font-medium text-sm">{nome(r.colaborador_id)}</span>
-                      <Button size="icon" variant="ghost" onClick={() => del.mutate(r.id)}><Trash2 className="h-4 w-4" /></Button>
+                      <Button size="icon" variant="ghost" onClick={() => del.mutate(r.id)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
-                    {r.observacoes && <p className="text-xs text-muted-foreground mt-1">{r.observacoes}</p>}
+                    {r.observacoes && (
+                      <p className="text-xs text-muted-foreground mt-1">{r.observacoes}</p>
+                    )}
                   </div>
                 ))}
               </div>

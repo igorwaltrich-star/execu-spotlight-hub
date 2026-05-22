@@ -8,14 +8,29 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { fmtMes, META_PRODUTIVIDADE, UNIDADES, UNIDADE_LABEL, type UnidadeKey } from "@/lib/constants";
+import {
+  fmtMes,
+  META_PRODUTIVIDADE,
+  UNIDADES,
+  UNIDADE_LABEL,
+  type UnidadeKey,
+} from "@/lib/constants";
 
 export function PageHeader({ title, description }: { title: string; description?: string }) {
   return (
@@ -56,24 +71,26 @@ export function CadastroOperacionalView() {
   const upsert = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error("Não autenticado");
-      if (!unidade || !mes || volume === "" || pessoas === "") throw new Error("Preencha todos os campos");
-      const { error } = await supabase
-        .from("operacional_mensal")
-        .upsert(
-          {
-            user_id: user.id,
-            unidade,
-            mes: `${mes}-01`,
-            volume: Number(volume),
-            pessoas: Number(pessoas),
-          },
-          { onConflict: "user_id,mes,unidade" }
-        );
+      if (!unidade || !mes || volume === "" || pessoas === "")
+        throw new Error("Preencha todos os campos");
+      const { error } = await supabase.from("operacional_mensal").upsert(
+        {
+          user_id: user.id,
+          unidade,
+          mes: `${mes}-01`,
+          volume: Number(volume),
+          pessoas: Number(pessoas),
+        },
+        { onConflict: "user_id,mes,unidade" },
+      );
       if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Registro salvo");
-      setMes(""); setVolume(""); setPessoas(""); setUnidade("");
+      setMes("");
+      setVolume("");
+      setPessoas("");
+      setUnidade("");
       qc.invalidateQueries({ queryKey });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -97,20 +114,29 @@ export function CadastroOperacionalView() {
         <Card>
           <CardHeader>
             <CardTitle>Novo registro mensal</CardTitle>
-            <CardDescription>Atualiza automaticamente se já existir registro para a mesma unidade/mês.</CardDescription>
+            <CardDescription>
+              Atualiza automaticamente se já existir registro para a mesma unidade/mês.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <form
               className="grid grid-cols-1 md:grid-cols-5 gap-4"
-              onSubmit={(e) => { e.preventDefault(); upsert.mutate(); }}
+              onSubmit={(e) => {
+                e.preventDefault();
+                upsert.mutate();
+              }}
             >
               <div className="space-y-2">
                 <Label>Unidade</Label>
                 <Select value={unidade} onValueChange={(v) => setUnidade(v as UnidadeKey)}>
-                  <SelectTrigger><SelectValue placeholder="Selecione…" /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione…" />
+                  </SelectTrigger>
                   <SelectContent>
                     {UNIDADES.map((u) => (
-                      <SelectItem key={u.key} value={u.key}>{u.label}</SelectItem>
+                      <SelectItem key={u.key} value={u.key}>
+                        {u.label}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -121,21 +147,37 @@ export function CadastroOperacionalView() {
               </div>
               <div className="space-y-2">
                 <Label>Volume</Label>
-                <Input type="number" min={0} value={volume} onChange={(e) => setVolume(e.target.value === "" ? "" : Number(e.target.value))} required />
+                <Input
+                  type="number"
+                  min={0}
+                  value={volume}
+                  onChange={(e) => setVolume(e.target.value === "" ? "" : Number(e.target.value))}
+                  required
+                />
               </div>
               <div className="space-y-2">
                 <Label>Pessoas</Label>
-                <Input type="number" min={0} value={pessoas} onChange={(e) => setPessoas(e.target.value === "" ? "" : Number(e.target.value))} required />
+                <Input
+                  type="number"
+                  min={0}
+                  value={pessoas}
+                  onChange={(e) => setPessoas(e.target.value === "" ? "" : Number(e.target.value))}
+                  required
+                />
               </div>
               <div className="flex items-end">
-                <Button type="submit" className="w-full" disabled={upsert.isPending}>Salvar</Button>
+                <Button type="submit" className="w-full" disabled={upsert.isPending}>
+                  Salvar
+                </Button>
               </div>
             </form>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>Histórico</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>Histórico</CardTitle>
+          </CardHeader>
           <CardContent className="p-0">
             <Table>
               <TableHeader>
@@ -150,18 +192,26 @@ export function CadastroOperacionalView() {
               </TableHeader>
               <TableBody>
                 {rows.length === 0 && (
-                  <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Sem registros.</TableCell></TableRow>
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                      Sem registros.
+                    </TableCell>
+                  </TableRow>
                 )}
                 {rows.map((r) => {
                   const p = r.pessoas > 0 ? r.volume / r.pessoas : 0;
                   const ok = p >= META_PRODUTIVIDADE;
                   return (
                     <TableRow key={r.id}>
-                      <TableCell className="font-medium">{UNIDADE_LABEL[r.unidade] ?? r.unidade}</TableCell>
+                      <TableCell className="font-medium">
+                        {UNIDADE_LABEL[r.unidade] ?? r.unidade}
+                      </TableCell>
                       <TableCell>{fmtMes(r.mes)}</TableCell>
                       <TableCell className="text-right">{r.volume}</TableCell>
                       <TableCell className="text-right">{r.pessoas}</TableCell>
-                      <TableCell className={`text-right font-medium ${r.pessoas > 0 ? (ok ? "text-success" : "text-destructive") : "text-muted-foreground"}`}>
+                      <TableCell
+                        className={`text-right font-medium ${r.pessoas > 0 ? (ok ? "text-success" : "text-destructive") : "text-muted-foreground"}`}
+                      >
                         {r.pessoas > 0 ? p.toFixed(1) : "—"}
                       </TableCell>
                       <TableCell>

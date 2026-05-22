@@ -7,7 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { fmtMes, META_SLA } from "@/lib/constants";
@@ -18,7 +25,10 @@ export type SlaField = { key: string; label: string };
 type AnyRow = Record<string, unknown> & { id: string; mes: string };
 
 export function SlaView({
-  table, title, description, fields,
+  table,
+  title,
+  description,
+  fields,
 }: {
   table: "sla_midea" | "sla_bosch";
   title: string;
@@ -33,7 +43,10 @@ export function SlaView({
   const { data: rows = [] } = useQuery({
     queryKey,
     queryFn: async () => {
-      const { data, error } = await supabase.from(table).select("*").order("mes", { ascending: true });
+      const { data, error } = await supabase
+        .from(table)
+        .select("*")
+        .order("mes", { ascending: true });
       if (error) throw error;
       return data as AnyRow[];
     },
@@ -56,7 +69,8 @@ export function SlaView({
     },
     onSuccess: () => {
       toast.success("Registro salvo");
-      setMes(""); setVals(empty);
+      setMes("");
+      setVals(empty);
       qc.invalidateQueries({ queryKey });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -82,7 +96,10 @@ export function SlaView({
           <CardContent>
             <form
               className="grid grid-cols-2 md:grid-cols-6 gap-4"
-              onSubmit={(e) => { e.preventDefault(); upsert.mutate(); }}
+              onSubmit={(e) => {
+                e.preventDefault();
+                upsert.mutate();
+              }}
             >
               <div className="space-y-2 col-span-2 md:col-span-1">
                 <Label>Mês</Label>
@@ -92,33 +109,51 @@ export function SlaView({
                 <div key={f.key} className="space-y-2">
                   <Label>{f.label}</Label>
                   <Input
-                    type="number" min={0} max={100} step="0.1"
+                    type="number"
+                    min={0}
+                    max={100}
+                    step="0.1"
                     value={vals[f.key]}
                     onChange={(e) => setVals({ ...vals, [f.key]: e.target.value })}
                   />
                 </div>
               ))}
               <div className="flex items-end col-span-2 md:col-span-1">
-                <Button type="submit" className="w-full" disabled={upsert.isPending}>Salvar</Button>
+                <Button type="submit" className="w-full" disabled={upsert.isPending}>
+                  Salvar
+                </Button>
               </div>
             </form>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>Histórico</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>Histórico</CardTitle>
+          </CardHeader>
           <CardContent className="p-0">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Mês</TableHead>
-                  {fields.map((f) => <TableHead key={f.key} className="text-right">{f.label}</TableHead>)}
+                  {fields.map((f) => (
+                    <TableHead key={f.key} className="text-right">
+                      {f.label}
+                    </TableHead>
+                  ))}
                   <TableHead className="w-12" />
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {rows.length === 0 && (
-                  <TableRow><TableCell colSpan={fields.length + 2} className="text-center text-muted-foreground py-8">Sem registros.</TableCell></TableRow>
+                  <TableRow>
+                    <TableCell
+                      colSpan={fields.length + 2}
+                      className="text-center text-muted-foreground py-8"
+                    >
+                      Sem registros.
+                    </TableCell>
+                  </TableRow>
                 )}
                 {rows.map((r) => (
                   <TableRow key={r.id}>
@@ -127,7 +162,10 @@ export function SlaView({
                       const v = Number(r[f.key] ?? 0);
                       const ok = v >= META_SLA;
                       return (
-                        <TableCell key={f.key} className={`text-right font-medium ${ok ? "text-success" : "text-destructive"}`}>
+                        <TableCell
+                          key={f.key}
+                          className={`text-right font-medium ${ok ? "text-success" : "text-destructive"}`}
+                        >
                           {v.toFixed(1)}%
                         </TableCell>
                       );

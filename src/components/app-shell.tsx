@@ -2,7 +2,16 @@ import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import {
-  LayoutDashboard, Database, Gauge, AlertTriangle, Lightbulb, ListChecks, LogOut, Activity, DollarSign, Briefcase,
+  LayoutDashboard,
+  Database,
+  Gauge,
+  AlertTriangle,
+  Lightbulb,
+  ListChecks,
+  LogOut,
+  Activity,
+  DollarSign,
+  Briefcase,
 } from "lucide-react";
 import type { ReactNode } from "react";
 
@@ -61,7 +70,10 @@ export function AppShell({ children }: { children: ReactNode }) {
           <Button
             variant="secondary"
             className="w-full justify-start"
-            onClick={async () => { await signOut(); navigate({ to: "/login" as never }); }}
+            onClick={async () => {
+              await signOut();
+              navigate({ to: "/login" as never });
+            }}
           >
             <LogOut className="h-4 w-4 mr-2" /> Sair
           </Button>

@@ -9,7 +9,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Trash2, Lightbulb, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
@@ -30,7 +36,10 @@ function MelhoriasPage() {
   const { data: rows = [] } = useQuery({
     queryKey,
     queryFn: async () => {
-      const { data, error } = await supabase.from("melhorias").select("*").order("created_at", { ascending: false });
+      const { data, error } = await supabase
+        .from("melhorias")
+        .select("*")
+        .order("created_at", { ascending: false });
       if (error) throw error;
       return data as Row[];
     },
@@ -43,12 +52,16 @@ function MelhoriasPage() {
   const add = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error("Não autenticado");
-      const { error } = await supabase.from("melhorias").insert({ user_id: user.id, titulo, descricao, tipo });
+      const { error } = await supabase
+        .from("melhorias")
+        .insert({ user_id: user.id, titulo, descricao, tipo });
       if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Item adicionado");
-      setTitulo(""); setDescricao(""); setTipo("oportunidade");
+      setTitulo("");
+      setDescricao("");
+      setTipo("oportunidade");
       qc.invalidateQueries({ queryKey });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -64,24 +77,41 @@ function MelhoriasPage() {
 
   return (
     <>
-      <PageHeader title="Melhorias e Oportunidades" description="Itens de atenção e oportunidades identificadas." />
+      <PageHeader
+        title="Melhorias e Oportunidades"
+        description="Itens de atenção e oportunidades identificadas."
+      />
       <div className="p-8 space-y-6">
         <Card>
-          <CardHeader><CardTitle>Novo item</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>Novo item</CardTitle>
+          </CardHeader>
           <CardContent>
-            <form className="grid grid-cols-1 md:grid-cols-12 gap-4" onSubmit={(e) => { e.preventDefault(); add.mutate(); }}>
+            <form
+              className="grid grid-cols-1 md:grid-cols-12 gap-4"
+              onSubmit={(e) => {
+                e.preventDefault();
+                add.mutate();
+              }}
+            >
               <div className="space-y-2 md:col-span-5">
                 <Label>Título</Label>
                 <Input value={titulo} onChange={(e) => setTitulo(e.target.value)} required />
               </div>
               <div className="space-y-2 md:col-span-5">
                 <Label>Descrição</Label>
-                <Textarea rows={1} value={descricao} onChange={(e) => setDescricao(e.target.value)} />
+                <Textarea
+                  rows={1}
+                  value={descricao}
+                  onChange={(e) => setDescricao(e.target.value)}
+                />
               </div>
               <div className="space-y-2 md:col-span-1">
                 <Label>Tipo</Label>
                 <Select value={tipo} onValueChange={(v) => setTipo(v as typeof tipo)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="atencao">Atenção</SelectItem>
                     <SelectItem value="oportunidade">Oportunidade</SelectItem>
@@ -89,7 +119,9 @@ function MelhoriasPage() {
                 </Select>
               </div>
               <div className="flex items-end md:col-span-1">
-                <Button type="submit" className="w-full" disabled={add.isPending}>+</Button>
+                <Button type="submit" className="w-full" disabled={add.isPending}>
+                  +
+                </Button>
               </div>
             </form>
           </CardContent>
@@ -110,12 +142,19 @@ function MelhoriasPage() {
                   <Badge variant="secondary">{items.length}</Badge>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {items.length === 0 && <p className="text-sm text-muted-foreground">Nenhum item.</p>}
+                  {items.length === 0 && (
+                    <p className="text-sm text-muted-foreground">Nenhum item.</p>
+                  )}
                   {items.map((r) => (
-                    <div key={r.id} className="border rounded-md p-3 flex items-start justify-between gap-2">
+                    <div
+                      key={r.id}
+                      className="border rounded-md p-3 flex items-start justify-between gap-2"
+                    >
                       <div>
                         <div className="font-medium">{r.titulo}</div>
-                        {r.descricao && <div className="text-xs text-muted-foreground mt-1">{r.descricao}</div>}
+                        {r.descricao && (
+                          <div className="text-xs text-muted-foreground mt-1">{r.descricao}</div>
+                        )}
                       </div>
                       <Button size="icon" variant="ghost" onClick={() => del.mutate(r.id)}>
                         <Trash2 className="h-4 w-4" />

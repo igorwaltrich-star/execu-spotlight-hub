@@ -21,9 +21,14 @@ const CATEGORIAS = [
 ] as const;
 
 type Row = {
-  id: string; efeito: string;
-  metodo: string[]; maquina: string[]; mao_obra: string[];
-  materiais: string[]; medida: string[]; meio_ambiente: string[];
+  id: string;
+  efeito: string;
+  metodo: string[];
+  maquina: string[];
+  mao_obra: string[];
+  materiais: string[];
+  medida: string[];
+  meio_ambiente: string[];
 };
 
 export function Ishikawa() {
@@ -34,7 +39,10 @@ export function Ishikawa() {
   const { data: rows = [] } = useQuery({
     queryKey: ["ishikawa"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("ishikawa").select("id, efeito, metodo, maquina, mao_obra, materiais, medida, meio_ambiente").order("created_at", { ascending: false });
+      const { data, error } = await supabase
+        .from("ishikawa")
+        .select("id, efeito, metodo, maquina, mao_obra, materiais, medida, meio_ambiente")
+        .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as Row[];
     },
@@ -46,18 +54,28 @@ export function Ishikawa() {
   const save = useMutation({
     mutationFn: async () => {
       if (!user || !efeito) throw new Error("Defina o efeito");
-      const split = (k: string) => (textos[k] ?? "").split("\n").map((l) => l.trim()).filter(Boolean);
+      const split = (k: string) =>
+        (textos[k] ?? "")
+          .split("\n")
+          .map((l) => l.trim())
+          .filter(Boolean);
       const { error } = await supabase.from("ishikawa").insert({
-        user_id: user.id, efeito,
-        metodo: split("metodo"), maquina: split("maquina"), mao_obra: split("mao_obra"),
-        materiais: split("materiais"), medida: split("medida"), meio_ambiente: split("meio_ambiente"),
+        user_id: user.id,
+        efeito,
+        metodo: split("metodo"),
+        maquina: split("maquina"),
+        mao_obra: split("mao_obra"),
+        materiais: split("materiais"),
+        medida: split("medida"),
+        meio_ambiente: split("meio_ambiente"),
       });
       if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Diagrama salvo");
       qc.invalidateQueries({ queryKey: ["ishikawa"] });
-      setEfeito(""); setTextos({});
+      setEfeito("");
+      setTextos({});
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Erro"),
   });
@@ -73,11 +91,17 @@ export function Ishikawa() {
   return (
     <div className="space-y-4">
       <Card>
-        <CardHeader><CardTitle>Diagrama de Ishikawa (Espinha de Peixe)</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle>Diagrama de Ishikawa (Espinha de Peixe)</CardTitle>
+        </CardHeader>
         <CardContent className="space-y-4">
           <div>
             <Label>Efeito (problema central)</Label>
-            <Input value={efeito} onChange={(e) => setEfeito(e.target.value)} placeholder="Ex: Queda de SLA no OTCC" />
+            <Input
+              value={efeito}
+              onChange={(e) => setEfeito(e.target.value)}
+              placeholder="Ex: Queda de SLA no OTCC"
+            />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {CATEGORIAS.map((c) => (
@@ -92,7 +116,9 @@ export function Ishikawa() {
               </div>
             ))}
           </div>
-          <Button onClick={() => save.mutate()} disabled={save.isPending}>Salvar diagrama</Button>
+          <Button onClick={() => save.mutate()} disabled={save.isPending}>
+            Salvar diagrama
+          </Button>
         </CardContent>
       </Card>
 
@@ -100,7 +126,9 @@ export function Ishikawa() {
         <Card key={r.id}>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-base">Efeito: {r.efeito}</CardTitle>
-            <Button size="icon" variant="ghost" onClick={() => del.mutate(r.id)}><Trash2 className="h-4 w-4" /></Button>
+            <Button size="icon" variant="ghost" onClick={() => del.mutate(r.id)}>
+              <Trash2 className="h-4 w-4" />
+            </Button>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
@@ -111,7 +139,9 @@ export function Ishikawa() {
                     <div className="font-medium text-primary mb-1">{c.label}</div>
                     <ul className="list-disc pl-4 text-muted-foreground space-y-0.5">
                       {items.length === 0 && <li className="list-none italic">—</li>}
-                      {items.map((it, i) => <li key={i}>{it}</li>)}
+                      {items.map((it, i) => (
+                        <li key={i}>{it}</li>
+                      ))}
                     </ul>
                   </div>
                 );

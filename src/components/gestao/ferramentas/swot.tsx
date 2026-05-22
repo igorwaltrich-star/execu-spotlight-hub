@@ -12,15 +12,43 @@ import { TrendingUp, TrendingDown, Sparkles, AlertTriangle, Trash2 } from "lucid
 import { toast } from "sonner";
 
 type Row = {
-  id: string; titulo: string;
-  forcas: string[]; fraquezas: string[]; oportunidades: string[]; ameacas: string[];
+  id: string;
+  titulo: string;
+  forcas: string[];
+  fraquezas: string[];
+  oportunidades: string[];
+  ameacas: string[];
 };
 
 const QUADRANTES = [
-  { key: "forcas", label: "Forças", icon: TrendingUp, color: "text-success", bg: "bg-success/10 border-success/30" },
-  { key: "fraquezas", label: "Fraquezas", icon: TrendingDown, color: "text-destructive", bg: "bg-destructive/10 border-destructive/30" },
-  { key: "oportunidades", label: "Oportunidades", icon: Sparkles, color: "text-primary", bg: "bg-primary/10 border-primary/30" },
-  { key: "ameacas", label: "Ameaças", icon: AlertTriangle, color: "text-warning", bg: "bg-warning/10 border-warning/30" },
+  {
+    key: "forcas",
+    label: "Forças",
+    icon: TrendingUp,
+    color: "text-success",
+    bg: "bg-success/10 border-success/30",
+  },
+  {
+    key: "fraquezas",
+    label: "Fraquezas",
+    icon: TrendingDown,
+    color: "text-destructive",
+    bg: "bg-destructive/10 border-destructive/30",
+  },
+  {
+    key: "oportunidades",
+    label: "Oportunidades",
+    icon: Sparkles,
+    color: "text-primary",
+    bg: "bg-primary/10 border-primary/30",
+  },
+  {
+    key: "ameacas",
+    label: "Ameaças",
+    icon: AlertTriangle,
+    color: "text-warning",
+    bg: "bg-warning/10 border-warning/30",
+  },
 ] as const;
 
 export function Swot() {
@@ -31,7 +59,10 @@ export function Swot() {
   const { data: rows = [] } = useQuery({
     queryKey: ["swot"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("swot").select("id, titulo, forcas, fraquezas, oportunidades, ameacas").order("created_at", { ascending: false });
+      const { data, error } = await supabase
+        .from("swot")
+        .select("id, titulo, forcas, fraquezas, oportunidades, ameacas")
+        .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as Row[];
     },
@@ -43,18 +74,26 @@ export function Swot() {
   const save = useMutation({
     mutationFn: async () => {
       if (!user || !titulo) throw new Error("Defina um título");
-      const split = (k: string) => (textos[k] ?? "").split("\n").map((l) => l.trim()).filter(Boolean);
+      const split = (k: string) =>
+        (textos[k] ?? "")
+          .split("\n")
+          .map((l) => l.trim())
+          .filter(Boolean);
       const { error } = await supabase.from("swot").insert({
-        user_id: user.id, titulo,
-        forcas: split("forcas"), fraquezas: split("fraquezas"),
-        oportunidades: split("oportunidades"), ameacas: split("ameacas"),
+        user_id: user.id,
+        titulo,
+        forcas: split("forcas"),
+        fraquezas: split("fraquezas"),
+        oportunidades: split("oportunidades"),
+        ameacas: split("ameacas"),
       });
       if (error) throw error;
     },
     onSuccess: () => {
       toast.success("SWOT salvo");
       qc.invalidateQueries({ queryKey: ["swot"] });
-      setTitulo(""); setTextos({});
+      setTitulo("");
+      setTextos({});
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Erro"),
   });
@@ -70,15 +109,27 @@ export function Swot() {
   return (
     <div className="space-y-4">
       <Card>
-        <CardHeader><CardTitle>Nova Análise SWOT</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle>Nova Análise SWOT</CardTitle>
+        </CardHeader>
         <CardContent className="space-y-4">
-          <div><Label>Título</Label><Input value={titulo} onChange={(e) => setTitulo(e.target.value)} placeholder="Ex: SWOT operação Q2/2026" /></div>
+          <div>
+            <Label>Título</Label>
+            <Input
+              value={titulo}
+              onChange={(e) => setTitulo(e.target.value)}
+              placeholder="Ex: SWOT operação Q2/2026"
+            />
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {QUADRANTES.map((q) => {
               const Icon = q.icon;
               return (
                 <div key={q.key} className={`p-3 rounded-lg border ${q.bg}`}>
-                  <Label className={`flex items-center gap-1 mb-2 ${q.color}`}><Icon className="h-4 w-4" />{q.label}</Label>
+                  <Label className={`flex items-center gap-1 mb-2 ${q.color}`}>
+                    <Icon className="h-4 w-4" />
+                    {q.label}
+                  </Label>
                   <Textarea
                     rows={4}
                     placeholder="Um item por linha"
@@ -89,7 +140,9 @@ export function Swot() {
               );
             })}
           </div>
-          <Button onClick={() => save.mutate()} disabled={save.isPending}>Salvar análise</Button>
+          <Button onClick={() => save.mutate()} disabled={save.isPending}>
+            Salvar análise
+          </Button>
         </CardContent>
       </Card>
 
@@ -97,7 +150,9 @@ export function Swot() {
         <Card key={r.id}>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-base">{r.titulo}</CardTitle>
-            <Button size="icon" variant="ghost" onClick={() => del.mutate(r.id)}><Trash2 className="h-4 w-4" /></Button>
+            <Button size="icon" variant="ghost" onClick={() => del.mutate(r.id)}>
+              <Trash2 className="h-4 w-4" />
+            </Button>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -106,10 +161,15 @@ export function Swot() {
                 const items = r[q.key as keyof Row] as string[];
                 return (
                   <div key={q.key} className={`p-3 rounded-lg border ${q.bg}`}>
-                    <div className={`flex items-center gap-1 font-medium mb-2 ${q.color}`}><Icon className="h-4 w-4" />{q.label}</div>
+                    <div className={`flex items-center gap-1 font-medium mb-2 ${q.color}`}>
+                      <Icon className="h-4 w-4" />
+                      {q.label}
+                    </div>
                     <ul className="list-disc pl-4 text-sm text-muted-foreground space-y-0.5">
                       {items.length === 0 && <li className="list-none italic">—</li>}
-                      {items.map((it, i) => <li key={i}>{it}</li>)}
+                      {items.map((it, i) => (
+                        <li key={i}>{it}</li>
+                      ))}
                     </ul>
                   </div>
                 );
