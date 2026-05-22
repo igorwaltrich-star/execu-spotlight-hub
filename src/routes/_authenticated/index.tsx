@@ -762,7 +762,8 @@ function DashboardPage() {
                   <Bar
                     dataKey="valor"
                     radius={[6, 6, 0, 0]}
-                    shape={((props: { x?: number; y?: number; width?: number; height?: number; payload?: { valor: number } }) => {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    shape={(props: any) => {
                       const ok = props.payload.valor >= META_SLA;
                       return (
                         <rect
