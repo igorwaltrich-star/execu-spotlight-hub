@@ -160,6 +160,18 @@ export function PerformanceOperacional() {
             </div>
           )}
 
+          <div className="space-y-2">
+            <Label htmlFor="contexto-ia">Contexto adicional (opcional)</Label>
+            <Textarea
+              id="contexto-ia"
+              placeholder="Ex.: Foco em SLA OTCC dos últimos 60 dias, unidades Midea SC e RS..."
+              value={contexto}
+              onChange={(e) => setContexto(e.target.value)}
+              rows={3}
+              maxLength={2000}
+            />
+          </div>
+
           <Button
             onClick={handleAnalyze}
             disabled={analyzing || files.length === 0}
