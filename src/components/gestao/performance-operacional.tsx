@@ -1,8 +1,11 @@
 import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
+import * as XLSX from "xlsx";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   Upload,
   Sparkles,
@@ -26,13 +29,38 @@ const ACCEPT = {
 };
 
 function fileIcon(name: string) {
-  if (name.endsWith(".pdf")) return <FileType className="h-4 w-4 text-destructive" />;
-  if (name.endsWith(".csv")) return <FileText className="h-4 w-4 text-primary" />;
+  const n = name.toLowerCase();
+  if (n.endsWith(".pdf")) return <FileType className="h-4 w-4 text-destructive" />;
+  if (n.endsWith(".csv")) return <FileText className="h-4 w-4 text-primary" />;
   return <FileSpreadsheet className="h-4 w-4 text-success" />;
+}
+
+async function extractExcerpt(file: File): Promise<string | undefined> {
+  const name = file.name.toLowerCase();
+  try {
+    if (name.endsWith(".csv")) {
+      const text = await file.text();
+      return text.slice(0, 8000);
+    }
+    if (name.endsWith(".xlsx") || name.endsWith(".xls")) {
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, { type: "array" });
+      const parts: string[] = [];
+      for (const sheetName of wb.SheetNames.slice(0, 3)) {
+        const csv = XLSX.utils.sheet_to_csv(wb.Sheets[sheetName]);
+        parts.push(`# Aba: ${sheetName}\n${csv.slice(0, 4000)}`);
+      }
+      return parts.join("\n\n").slice(0, 12000);
+    }
+  } catch {
+    return undefined;
+  }
+  return undefined;
 }
 
 export function PerformanceOperacional() {
   const [files, setFiles] = useState<File[]>([]);
+  const [contexto, setContexto] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState<AnalyseResult | null>(null);
 
@@ -55,8 +83,15 @@ export function PerformanceOperacional() {
     setAnalyzing(true);
     setResult(null);
     try {
+      const filesPayload = await Promise.all(
+        files.map(async (f) => ({
+          name: f.name,
+          size: f.size,
+          excerpt: await extractExcerpt(f),
+        })),
+      );
       const data = await analyzePerformanceReport({
-        data: { fileNames: files.map((f) => f.name) },
+        data: { files: filesPayload, contexto: contexto.trim() || undefined },
       });
       setResult(data);
       toast.success("Análise concluída");
