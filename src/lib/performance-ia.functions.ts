@@ -1,8 +1,15 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
+const fileSchema = z.object({
+  name: z.string().min(1).max(255),
+  size: z.number().min(0),
+  excerpt: z.string().max(20000).optional(),
+});
+
 const inputSchema = z.object({
-  fileNames: z.array(z.string()).min(1).max(10),
+  files: z.array(fileSchema).min(1).max(10),
+  contexto: z.string().max(2000).optional(),
 });
 
 export type AnalyseResult = {
@@ -11,54 +18,101 @@ export type AnalyseResult = {
   oportunidades: { titulo: string; descricao: string; acao: string }[];
 };
 
+const tool = {
+  type: "function",
+  function: {
+    name: "registrar_analise_operacional",
+    description: "Registra a análise consolidada de relatórios operacionais.",
+    parameters: {
+      type: "object",
+      properties: {
+        resumo: {
+          type: "string",
+          description:
+            "Resumo executivo (3-6 frases) sobre o cenário operacional, com números concretos quando possível.",
+        },
+        pontosCriticos: {
+          type: "array",
+          minItems: 2,
+          maxItems: 6,
+          items: {
+            type: "object",
+            properties: {
+              titulo: { type: "string" },
+              descricao: { type: "string" },
+              severidade: { type: "string", enum: ["alta", "media"] },
+            },
+            required: ["titulo", "descricao", "severidade"],
+            additionalProperties: false,
+          },
+        },
+        oportunidades: {
+          type: "array",
+          minItems: 2,
+          maxItems: 6,
+          items: {
+            type: "object",
+            properties: {
+              titulo: { type: "string" },
+              descricao: { type: "string" },
+              acao: { type: "string" },
+            },
+            required: ["titulo", "descricao", "acao"],
+            additionalProperties: false,
+          },
+        },
+      },
+      required: ["resumo", "pontosCriticos", "oportunidades"],
+      additionalProperties: false,
+    },
+  },
+} as const;
+
 export const analyzePerformanceReport = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => inputSchema.parse(input))
   .handler(async ({ data }): Promise<AnalyseResult> => {
-    // MOCK: simula chamada para Edge Function `analyze-performance-report`
-    await new Promise((r) => setTimeout(r, 3000));
+    const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
+    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY não configurada");
 
-    const arquivos = data.fileNames.join(", ");
+    const systemPrompt = `Você é um consultor sênior de operações e performance. Analise os relatórios operacionais enviados (planilhas, CSVs ou PDFs) e gere insights acionáveis em português do Brasil. Seja específico: cite números, unidades, indicadores (SLA, OTCC, produtividade, headcount, turnover) sempre que possível a partir dos dados. Caso o conteúdo seja parcial, faça inferências razoáveis e sinalize claramente. Sempre responda chamando a função registrar_analise_operacional.`;
 
-    return {
-      resumo: `Análise consolidada de ${data.fileNames.length} arquivo(s) (${arquivos}). A operação apresenta produtividade média compatível com a meta, porém com variações relevantes entre unidades. Indicadores de SLA mostram queda no último trimestre, especialmente no OTCC, enquanto o volume processado cresceu 12% sem aumento proporcional de headcount, sinalizando ganho de eficiência mas também risco de sobrecarga.`,
-      pontosCriticos: [
-        {
-          titulo: "Queda de SLA no OTCC (Midea SC)",
-          descricao:
-            "Indicador caiu de 96% para 88% nos últimos 60 dias, principalmente em pedidos acima de R$ 50k.",
-          severidade: "alta",
-        },
-        {
-          titulo: "Sobrecarga operacional na unidade RS",
-          descricao:
-            "Produtividade por pessoa 35% acima da média, com risco de burnout e turnover.",
-          severidade: "alta",
-        },
-        {
-          titulo: "Desvios recorrentes no Start Up (Bosch HC)",
-          descricao:
-            "12 ocorrências no período, padrão de falha relacionado à integração com sistema legado.",
-          severidade: "media",
-        },
-      ],
-      oportunidades: [
-        {
-          titulo: "Redistribuição de carteira entre unidades Midea",
-          descricao:
-            "Balancear volume entre SC, AM, RS e MG pode normalizar a produtividade e elevar SLA.",
-          acao: "Criar comitê semanal de alocação dinâmica de carteira nas próximas 2 semanas.",
-        },
-        {
-          titulo: "Automação de validação no Start Up",
-          descricao: "Padronizar checklist de integração reduziria 60% dos desvios recorrentes.",
-          acao: "Levantar requisitos com TI e priorizar no próximo sprint operacional.",
-        },
-        {
-          titulo: "Programa de retenção para time RS",
-          descricao:
-            "Reconhecimento + revisão de pleitos antes que a sobrecarga gere desligamentos.",
-          acao: "RH apresentar plano de retenção em até 30 dias.",
-        },
-      ],
-    };
+    const arquivosResumo = data.files
+      .map((f, i) => {
+        const head = `Arquivo ${i + 1}: ${f.name} (${(f.size / 1024).toFixed(0)} KB)`;
+        return f.excerpt ? `${head}\nConteúdo (parcial):\n${f.excerpt}` : head;
+      })
+      .join("\n\n---\n\n");
+
+    const userPrompt = `${data.contexto ? `Contexto adicional: ${data.contexto}\n\n` : ""}Relatórios recebidos:\n\n${arquivosResumo}\n\nGere a análise estruturada chamando a função.`;
+
+    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-3-flash-preview",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        tools: [tool],
+        tool_choice: { type: "function", function: { name: "registrar_analise_operacional" } },
+      }),
+    });
+
+    if (!res.ok) {
+      if (res.status === 429) throw new Error("Limite de requisições atingido. Tente novamente em instantes.");
+      if (res.status === 402) throw new Error("Créditos de IA esgotados. Adicione créditos em Configurações > Workspace.");
+      const txt = await res.text();
+      throw new Error(`Falha na IA (${res.status}): ${txt.slice(0, 200)}`);
+    }
+
+    const payload = await res.json();
+    const call = payload?.choices?.[0]?.message?.tool_calls?.[0];
+    if (!call?.function?.arguments) throw new Error("IA não retornou estrutura esperada");
+
+    const parsed = JSON.parse(call.function.arguments) as AnalyseResult;
+    return parsed;
   });
