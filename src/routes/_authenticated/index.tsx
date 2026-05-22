@@ -762,7 +762,7 @@ function DashboardPage() {
                   <Bar
                     dataKey="valor"
                     radius={[6, 6, 0, 0]}
-                    shape={(props: any) => {
+                    shape={(props: { x: number; y: number; width: number; height: number; payload: { valor: number } }) => {
                       const ok = props.payload.valor >= META_SLA;
                       return (
                         <rect
@@ -924,7 +924,7 @@ function Kpi({
   sub,
   good,
 }: {
-  icon: any;
+  icon: React.ComponentType<{ className?: string }>;
   label: string;
   value: string;
   sub?: string;
@@ -957,7 +957,7 @@ function StatCard({
   label: string;
   value: number;
   tone: string;
-  icon?: any;
+  icon?: React.ComponentType<{ className?: string }>;
 }) {
   return (
     <div className={`rounded-lg p-4 ${tone}`}>
