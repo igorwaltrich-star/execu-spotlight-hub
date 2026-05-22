@@ -6,8 +6,10 @@ import { supabase } from "@/integrations/supabase/client";
 export function useRealtimeTable(table: string, queryKey: unknown[]) {
   const qc = useQueryClient();
   useEffect(() => {
-    const channel = supabase
-      .channel(`rt:${table}`)
+    const channel = supabase.channel(
+      `rt:${table}:${Math.random().toString(36).slice(2)}`,
+    );
+    channel
       .on("postgres_changes", { event: "*", schema: "public", table }, () => {
         qc.invalidateQueries({ queryKey });
       })
