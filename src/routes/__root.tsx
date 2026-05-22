@@ -75,17 +75,34 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Dashboard de Performance Operacional" },
-      { name: "description", content: "Apresentação executiva de performance operacional e planejamento estratégico." },
+      {
+        name: "description",
+        content: "Apresentação executiva de performance operacional e planejamento estratégico.",
+      },
       { name: "author", content: "Diretoria" },
       { property: "og:title", content: "Dashboard de Performance Operacional" },
-      { property: "og:description", content: "Apresentação executiva de performance operacional e planejamento estratégico." },
+      {
+        property: "og:description",
+        content: "Apresentação executiva de performance operacional e planejamento estratégico.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
       { name: "twitter:title", content: "Dashboard de Performance Operacional" },
-      { name: "twitter:description", content: "Apresentação executiva de performance operacional e planejamento estratégico." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/b7d19b0a-e12f-4af5-b329-9b7e9f99590a/id-preview-d95ac776--9507cc4c-f93d-4508-a5f8-024813eddd8b.lovable.app-1778703937670.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/b7d19b0a-e12f-4af5-b329-9b7e9f99590a/id-preview-d95ac776--9507cc4c-f93d-4508-a5f8-024813eddd8b.lovable.app-1778703937670.png" },
+      {
+        name: "twitter:description",
+        content: "Apresentação executiva de performance operacional e planejamento estratégico.",
+      },
+      {
+        property: "og:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/b7d19b0a-e12f-4af5-b329-9b7e9f99590a/id-preview-d95ac776--9507cc4c-f93d-4508-a5f8-024813eddd8b.lovable.app-1778703937670.png",
+      },
+      {
+        name: "twitter:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/b7d19b0a-e12f-4af5-b329-9b7e9f99590a/id-preview-d95ac776--9507cc4c-f93d-4508-a5f8-024813eddd8b.lovable.app-1778703937670.png",
+      },
     ],
     links: [
       {

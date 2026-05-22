@@ -2,8 +2,18 @@ export const META_PRODUTIVIDADE = 60;
 export const META_SLA = 95;
 
 export const MESES_PT = [
-  "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
-  "Jul", "Ago", "Set", "Out", "Nov", "Dez",
+  "Jan",
+  "Fev",
+  "Mar",
+  "Abr",
+  "Mai",
+  "Jun",
+  "Jul",
+  "Ago",
+  "Set",
+  "Out",
+  "Nov",
+  "Dez",
 ];
 
 export function fmtMes(d: string | Date) {
@@ -11,9 +21,7 @@ export function fmtMes(d: string | Date) {
   return `${MESES_PT[date.getUTCMonth()]}/${String(date.getUTCFullYear()).slice(2)}`;
 }
 
-export type UnidadeKey =
-  | "midea_sc" | "midea_am" | "midea_rs" | "midea_mg"
-  | "bosch" | "bosch_hc";
+export type UnidadeKey = "midea_sc" | "midea_am" | "midea_rs" | "midea_mg" | "bosch" | "bosch_hc";
 
 export const UNIDADES: { key: UnidadeKey; label: string; grupo: "midea" | "bosch" }[] = [
   { key: "midea_sc", label: "Midea SC", grupo: "midea" },
@@ -25,5 +33,5 @@ export const UNIDADES: { key: UnidadeKey; label: string; grupo: "midea" | "bosch
 ];
 
 export const UNIDADE_LABEL: Record<UnidadeKey, string> = Object.fromEntries(
-  UNIDADES.map((u) => [u.key, u.label])
+  UNIDADES.map((u) => [u.key, u.label]),
 ) as Record<UnidadeKey, string>;

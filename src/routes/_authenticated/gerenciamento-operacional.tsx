@@ -34,14 +34,30 @@ function GerenciamentoOperacionalPage() {
           <TabsTrigger value="ferramentas">Ferramentas de Gestão</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="performance" className="mt-4"><PerformanceOperacional /></TabsContent>
-        <TabsContent value="colaboradores" className="mt-4"><CadastroColaboradores /></TabsContent>
-        <TabsContent value="home-office" className="mt-4"><EscalaHomeOffice /></TabsContent>
-        <TabsContent value="ferias" className="mt-4"><ControleFerias /></TabsContent>
-        <TabsContent value="matriz" className="mt-4"><MatrizLideranca /></TabsContent>
-        <TabsContent value="navyseal" className="mt-4"><NavySeal /></TabsContent>
-        <TabsContent value="pdi" className="mt-4"><PDI /></TabsContent>
-        <TabsContent value="ferramentas" className="mt-4"><FerramentasGestao /></TabsContent>
+        <TabsContent value="performance" className="mt-4">
+          <PerformanceOperacional />
+        </TabsContent>
+        <TabsContent value="colaboradores" className="mt-4">
+          <CadastroColaboradores />
+        </TabsContent>
+        <TabsContent value="home-office" className="mt-4">
+          <EscalaHomeOffice />
+        </TabsContent>
+        <TabsContent value="ferias" className="mt-4">
+          <ControleFerias />
+        </TabsContent>
+        <TabsContent value="matriz" className="mt-4">
+          <MatrizLideranca />
+        </TabsContent>
+        <TabsContent value="navyseal" className="mt-4">
+          <NavySeal />
+        </TabsContent>
+        <TabsContent value="pdi" className="mt-4">
+          <PDI />
+        </TabsContent>
+        <TabsContent value="ferramentas" className="mt-4">
+          <FerramentasGestao />
+        </TabsContent>
       </Tabs>
     </div>
   );

@@ -9,7 +9,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -36,7 +42,10 @@ function DiagnosticoPage() {
   const { data: rows = [] } = useQuery({
     queryKey,
     queryFn: async () => {
-      const { data, error } = await supabase.from("gargalos").select("*").order("created_at", { ascending: false });
+      const { data, error } = await supabase
+        .from("gargalos")
+        .select("*")
+        .order("created_at", { ascending: false });
       if (error) throw error;
       return data as Row[];
     },
@@ -49,12 +58,16 @@ function DiagnosticoPage() {
   const add = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error("Não autenticado");
-      const { error } = await supabase.from("gargalos").insert({ user_id: user.id, item, impacto, risco });
+      const { error } = await supabase
+        .from("gargalos")
+        .insert({ user_id: user.id, item, impacto, risco });
       if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Item adicionado");
-      setItem(""); setImpacto(""); setRisco("medio");
+      setItem("");
+      setImpacto("");
+      setRisco("medio");
       qc.invalidateQueries({ queryKey });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -70,7 +83,10 @@ function DiagnosticoPage() {
 
   return (
     <>
-      <PageHeader title="Diagnóstico — Gargalos e Riscos" description="Mapeamento de pontos de atenção e seus impactos." />
+      <PageHeader
+        title="Diagnóstico — Gargalos e Riscos"
+        description="Mapeamento de pontos de atenção e seus impactos."
+      />
       <div className="p-8 space-y-6">
         <Card>
           <CardHeader>
@@ -78,7 +94,13 @@ function DiagnosticoPage() {
             <CardDescription>Descreva o item e classifique o nível de risco.</CardDescription>
           </CardHeader>
           <CardContent>
-            <form className="grid grid-cols-1 md:grid-cols-12 gap-4" onSubmit={(e) => { e.preventDefault(); add.mutate(); }}>
+            <form
+              className="grid grid-cols-1 md:grid-cols-12 gap-4"
+              onSubmit={(e) => {
+                e.preventDefault();
+                add.mutate();
+              }}
+            >
               <div className="space-y-2 md:col-span-4">
                 <Label>Item</Label>
                 <Input value={item} onChange={(e) => setItem(e.target.value)} required />
@@ -90,7 +112,9 @@ function DiagnosticoPage() {
               <div className="space-y-2 md:col-span-2">
                 <Label>Risco</Label>
                 <Select value={risco} onValueChange={(v) => setRisco(v as typeof risco)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="alto">Alto</SelectItem>
                     <SelectItem value="medio">Médio</SelectItem>
@@ -99,7 +123,9 @@ function DiagnosticoPage() {
                 </Select>
               </div>
               <div className="flex items-end md:col-span-1">
-                <Button type="submit" className="w-full" disabled={add.isPending}>+</Button>
+                <Button type="submit" className="w-full" disabled={add.isPending}>
+                  +
+                </Button>
               </div>
             </form>
           </CardContent>
@@ -111,16 +137,25 @@ function DiagnosticoPage() {
             return (
               <Card key={nivel}>
                 <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle className="capitalize">{nivel === "medio" ? "Médio" : nivel}</CardTitle>
+                  <CardTitle className="capitalize">
+                    {nivel === "medio" ? "Médio" : nivel}
+                  </CardTitle>
                   <Badge className={riscoColor(nivel)}>{items.length}</Badge>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {items.length === 0 && <p className="text-sm text-muted-foreground">Nenhum item.</p>}
+                  {items.length === 0 && (
+                    <p className="text-sm text-muted-foreground">Nenhum item.</p>
+                  )}
                   {items.map((r) => (
-                    <div key={r.id} className="border rounded-md p-3 flex items-start justify-between gap-2">
+                    <div
+                      key={r.id}
+                      className="border rounded-md p-3 flex items-start justify-between gap-2"
+                    >
                       <div>
                         <div className="font-medium">{r.item}</div>
-                        {r.impacto && <div className="text-xs text-muted-foreground mt-1">{r.impacto}</div>}
+                        {r.impacto && (
+                          <div className="text-xs text-muted-foreground mt-1">{r.impacto}</div>
+                        )}
                       </div>
                       <Button size="icon" variant="ghost" onClick={() => del.mutate(r.id)}>
                         <Trash2 className="h-4 w-4" />

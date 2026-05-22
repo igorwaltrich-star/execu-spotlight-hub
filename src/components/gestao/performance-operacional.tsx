@@ -4,7 +4,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  Upload, Sparkles, Loader2, FileText, AlertCircle, Lightbulb, CheckCircle2, X, FileSpreadsheet, FileType,
+  Upload,
+  Sparkles,
+  Loader2,
+  FileText,
+  AlertCircle,
+  Lightbulb,
+  CheckCircle2,
+  X,
+  FileSpreadsheet,
+  FileType,
 } from "lucide-react";
 import { toast } from "sonner";
 import { analyzePerformanceReport, type AnalyseResult } from "@/lib/performance-ia.functions";
@@ -46,7 +55,9 @@ export function PerformanceOperacional() {
     setAnalyzing(true);
     setResult(null);
     try {
-      const data = await analyzePerformanceReport({ data: { fileNames: files.map((f) => f.name) } });
+      const data = await analyzePerformanceReport({
+        data: { fileNames: files.map((f) => f.name) },
+      });
       setResult(data);
       toast.success("Análise concluída");
     } catch (e) {
@@ -65,7 +76,8 @@ export function PerformanceOperacional() {
             Análise Inteligente de Performance
           </CardTitle>
           <CardDescription>
-            Envie relatórios operacionais (.xlsx, .csv, .pdf) para receber insights, gargalos e plano de ação gerados por IA.
+            Envie relatórios operacionais (.xlsx, .csv, .pdf) para receber insights, gargalos e
+            plano de ação gerados por IA.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -78,7 +90,9 @@ export function PerformanceOperacional() {
             <input {...getInputProps()} />
             <Upload className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
             <p className="font-medium">
-              {isDragActive ? "Solte os arquivos aqui" : "Arraste arquivos ou clique para selecionar"}
+              {isDragActive
+                ? "Solte os arquivos aqui"
+                : "Arraste arquivos ou clique para selecionar"}
             </p>
             <p className="text-sm text-muted-foreground mt-1">
               .xlsx, .csv, .pdf · até 10 arquivos · máx 10MB cada
@@ -88,11 +102,16 @@ export function PerformanceOperacional() {
           {files.length > 0 && (
             <div className="space-y-2">
               {files.map((f, i) => (
-                <div key={i} className="flex items-center justify-between p-2 rounded-md border bg-muted/30">
+                <div
+                  key={i}
+                  className="flex items-center justify-between p-2 rounded-md border bg-muted/30"
+                >
                   <div className="flex items-center gap-2 min-w-0">
                     {fileIcon(f.name)}
                     <span className="text-sm truncate">{f.name}</span>
-                    <span className="text-xs text-muted-foreground">{(f.size / 1024).toFixed(0)} KB</span>
+                    <span className="text-xs text-muted-foreground">
+                      {(f.size / 1024).toFixed(0)} KB
+                    </span>
                   </div>
                   <Button
                     size="icon"
@@ -106,7 +125,12 @@ export function PerformanceOperacional() {
             </div>
           )}
 
-          <Button onClick={handleAnalyze} disabled={analyzing || files.length === 0} size="lg" className="w-full">
+          <Button
+            onClick={handleAnalyze}
+            disabled={analyzing || files.length === 0}
+            size="lg"
+            className="w-full"
+          >
             {analyzing ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />

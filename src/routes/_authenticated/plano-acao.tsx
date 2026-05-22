@@ -8,15 +8,34 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/cadastro-operacional-view";
 
 type Status = "andamento" | "concluido" | "atrasado";
-type Row = { id: string; iniciativa: string; responsavel: string; prazo: string | null; status: Status };
+type Row = {
+  id: string;
+  iniciativa: string;
+  responsavel: string;
+  prazo: string | null;
+  status: Status;
+};
 
 export const Route = createFileRoute("/_authenticated/plano-acao")({
   component: PlanoAcaoPage,
@@ -40,7 +59,10 @@ function PlanoAcaoPage() {
   const { data: rows = [] } = useQuery({
     queryKey,
     queryFn: async () => {
-      const { data, error } = await supabase.from("plano_acao").select("*").order("prazo", { ascending: true });
+      const { data, error } = await supabase
+        .from("plano_acao")
+        .select("*")
+        .order("prazo", { ascending: true });
       if (error) throw error;
       return data as Row[];
     },
@@ -55,13 +77,20 @@ function PlanoAcaoPage() {
     mutationFn: async () => {
       if (!user) throw new Error("Não autenticado");
       const { error } = await supabase.from("plano_acao").insert({
-        user_id: user.id, iniciativa, responsavel, prazo: prazo || null, status,
+        user_id: user.id,
+        iniciativa,
+        responsavel,
+        prazo: prazo || null,
+        status,
       });
       if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Iniciativa adicionada");
-      setIniciativa(""); setResponsavel(""); setPrazo(""); setStatus("andamento");
+      setIniciativa("");
+      setResponsavel("");
+      setPrazo("");
+      setStatus("andamento");
       qc.invalidateQueries({ queryKey });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -77,15 +106,30 @@ function PlanoAcaoPage() {
 
   return (
     <>
-      <PageHeader title="Plano de Ação 2026" description="Iniciativas estratégicas, responsáveis e status." />
+      <PageHeader
+        title="Plano de Ação 2026"
+        description="Iniciativas estratégicas, responsáveis e status."
+      />
       <div className="p-8 space-y-6">
         <Card>
-          <CardHeader><CardTitle>Nova iniciativa</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>Nova iniciativa</CardTitle>
+          </CardHeader>
           <CardContent>
-            <form className="grid grid-cols-1 md:grid-cols-12 gap-4" onSubmit={(e) => { e.preventDefault(); add.mutate(); }}>
+            <form
+              className="grid grid-cols-1 md:grid-cols-12 gap-4"
+              onSubmit={(e) => {
+                e.preventDefault();
+                add.mutate();
+              }}
+            >
               <div className="space-y-2 md:col-span-5">
                 <Label>Iniciativa</Label>
-                <Input value={iniciativa} onChange={(e) => setIniciativa(e.target.value)} required />
+                <Input
+                  value={iniciativa}
+                  onChange={(e) => setIniciativa(e.target.value)}
+                  required
+                />
               </div>
               <div className="space-y-2 md:col-span-3">
                 <Label>Responsável</Label>
@@ -98,7 +142,9 @@ function PlanoAcaoPage() {
               <div className="space-y-2 md:col-span-1">
                 <Label>Status</Label>
                 <Select value={status} onValueChange={(v) => setStatus(v as Status)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="andamento">Em andamento</SelectItem>
                     <SelectItem value="concluido">Concluído</SelectItem>
@@ -107,14 +153,18 @@ function PlanoAcaoPage() {
                 </Select>
               </div>
               <div className="flex items-end md:col-span-1">
-                <Button type="submit" className="w-full" disabled={add.isPending}>+</Button>
+                <Button type="submit" className="w-full" disabled={add.isPending}>
+                  +
+                </Button>
               </div>
             </form>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>Iniciativas</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>Iniciativas</CardTitle>
+          </CardHeader>
           <CardContent className="p-0">
             <Table>
               <TableHeader>
@@ -128,14 +178,22 @@ function PlanoAcaoPage() {
               </TableHeader>
               <TableBody>
                 {rows.length === 0 && (
-                  <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Sem iniciativas.</TableCell></TableRow>
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                      Sem iniciativas.
+                    </TableCell>
+                  </TableRow>
                 )}
                 {rows.map((r) => (
                   <TableRow key={r.id}>
                     <TableCell className="font-medium">{r.iniciativa}</TableCell>
                     <TableCell>{r.responsavel || "—"}</TableCell>
-                    <TableCell>{r.prazo ? new Date(r.prazo).toLocaleDateString("pt-BR") : "—"}</TableCell>
-                    <TableCell><Badge className={statusColor(r.status)}>{statusLabel(r.status)}</Badge></TableCell>
+                    <TableCell>
+                      {r.prazo ? new Date(r.prazo).toLocaleDateString("pt-BR") : "—"}
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={statusColor(r.status)}>{statusLabel(r.status)}</Badge>
+                    </TableCell>
                     <TableCell>
                       <Button size="icon" variant="ghost" onClick={() => del.mutate(r.id)}>
                         <Trash2 className="h-4 w-4" />

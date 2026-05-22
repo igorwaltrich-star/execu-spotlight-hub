@@ -5,15 +5,53 @@ import { supabase } from "@/integrations/supabase/client";
 import { useRealtimeTable } from "@/hooks/use-realtime-table";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { fmtMes, MESES_PT, META_PRODUTIVIDADE, META_SLA, UNIDADES, UNIDADE_LABEL, type UnidadeKey } from "@/lib/constants";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid,
-  BarChart, Bar, ReferenceLine, Legend, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
-  LineChart, Line,
+  fmtMes,
+  MESES_PT,
+  META_PRODUTIVIDADE,
+  META_SLA,
+  UNIDADES,
+  UNIDADE_LABEL,
+  type UnidadeKey,
+} from "@/lib/constants";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  BarChart,
+  Bar,
+  ReferenceLine,
+  Legend,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Radar,
+  LineChart,
+  Line,
 } from "recharts";
-import { TrendingUp, Users, Gauge, AlertTriangle, Target, CheckCircle2, Lightbulb, AlertCircle } from "lucide-react";
+import {
+  TrendingUp,
+  Users,
+  Gauge,
+  AlertTriangle,
+  Target,
+  CheckCircle2,
+  Lightbulb,
+  AlertCircle,
+} from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/")({
   component: DashboardPage,
@@ -24,12 +62,39 @@ const C2 = "var(--color-accent)";
 const C3 = "var(--color-success)";
 const CD = "var(--color-destructive)";
 
-type OpRow = { id: string; mes: string; volume: number; pessoas: number; produtividade: number | null; unidade: UnidadeKey };
+type OpRow = {
+  id: string;
+  mes: string;
+  volume: number;
+  pessoas: number;
+  produtividade: number | null;
+  unidade: UnidadeKey;
+};
 type SlaMidea = { mes: string; start_up: number; otcc: number; otd: number; sotd: number };
-type SlaBosch = { mes: string; dig_conf: number; start_up: number; otcc: number; desvios: number; pinho: number };
+type SlaBosch = {
+  mes: string;
+  dig_conf: number;
+  start_up: number;
+  otcc: number;
+  desvios: number;
+  pinho: number;
+};
 type Gargalo = { id: string; item: string; impacto: string; risco: "alto" | "medio" | "baixo" };
-type Acao = { id: string; iniciativa: string; responsavel: string; prazo: string | null; status: "andamento" | "concluido" | "atrasado" };
-type Oport = { id: string; titulo: string; categoria: string; savings: number; custo_extra: number; status: "identificada" | "em_andamento" | "implementada" };
+type Acao = {
+  id: string;
+  iniciativa: string;
+  responsavel: string;
+  prazo: string | null;
+  status: "andamento" | "concluido" | "atrasado";
+};
+type Oport = {
+  id: string;
+  titulo: string;
+  categoria: string;
+  savings: number;
+  custo_extra: number;
+  status: "identificada" | "em_andamento" | "implementada";
+};
 type Melhoria = { id: string; titulo: string; descricao: string; tipo: "atencao" | "oportunidade" };
 
 function DashboardPage() {
@@ -43,7 +108,10 @@ function DashboardPage() {
   const melhorias = useQuery({
     queryKey: ["melhorias"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("melhorias").select("id, titulo, descricao, tipo").order("created_at", { ascending: false });
+      const { data, error } = await supabase
+        .from("melhorias")
+        .select("id, titulo, descricao, tipo")
+        .order("created_at", { ascending: false });
       if (error) throw error;
       return data as Melhoria[];
     },
@@ -98,7 +166,10 @@ function DashboardPage() {
   const oportunidades = useQuery({
     queryKey: ["oportunidades"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("oportunidades").select("id, titulo, categoria, savings, custo_extra, status").order("data", { ascending: false });
+      const { data, error } = await supabase
+        .from("oportunidades")
+        .select("id, titulo, categoria, savings, custo_extra, status")
+        .order("data", { ascending: false });
       if (error) throw error;
       return data as Oport[];
     },
@@ -118,15 +189,15 @@ function DashboardPage() {
 
   const mesesOp = useMemo(
     () => [...new Set(opAll.map((r) => r.mes))].sort((a, b) => b.localeCompare(a)),
-    [opAll]
+    [opAll],
   );
   const mesesMidea = useMemo(
     () => [...new Set((midea.data ?? []).map((r) => r.mes))].sort((a, b) => b.localeCompare(a)),
-    [midea.data]
+    [midea.data],
   );
   const mesesBosch = useMemo(
     () => [...new Set((bosch.data ?? []).map((r) => r.mes))].sort((a, b) => b.localeCompare(a)),
-    [bosch.data]
+    [bosch.data],
   );
 
   // Per-chart filters
@@ -163,42 +234,50 @@ function DashboardPage() {
   };
 
   const volumeData = useMemo(() => {
-    const rows = opAll.filter((r) =>
-      (filtroGrupoVol === "all" || grupoDe(r.unidade) === filtroGrupoVol) &&
-      matchesMes(r.mes, filtroMesVol)
+    const rows = opAll.filter(
+      (r) =>
+        (filtroGrupoVol === "all" || grupoDe(r.unidade) === filtroGrupoVol) &&
+        matchesMes(r.mes, filtroMesVol),
     );
     return aggByMonth(rows);
   }, [opAll, filtroGrupoVol, filtroMesVol]);
 
   const prodData = useMemo(() => {
-    const rows = opAll.filter((r) =>
-      (filtroGrupoProd === "all" || grupoDe(r.unidade) === filtroGrupoProd) &&
-      matchesMes(r.mes, filtroMesProd)
+    const rows = opAll.filter(
+      (r) =>
+        (filtroGrupoProd === "all" || grupoDe(r.unidade) === filtroGrupoProd) &&
+        matchesMes(r.mes, filtroMesProd),
     );
     return aggByMonth(rows);
   }, [opAll, filtroGrupoProd, filtroMesProd]);
 
   // KPI por unidade respeitando filtro do slide carteiras
-  const kpiPorUnidade = useMemo(() =>
-    UNIDADES.map((u) => {
-      const rows = opAll.filter((r) => r.unidade === u.key && matchesMes(r.mes, filtroMesCart));
-      const volume = rows.reduce((s, r) => s + r.volume, 0);
-      // Headcount não soma o mesmo time mês a mês: usa o máximo do período.
-      const headcount = rows.reduce((m, r) => Math.max(m, Number(r.pessoas ?? 0)), 0);
-      const totalPessoas = rows.reduce((s, r) => s + Number(r.pessoas ?? 0), 0);
-      const prod = totalPessoas > 0 ? volume / totalPessoas : 0;
-      return { ...u, volume, headcount, prod, meses: rows.length };
-    }), [opAll, filtroMesCart]);
+  const kpiPorUnidade = useMemo(
+    () =>
+      UNIDADES.map((u) => {
+        const rows = opAll.filter((r) => r.unidade === u.key && matchesMes(r.mes, filtroMesCart));
+        const volume = rows.reduce((s, r) => s + r.volume, 0);
+        // Headcount não soma o mesmo time mês a mês: usa o máximo do período.
+        const headcount = rows.reduce((m, r) => Math.max(m, Number(r.pessoas ?? 0)), 0);
+        const totalPessoas = rows.reduce((s, r) => s + Number(r.pessoas ?? 0), 0);
+        const prod = totalPessoas > 0 ? volume / totalPessoas : 0;
+        return { ...u, volume, headcount, prod, meses: rows.length };
+      }),
+    [opAll, filtroMesCart],
+  );
 
   const totalizador = (grupo: "midea" | "bosch", uniFilter: "all" | UnidadeKey = "all") => {
-    const items = kpiPorUnidade.filter((k) => k.grupo === grupo && (uniFilter === "all" || k.key === uniFilter));
+    const items = kpiPorUnidade.filter(
+      (k) => k.grupo === grupo && (uniFilter === "all" || k.key === uniFilter),
+    );
     const volume = items.reduce((s, r) => s + r.volume, 0);
     const headcount = items.reduce((s, r) => s + r.headcount, 0);
     // produtividade do bloco: volume total / soma(pessoas) mês a mês das unidades exibidas
-    const rows = opAll.filter((r) =>
-      grupoDe(r.unidade) === grupo &&
-      (uniFilter === "all" || r.unidade === uniFilter) &&
-      matchesMes(r.mes, filtroMesCart)
+    const rows = opAll.filter(
+      (r) =>
+        grupoDe(r.unidade) === grupo &&
+        (uniFilter === "all" || r.unidade === uniFilter) &&
+        matchesMes(r.mes, filtroMesCart),
     );
     const totalPessoas = rows.reduce((s, r) => s + Number(r.pessoas ?? 0), 0);
     const prod = totalPessoas > 0 ? volume / totalPessoas : 0;
@@ -240,7 +319,13 @@ function DashboardPage() {
     const rows = boschFiltrada;
     if (!rows.length) return [];
     const keys = ["dig_conf", "start_up", "otcc", "desvios", "pinho"] as const;
-    const labels: Record<string, string> = { dig_conf: "Dig.Conf.", start_up: "Start-up", otcc: "OTCC", desvios: "Desvios", pinho: "Pinho" };
+    const labels: Record<string, string> = {
+      dig_conf: "Dig.Conf.",
+      start_up: "Start-up",
+      otcc: "OTCC",
+      desvios: "Desvios",
+      pinho: "Pinho",
+    };
     return keys.map((k) => ({
       indicador: labels[k],
       valor: rows.reduce((s, r) => s + Number(r[k] || 0), 0) / rows.length,
@@ -292,7 +377,9 @@ function DashboardPage() {
       {/* Slide 1 — Capa + KPIs */}
       <Slide tone="primary">
         <div className="flex flex-col items-start justify-center h-full max-w-6xl mx-auto w-full">
-          <Badge variant="secondary" className="mb-4">Apresentação à Diretoria</Badge>
+          <Badge variant="secondary" className="mb-4">
+            Apresentação à Diretoria
+          </Badge>
           <h1 className="text-5xl md:text-6xl font-bold tracking-tight text-primary-foreground">
             Performance Operacional
           </h1>
@@ -300,10 +387,31 @@ function DashboardPage() {
             Resultados, indicadores de SLA, riscos identificados e plano estratégico para 2026.
           </p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-12 w-full">
-            <Kpi icon={TrendingUp} label="Volume Total" value={totalVolume.toLocaleString("pt-BR")} />
-            <Kpi icon={Users} label="Headcount Total" value={headcountTotal.toLocaleString("pt-BR")} sub="Sem dupla contagem" />
-            <Kpi icon={Gauge} label="Produtividade média" value={avgProd.toFixed(1)} sub={`Meta ${META_PRODUTIVIDADE}`} good={avgProd >= META_PRODUTIVIDADE} />
-            <Kpi icon={Target} label="SLA médio" value={`${slaMedio.toFixed(1)}%`} sub={`Meta ${META_SLA}%`} good={slaMedio >= META_SLA} />
+            <Kpi
+              icon={TrendingUp}
+              label="Volume Total"
+              value={totalVolume.toLocaleString("pt-BR")}
+            />
+            <Kpi
+              icon={Users}
+              label="Headcount Total"
+              value={headcountTotal.toLocaleString("pt-BR")}
+              sub="Sem dupla contagem"
+            />
+            <Kpi
+              icon={Gauge}
+              label="Produtividade média"
+              value={avgProd.toFixed(1)}
+              sub={`Meta ${META_PRODUTIVIDADE}`}
+              good={avgProd >= META_PRODUTIVIDADE}
+            />
+            <Kpi
+              icon={Target}
+              label="SLA médio"
+              value={`${slaMedio.toFixed(1)}%`}
+              sub={`Meta ${META_SLA}%`}
+              good={slaMedio >= META_SLA}
+            />
           </div>
         </div>
       </Slide>
@@ -312,8 +420,12 @@ function DashboardPage() {
       <Slide>
         <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
           <div>
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Indicadores por Carteira</h2>
-            <p className="text-muted-foreground mt-1">Volume e produtividade consolidados por unidade</p>
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
+              Indicadores por Carteira
+            </h2>
+            <p className="text-muted-foreground mt-1">
+              Volume e produtividade consolidados por unidade
+            </p>
           </div>
           <div className="flex gap-2 flex-wrap">
             <FiltroUnidade value={filtroUnidade} onChange={setFiltroUnidade} />
@@ -326,7 +438,9 @@ function DashboardPage() {
               titulo="Midea"
               tone="border-primary/40 bg-primary/5"
               total={totalizador("midea", filtroUnidade)}
-              unidades={kpiPorUnidade.filter((k) => k.grupo === "midea" && (filtroUnidade === "all" || k.key === filtroUnidade))}
+              unidades={kpiPorUnidade.filter(
+                (k) => k.grupo === "midea" && (filtroUnidade === "all" || k.key === filtroUnidade),
+              )}
             />
           )}
           {(filtroUnidade === "all" || grupoDe(filtroUnidade as UnidadeKey) === "bosch") && (
@@ -334,7 +448,9 @@ function DashboardPage() {
               titulo="Bosch"
               tone="border-accent/40 bg-accent/5"
               total={totalizador("bosch", filtroUnidade)}
-              unidades={kpiPorUnidade.filter((k) => k.grupo === "bosch" && (filtroUnidade === "all" || k.key === filtroUnidade))}
+              unidades={kpiPorUnidade.filter(
+                (k) => k.grupo === "bosch" && (filtroUnidade === "all" || k.key === filtroUnidade),
+              )}
             />
           )}
         </div>
@@ -366,7 +482,13 @@ function DashboardPage() {
                 <XAxis dataKey="mes" />
                 <YAxis />
                 <Tooltip />
-                <Area type="monotone" dataKey="volume" stroke={C1} fill="url(#gv)" strokeWidth={3} />
+                <Area
+                  type="monotone"
+                  dataKey="volume"
+                  stroke={C1}
+                  fill="url(#gv)"
+                  strokeWidth={3}
+                />
               </AreaChart>
             </ResponsiveContainer>
           </CardContent>
@@ -375,26 +497,56 @@ function DashboardPage() {
 
       {/* Slide — Oportunidades & Savings */}
       <Slide>
-        <SlideHeader title="Oportunidades e Riscos" subtitle="Iniciativas de melhoria, savings estimados e custos extras gerados" />
+        <SlideHeader
+          title="Oportunidades e Riscos"
+          subtitle="Iniciativas de melhoria, savings estimados e custos extras gerados"
+        />
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-          <StatCard label="Total" value={oportunidades.data?.length ?? 0} tone="bg-muted text-foreground" />
+          <StatCard
+            label="Total"
+            value={oportunidades.data?.length ?? 0}
+            tone="bg-muted text-foreground"
+          />
           <StatCard label="Identificadas" value={oportStats.identificada} tone="bg-card border" />
-          <StatCard label="Em andamento" value={oportStats.em_andamento} tone="bg-accent text-accent-foreground" />
-          <StatCard label="Implementadas" value={oportStats.implementada} tone="bg-success text-success-foreground" icon={CheckCircle2} />
+          <StatCard
+            label="Em andamento"
+            value={oportStats.em_andamento}
+            tone="bg-accent text-accent-foreground"
+          />
+          <StatCard
+            label="Implementadas"
+            value={oportStats.implementada}
+            tone="bg-success text-success-foreground"
+            icon={CheckCircle2}
+          />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-          <Card><CardContent className="pt-6">
-            <div className="text-xs uppercase text-muted-foreground">Savings totais (R$)</div>
-            <div className="text-3xl font-bold mt-1 text-success">{savingsTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</div>
-          </CardContent></Card>
-          <Card><CardContent className="pt-6">
-            <div className="text-xs uppercase text-muted-foreground">Custos extras (R$)</div>
-            <div className="text-3xl font-bold mt-1 text-destructive">{custoExtraTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</div>
-          </CardContent></Card>
-          <Card><CardContent className="pt-6">
-            <div className="text-xs uppercase text-muted-foreground">Saldo líquido (R$)</div>
-            <div className={`text-3xl font-bold mt-1 ${saldoLiquido >= 0 ? "text-success" : "text-destructive"}`}>{saldoLiquido.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</div>
-          </CardContent></Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-xs uppercase text-muted-foreground">Savings totais (R$)</div>
+              <div className="text-3xl font-bold mt-1 text-success">
+                {savingsTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-xs uppercase text-muted-foreground">Custos extras (R$)</div>
+              <div className="text-3xl font-bold mt-1 text-destructive">
+                {custoExtraTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-xs uppercase text-muted-foreground">Saldo líquido (R$)</div>
+              <div
+                className={`text-3xl font-bold mt-1 ${saldoLiquido >= 0 ? "text-success" : "text-destructive"}`}
+              >
+                {saldoLiquido.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+              </div>
+            </CardContent>
+          </Card>
         </div>
         <Card className="flex-1 min-h-0 overflow-auto">
           <CardContent className="p-0">
@@ -410,23 +562,41 @@ function DashboardPage() {
               </thead>
               <tbody>
                 {(oportunidades.data ?? []).length === 0 && (
-                  <tr><td colSpan={5} className="text-center text-muted-foreground py-8">Nenhum registro cadastrado.</td></tr>
+                  <tr>
+                    <td colSpan={5} className="text-center text-muted-foreground py-8">
+                      Nenhum registro cadastrado.
+                    </td>
+                  </tr>
                 )}
                 {(oportunidades.data ?? []).map((o) => (
                   <tr key={o.id} className="border-t border-border">
                     <td className="px-4 py-3 font-medium">{o.titulo}</td>
                     <td className="px-4 py-3">{o.categoria}</td>
                     <td className="px-4 py-3">
-                      <Badge className={
-                        o.status === "implementada" ? "bg-success text-success-foreground" :
-                        o.status === "em_andamento" ? "bg-accent text-accent-foreground" :
-                        "bg-muted text-muted-foreground"
-                      }>
-                        {o.status === "implementada" ? "Implementada" : o.status === "em_andamento" ? "Em andamento" : "Identificada"}
+                      <Badge
+                        className={
+                          o.status === "implementada"
+                            ? "bg-success text-success-foreground"
+                            : o.status === "em_andamento"
+                              ? "bg-accent text-accent-foreground"
+                              : "bg-muted text-muted-foreground"
+                        }
+                      >
+                        {o.status === "implementada"
+                          ? "Implementada"
+                          : o.status === "em_andamento"
+                            ? "Em andamento"
+                            : "Identificada"}
                       </Badge>
                     </td>
-                    <td className="px-4 py-3 text-right font-semibold text-success">{Number(o.savings).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
-                    <td className="px-4 py-3 text-right font-semibold text-destructive">{Number(o.custo_extra ?? 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
+                    <td className="px-4 py-3 text-right font-semibold text-success">
+                      {Number(o.savings).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                    </td>
+                    <td className="px-4 py-3 text-right font-semibold text-destructive">
+                      {Number(o.custo_extra ?? 0).toLocaleString("pt-BR", {
+                        minimumFractionDigits: 2,
+                      })}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -435,11 +605,12 @@ function DashboardPage() {
         </Card>
       </Slide>
 
-
-
       {/* Slide — Melhorias e Pontos de Atenção */}
       <Slide>
-        <SlideHeader title="Melhorias & Pontos de Atenção" subtitle="Itens de atenção e oportunidades identificadas pela operação" />
+        <SlideHeader
+          title="Melhorias & Pontos de Atenção"
+          subtitle="Itens de atenção e oportunidades identificadas pela operação"
+        />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 min-h-0">
           {(["atencao", "oportunidade"] as const).map((t) => {
             const items = (melhorias.data ?? []).filter((m) => m.tipo === t);
@@ -455,11 +626,15 @@ function DashboardPage() {
                   <Badge variant="secondary">{items.length}</Badge>
                 </CardHeader>
                 <CardContent className="space-y-3 overflow-auto flex-1">
-                  {items.length === 0 && <p className="text-sm text-muted-foreground">Nenhum item cadastrado.</p>}
+                  {items.length === 0 && (
+                    <p className="text-sm text-muted-foreground">Nenhum item cadastrado.</p>
+                  )}
                   {items.map((m) => (
                     <div key={m.id} className="border rounded-md p-3">
                       <div className="font-medium text-sm">{m.titulo}</div>
-                      {m.descricao && <div className="text-xs text-muted-foreground mt-1">{m.descricao}</div>}
+                      {m.descricao && (
+                        <div className="text-xs text-muted-foreground mt-1">{m.descricao}</div>
+                      )}
                     </div>
                   ))}
                 </CardContent>
@@ -474,7 +649,9 @@ function DashboardPage() {
         <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
           <div>
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Evolução da Operação</h2>
-            <p className="text-muted-foreground mt-1">Produtividade mensal por operação (Jan até o mês atual) — meta {META_PRODUTIVIDADE}</p>
+            <p className="text-muted-foreground mt-1">
+              Produtividade mensal por operação (Jan até o mês atual) — meta {META_PRODUTIVIDADE}
+            </p>
           </div>
           <div className="flex gap-2 flex-wrap">
             <FiltroUnidade value={filtroUnidadeEvol} onChange={setFiltroUnidadeEvol} />
@@ -490,11 +667,34 @@ function DashboardPage() {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <ReferenceLine y={META_PRODUTIVIDADE} stroke={CD} strokeDasharray="6 4" label={{ value: `Meta ${META_PRODUTIVIDADE}`, position: "right", fill: CD }} />
-                {UNIDADES.filter((u) => filtroUnidadeEvol === "all" || u.key === filtroUnidadeEvol).map((u, i) => {
-                  const palette = [C1, C2, C3, "var(--color-warning)", "var(--color-muted-foreground)", CD];
+                <ReferenceLine
+                  y={META_PRODUTIVIDADE}
+                  stroke={CD}
+                  strokeDasharray="6 4"
+                  label={{ value: `Meta ${META_PRODUTIVIDADE}`, position: "right", fill: CD }}
+                />
+                {UNIDADES.filter(
+                  (u) => filtroUnidadeEvol === "all" || u.key === filtroUnidadeEvol,
+                ).map((u, i) => {
+                  const palette = [
+                    C1,
+                    C2,
+                    C3,
+                    "var(--color-warning)",
+                    "var(--color-muted-foreground)",
+                    CD,
+                  ];
                   return (
-                    <Line key={u.key} type="monotone" dataKey={u.key} name={u.label} stroke={palette[i % palette.length]} strokeWidth={2} dot={{ r: 3 }} connectNulls />
+                    <Line
+                      key={u.key}
+                      type="monotone"
+                      dataKey={u.key}
+                      name={u.label}
+                      stroke={palette[i % palette.length]}
+                      strokeWidth={2}
+                      dot={{ r: 3 }}
+                      connectNulls
+                    />
                   );
                 })}
               </LineChart>
@@ -514,7 +714,9 @@ function DashboardPage() {
         </div>
         <Card className="flex-1 min-h-0">
           <CardContent className="pt-6 h-[460px]">
-            {mideaRadar.length === 0 ? <Empty msg="Sem dados de SLA Midea cadastrados." /> : (
+            {mideaRadar.length === 0 ? (
+              <Empty msg="Sem dados de SLA Midea cadastrados." />
+            ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <RadarChart data={mideaRadar}>
                   <PolarGrid />
@@ -542,18 +744,36 @@ function DashboardPage() {
         </div>
         <Card className="flex-1 min-h-0">
           <CardContent className="pt-6 h-[460px]">
-            {boschBars.length === 0 ? <Empty msg="Sem dados de SLA BOSCH cadastrados." /> : (
+            {boschBars.length === 0 ? (
+              <Empty msg="Sem dados de SLA BOSCH cadastrados." />
+            ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={boschBars}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
                   <XAxis dataKey="indicador" />
                   <YAxis domain={[0, 100]} />
                   <Tooltip />
-                  <ReferenceLine y={META_SLA} stroke={CD} strokeDasharray="6 4" label={{ value: `Meta ${META_SLA}%`, position: "right", fill: CD }} />
-                  <Bar dataKey="valor" radius={[6, 6, 0, 0]}
+                  <ReferenceLine
+                    y={META_SLA}
+                    stroke={CD}
+                    strokeDasharray="6 4"
+                    label={{ value: `Meta ${META_SLA}%`, position: "right", fill: CD }}
+                  />
+                  <Bar
+                    dataKey="valor"
+                    radius={[6, 6, 0, 0]}
                     shape={(props: any) => {
                       const ok = props.payload.valor >= META_SLA;
-                      return <rect x={props.x} y={props.y} width={props.width} height={props.height} rx={6} fill={ok ? C3 : CD} />;
+                      return (
+                        <rect
+                          x={props.x}
+                          y={props.y}
+                          width={props.width}
+                          height={props.height}
+                          rx={6}
+                          fill={ok ? C3 : CD}
+                        />
+                      );
                     }}
                   />
                 </BarChart>
@@ -569,21 +789,31 @@ function DashboardPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1">
           {(["alto", "medio", "baixo"] as const).map((nivel) => {
             const items = (gargalos.data ?? []).filter((r) => r.risco === nivel);
-            const tone = nivel === "alto" ? "border-destructive" : nivel === "medio" ? "border-warning" : "border-success";
+            const tone =
+              nivel === "alto"
+                ? "border-destructive"
+                : nivel === "medio"
+                  ? "border-warning"
+                  : "border-success";
             return (
               <Card key={nivel} className={`border-2 ${tone}`}>
                 <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle className="capitalize flex items-center gap-2">
-                    <AlertTriangle className="h-5 w-5" /> Risco {nivel === "medio" ? "Médio" : nivel}
+                    <AlertTriangle className="h-5 w-5" /> Risco{" "}
+                    {nivel === "medio" ? "Médio" : nivel}
                   </CardTitle>
                   <Badge variant="secondary">{items.length}</Badge>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {items.length === 0 && <p className="text-sm text-muted-foreground">Nenhum item.</p>}
+                  {items.length === 0 && (
+                    <p className="text-sm text-muted-foreground">Nenhum item.</p>
+                  )}
                   {items.map((r) => (
                     <div key={r.id} className="border rounded p-3">
                       <div className="font-medium">{r.item}</div>
-                      {r.impacto && <div className="text-xs text-muted-foreground mt-1">{r.impacto}</div>}
+                      {r.impacto && (
+                        <div className="text-xs text-muted-foreground mt-1">{r.impacto}</div>
+                      )}
                     </div>
                   ))}
                 </CardContent>
@@ -597,9 +827,22 @@ function DashboardPage() {
       <Slide>
         <SlideHeader title="Plano de Ação 2026" subtitle="Iniciativas estratégicas" />
         <div className="grid grid-cols-3 gap-4 mb-4">
-          <StatCard label="Em andamento" value={acaoStats.andamento} tone="bg-accent text-accent-foreground" />
-          <StatCard label="Concluídas" value={acaoStats.concluido} tone="bg-success text-success-foreground" icon={CheckCircle2} />
-          <StatCard label="Atrasadas" value={acaoStats.atrasado} tone="bg-destructive text-destructive-foreground" />
+          <StatCard
+            label="Em andamento"
+            value={acaoStats.andamento}
+            tone="bg-accent text-accent-foreground"
+          />
+          <StatCard
+            label="Concluídas"
+            value={acaoStats.concluido}
+            tone="bg-success text-success-foreground"
+            icon={CheckCircle2}
+          />
+          <StatCard
+            label="Atrasadas"
+            value={acaoStats.atrasado}
+            tone="bg-destructive text-destructive-foreground"
+          />
         </div>
         <Card className="flex-1 min-h-0 overflow-auto">
           <CardContent className="p-0">
@@ -614,20 +857,34 @@ function DashboardPage() {
               </thead>
               <tbody>
                 {(acoes.data ?? []).length === 0 && (
-                  <tr><td colSpan={4} className="text-center text-muted-foreground py-8">Sem iniciativas cadastradas.</td></tr>
+                  <tr>
+                    <td colSpan={4} className="text-center text-muted-foreground py-8">
+                      Sem iniciativas cadastradas.
+                    </td>
+                  </tr>
                 )}
                 {(acoes.data ?? []).map((a) => (
                   <tr key={a.id} className="border-t border-border">
                     <td className="px-4 py-3 font-medium">{a.iniciativa}</td>
                     <td className="px-4 py-3">{a.responsavel || "—"}</td>
-                    <td className="px-4 py-3">{a.prazo ? new Date(a.prazo).toLocaleDateString("pt-BR") : "—"}</td>
                     <td className="px-4 py-3">
-                      <Badge className={
-                        a.status === "concluido" ? "bg-success text-success-foreground" :
-                        a.status === "atrasado" ? "bg-destructive text-destructive-foreground" :
-                        "bg-accent text-accent-foreground"
-                      }>
-                        {a.status === "concluido" ? "Concluído" : a.status === "atrasado" ? "Atrasado" : "Em andamento"}
+                      {a.prazo ? new Date(a.prazo).toLocaleDateString("pt-BR") : "—"}
+                    </td>
+                    <td className="px-4 py-3">
+                      <Badge
+                        className={
+                          a.status === "concluido"
+                            ? "bg-success text-success-foreground"
+                            : a.status === "atrasado"
+                              ? "bg-destructive text-destructive-foreground"
+                              : "bg-accent text-accent-foreground"
+                        }
+                      >
+                        {a.status === "concluido"
+                          ? "Concluído"
+                          : a.status === "atrasado"
+                            ? "Atrasado"
+                            : "Em andamento"}
                       </Badge>
                     </td>
                   </tr>
@@ -643,7 +900,9 @@ function DashboardPage() {
 
 function Slide({ children, tone }: { children: React.ReactNode; tone?: "primary" }) {
   return (
-    <section className={`min-h-screen w-full px-8 py-10 flex flex-col ${tone === "primary" ? "bg-gradient-to-br from-primary via-primary to-accent" : ""}`}>
+    <section
+      className={`min-h-screen w-full px-8 py-10 flex flex-col ${tone === "primary" ? "bg-gradient-to-br from-primary via-primary to-accent" : ""}`}
+    >
       <div className="flex-1 flex flex-col w-full max-w-7xl mx-auto">{children}</div>
     </section>
   );
@@ -658,7 +917,19 @@ function SlideHeader({ title, subtitle }: { title: string; subtitle?: string }) 
   );
 }
 
-function Kpi({ icon: Icon, label, value, sub, good }: { icon: any; label: string; value: string; sub?: string; good?: boolean }) {
+function Kpi({
+  icon: Icon,
+  label,
+  value,
+  sub,
+  good,
+}: {
+  icon: any;
+  label: string;
+  value: string;
+  sub?: string;
+  good?: boolean;
+}) {
   return (
     <Card className="bg-card/95 backdrop-blur">
       <CardContent className="pt-6">
@@ -666,14 +937,28 @@ function Kpi({ icon: Icon, label, value, sub, good }: { icon: any; label: string
           <span className="text-xs uppercase tracking-wide text-muted-foreground">{label}</span>
           <Icon className="h-5 w-5 text-primary" />
         </div>
-        <div className={`text-3xl font-bold ${good === false ? "text-destructive" : good === true ? "text-success" : ""}`}>{value}</div>
+        <div
+          className={`text-3xl font-bold ${good === false ? "text-destructive" : good === true ? "text-success" : ""}`}
+        >
+          {value}
+        </div>
         {sub && <div className="text-xs text-muted-foreground mt-1">{sub}</div>}
       </CardContent>
     </Card>
   );
 }
 
-function StatCard({ label, value, tone, icon: Icon }: { label: string; value: number; tone: string; icon?: any }) {
+function StatCard({
+  label,
+  value,
+  tone,
+  icon: Icon,
+}: {
+  label: string;
+  value: number;
+  tone: string;
+  icon?: any;
+}) {
   return (
     <div className={`rounded-lg p-4 ${tone}`}>
       <div className="flex items-center justify-between">
@@ -690,8 +975,14 @@ function Empty({ msg }: { msg: string }) {
 }
 
 function FiltroMes({
-  value, onChange, meses,
-}: { value: string; onChange: (v: string) => void; meses: string[] }) {
+  value,
+  onChange,
+  meses,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  meses: string[];
+}) {
   return (
     <Select value={value} onValueChange={onChange}>
       <SelectTrigger className="w-48">
@@ -700,7 +991,9 @@ function FiltroMes({
       <SelectContent>
         <SelectItem value="all">Todos os meses</SelectItem>
         {meses.map((m) => (
-          <SelectItem key={m} value={m}>{fmtMes(m)}</SelectItem>
+          <SelectItem key={m} value={m}>
+            {fmtMes(m)}
+          </SelectItem>
         ))}
       </SelectContent>
     </Select>
@@ -708,8 +1001,12 @@ function FiltroMes({
 }
 
 function FiltroGrupo({
-  value, onChange,
-}: { value: "all" | "midea" | "bosch"; onChange: (v: "all" | "midea" | "bosch") => void }) {
+  value,
+  onChange,
+}: {
+  value: "all" | "midea" | "bosch";
+  onChange: (v: "all" | "midea" | "bosch") => void;
+}) {
   return (
     <Tabs value={value} onValueChange={(v) => onChange(v as "all" | "midea" | "bosch")}>
       <TabsList>
@@ -722,8 +1019,12 @@ function FiltroGrupo({
 }
 
 function FiltroUnidade({
-  value, onChange,
-}: { value: "all" | UnidadeKey; onChange: (v: "all" | UnidadeKey) => void }) {
+  value,
+  onChange,
+}: {
+  value: "all" | UnidadeKey;
+  onChange: (v: "all" | UnidadeKey) => void;
+}) {
   return (
     <Select value={value} onValueChange={(v) => onChange(v as "all" | UnidadeKey)}>
       <SelectTrigger className="w-56">
@@ -732,7 +1033,9 @@ function FiltroUnidade({
       <SelectContent>
         <SelectItem value="all">Todas as operações</SelectItem>
         {UNIDADES.map((u) => (
-          <SelectItem key={u.key} value={u.key}>{u.label}</SelectItem>
+          <SelectItem key={u.key} value={u.key}>
+            {u.label}
+          </SelectItem>
         ))}
       </SelectContent>
     </Select>
@@ -740,12 +1043,20 @@ function FiltroUnidade({
 }
 
 type UnidadeKpi = {
-  key: UnidadeKey; label: string; grupo: "midea" | "bosch";
-  volume: number; headcount: number; prod: number; meses: number;
+  key: UnidadeKey;
+  label: string;
+  grupo: "midea" | "bosch";
+  volume: number;
+  headcount: number;
+  prod: number;
+  meses: number;
 };
 
 function GrupoBlock({
-  titulo, tone, total, unidades,
+  titulo,
+  tone,
+  total,
+  unidades,
 }: {
   titulo: string;
   tone: string;
@@ -775,17 +1086,27 @@ function GrupoBlock({
             const ok = u.prod >= META_PRODUTIVIDADE;
             return (
               <div key={u.key} className="rounded-lg border bg-card p-4">
-                <div className="text-xs uppercase tracking-wide text-muted-foreground">{u.label}</div>
+                <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                  {u.label}
+                </div>
                 <div className="mt-2 grid grid-cols-3 gap-2">
                   <Stat label="Vol." value={u.volume.toLocaleString("pt-BR")} />
                   <Stat label="HC" value={u.headcount.toLocaleString("pt-BR")} />
                   <Stat
                     label="Prod."
                     value={u.prod.toFixed(1)}
-                    className={u.meses === 0 ? "text-muted-foreground" : ok ? "text-success" : "text-destructive"}
+                    className={
+                      u.meses === 0
+                        ? "text-muted-foreground"
+                        : ok
+                          ? "text-success"
+                          : "text-destructive"
+                    }
                   />
                 </div>
-                {u.meses === 0 && <div className="text-[11px] text-muted-foreground mt-2">Sem cadastros</div>}
+                {u.meses === 0 && (
+                  <div className="text-[11px] text-muted-foreground mt-2">Sem cadastros</div>
+                )}
               </div>
             );
           })}
@@ -799,7 +1120,11 @@ function MiniKpi({ label, value, good }: { label: string; value: string; good?: 
   return (
     <div className="rounded-md bg-card border px-3 py-2 text-right min-w-24">
       <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</div>
-      <div className={`text-lg font-bold ${good === false ? "text-destructive" : good === true ? "text-success" : ""}`}>{value}</div>
+      <div
+        className={`text-lg font-bold ${good === false ? "text-destructive" : good === true ? "text-success" : ""}`}
+      >
+        {value}
+      </div>
     </div>
   );
 }

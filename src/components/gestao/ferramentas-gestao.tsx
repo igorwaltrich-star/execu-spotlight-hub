@@ -41,7 +41,9 @@ export function FerramentasGestao() {
           })}
         </nav>
       </Card>
-      <div><Current /></div>
+      <div>
+        <Current />
+      </div>
     </div>
   );
 }
