@@ -16,6 +16,11 @@ export type AnalyseResult = {
   resumo: string;
   pontosCriticos: { titulo: string; descricao: string; severidade: "alta" | "media" }[];
   oportunidades: { titulo: string; descricao: string; acao: string }[];
+  embarquesCriticos?: {
+    colunas: string[];
+    linhas: string[][];
+    observacao?: string;
+  };
 };
 
 const tool = {
@@ -61,6 +66,31 @@ const tool = {
             additionalProperties: false,
           },
         },
+        embarquesCriticos: {
+          type: "object",
+          description:
+            "Tabela consolidada dos embarques/pedidos sinalizados como críticos extraídos dos relatórios. Inclua somente registros realmente críticos (atraso, risco de SLA, parado, divergência). Se não houver dados tabulares de embarques nos arquivos, omita este campo.",
+          properties: {
+            colunas: {
+              type: "array",
+              minItems: 2,
+              maxItems: 8,
+              items: { type: "string" },
+              description:
+                "Cabeçalhos das colunas. Sugestões: Pedido, Cliente, Unidade, Data Prevista, Status, Motivo, Dias em Atraso.",
+            },
+            linhas: {
+              type: "array",
+              minItems: 1,
+              maxItems: 30,
+              items: { type: "array", items: { type: "string" } },
+              description: "Cada linha deve ter o mesmo número de elementos que 'colunas'.",
+            },
+            observacao: { type: "string" },
+          },
+          required: ["colunas", "linhas"],
+          additionalProperties: false,
+        },
       },
       required: ["resumo", "pontosCriticos", "oportunidades"],
       additionalProperties: false,
@@ -74,7 +104,7 @@ export const analyzePerformanceReport = createServerFn({ method: "POST" })
     const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY não configurada");
 
-    const systemPrompt = `Você é um consultor sênior de operações e performance. Analise os relatórios operacionais enviados (planilhas, CSVs ou PDFs) e gere insights acionáveis em português do Brasil. Seja específico: cite números, unidades, indicadores (SLA, OTCC, produtividade, headcount, turnover) sempre que possível a partir dos dados. Caso o conteúdo seja parcial, faça inferências razoáveis e sinalize claramente. Sempre responda chamando a função registrar_analise_operacional.`;
+    const systemPrompt = `Você é um consultor sênior de operações e performance. Analise os relatórios operacionais enviados (planilhas, CSVs ou PDFs) e gere insights acionáveis em português do Brasil. Seja específico: cite números, unidades, indicadores (SLA, OTCC, produtividade, headcount, turnover) sempre que possível a partir dos dados. Quando os arquivos contiverem dados de embarques/pedidos, identifique aqueles em situação crítica (atrasados, em risco de SLA, parados, com divergência) e preencha o campo embarquesCriticos com uma tabela consolidada — escolha as colunas mais relevantes presentes nos dados (ex.: Pedido, Cliente, Unidade, Data Prevista, Status, Motivo, Dias em Atraso). Caso o conteúdo seja parcial, faça inferências razoáveis e sinalize claramente. Sempre responda chamando a função registrar_analise_operacional.`;
 
     const arquivosResumo = data.files
       .map((f, i) => {
