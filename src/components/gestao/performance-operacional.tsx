@@ -105,11 +105,6 @@ async function extractExcerpt(file: File): Promise<string | undefined> {
   return undefined;
 }
 
-const TIPO_LABEL: Record<TipoArquivo, string> = {
-  sla_midea: "SLA Midea",
-  sla_bosch: "SLA Bosch",
-  operacional: "Operacional",
-};
 
 const STATUS_LABEL: Record<"ok" | "atencao" | "critico", { label: string; cls: string }> = {
   ok: { label: "OK", cls: "bg-success/15 text-success border-success/30" },
