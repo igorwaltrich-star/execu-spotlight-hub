@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import * as XLSX from "xlsx";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useRealtimeTable } from "@/hooks/use-realtime-table";
@@ -29,7 +30,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Download, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { useColaboradores } from "./use-colaboradores";
 
@@ -65,6 +66,7 @@ export function ControleFerias() {
     },
   });
 
+  const fileRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
     colaborador_id: "",
@@ -73,6 +75,100 @@ export function ControleFerias() {
     previsao_saida: "",
     retorno: "",
     saldo_dias: 30,
+  });
+
+  const baixarModelo = () => {
+    const ws = XLSX.utils.json_to_sheet([
+      {
+        colaborador: "João Silva",
+        periodo_inicio: "2025-01-01",
+        periodo_fim: "2025-12-31",
+        previsao_saida: "2026-01-15",
+        retorno: "2026-02-14",
+        saldo_dias: 30,
+      },
+      {
+        colaborador: "Maria Souza",
+        periodo_inicio: "2024-06-01",
+        periodo_fim: "2025-05-31",
+        previsao_saida: "2025-07-01",
+        retorno: "2025-07-30",
+        saldo_dias: 20,
+      },
+    ]);
+    ws["!cols"] = [
+      { wch: 28 },
+      { wch: 16 },
+      { wch: 16 },
+      { wch: 16 },
+      { wch: 16 },
+      { wch: 12 },
+    ];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Férias");
+    XLSX.writeFile(wb, "modelo-ferias.xlsx");
+  };
+
+  const parseDate = (v: string): string | null => {
+    const s = v.trim();
+    if (!s) return null;
+    // ISO yyyy-mm-dd
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+    // dd/mm/yyyy
+    const br = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (br) return `${br[3]}-${br[2]}-${br[1]}`;
+    // Excel serial
+    const n = Number(s);
+    if (Number.isFinite(n) && n > 20000 && n < 80000) {
+      const d = XLSX.SSF.parse_date_code(n);
+      if (d) {
+        const mm = String(d.m).padStart(2, "0");
+        const dd = String(d.d).padStart(2, "0");
+        return `${d.y}-${mm}-${dd}`;
+      }
+    }
+    return null;
+  };
+
+  const importar = useMutation({
+    mutationFn: async (file: File) => {
+      if (!user) throw new Error("Não autenticado");
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, { type: "array" });
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      const json = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: "" });
+      const norm = (k: string) => k.toString().trim().toLowerCase();
+      const byNome = new Map(colabs.map((c) => [c.nome.trim().toLowerCase(), c.id]));
+      const records = json
+        .map((r) => {
+          const e: Record<string, string> = {};
+          Object.entries(r).forEach(([k, v]) => {
+            e[norm(k)] = String(v ?? "").trim();
+          });
+          const colaborador_id = byNome.get((e.colaborador || e.nome || "").toLowerCase());
+          if (!colaborador_id) return null;
+          return {
+            user_id: user.id,
+            colaborador_id,
+            periodo_inicio: parseDate(e.periodo_inicio || ""),
+            periodo_fim: parseDate(e.periodo_fim || ""),
+            previsao_saida: parseDate(e.previsao_saida || ""),
+            retorno: parseDate(e.retorno || ""),
+            saldo_dias: Number(e.saldo_dias) || 30,
+          };
+        })
+        .filter((r): r is NonNullable<typeof r> => r !== null);
+      if (records.length === 0)
+        throw new Error("Nenhuma linha válida (colaborador deve existir no cadastro)");
+      const { error } = await supabase.from("controle_ferias").insert(records);
+      if (error) throw error;
+      return records.length;
+    },
+    onSuccess: (n) => {
+      toast.success(`${n} registro(s) importado(s)`);
+      qc.invalidateQueries({ queryKey: ["controle_ferias"] });
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Erro ao importar"),
   });
 
   const add = useMutation({
@@ -118,15 +214,40 @@ export function ControleFerias() {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader className="flex flex-row items-center justify-between gap-2 flex-wrap">
         <CardTitle>Controle de Férias</CardTitle>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm">
-              <Plus className="h-4 w-4 mr-1" />
-              Adicionar
-            </Button>
-          </DialogTrigger>
+        <div className="flex gap-2 flex-wrap">
+          <Button size="sm" variant="outline" onClick={baixarModelo}>
+            <Download className="h-4 w-4 mr-1" />
+            Modelo
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => fileRef.current?.click()}
+            disabled={importar.isPending}
+          >
+            <Upload className="h-4 w-4 mr-1" />
+            {importar.isPending ? "Importando..." : "Importar"}
+          </Button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".xlsx,.xls,.csv"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) importar.mutate(f);
+              e.target.value = "";
+            }}
+          />
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm">
+                <Plus className="h-4 w-4 mr-1" />
+                Adicionar
+              </Button>
+            </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Novo registro</DialogTitle>
@@ -198,6 +319,7 @@ export function ControleFerias() {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </CardHeader>
       <CardContent>
         <Table>

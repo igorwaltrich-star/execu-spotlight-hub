@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import * as XLSX from "xlsx";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useRealtimeTable } from "@/hooks/use-realtime-table";
@@ -30,7 +31,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Download, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { useColaboradores } from "./use-colaboradores";
 
@@ -61,10 +62,66 @@ export function EscalaHomeOffice() {
     },
   });
 
+  const fileRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
   const [colaboradorId, setColaboradorId] = useState("");
   const [dias, setDias] = useState<string[]>([]);
   const [status, setStatus] = useState<"ativo" | "pausado">("ativo");
+
+  const baixarModelo = () => {
+    const ws = XLSX.utils.json_to_sheet([
+      { colaborador: "João Silva", dias_semana: "Seg,Ter,Qua", status: "ativo" },
+      { colaborador: "Maria Souza", dias_semana: "Qui,Sex", status: "pausado" },
+    ]);
+    ws["!cols"] = [{ wch: 28 }, { wch: 24 }, { wch: 14 }];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Home Office");
+    XLSX.writeFile(wb, "modelo-home-office.xlsx");
+  };
+
+  const importar = useMutation({
+    mutationFn: async (file: File) => {
+      if (!user) throw new Error("Não autenticado");
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, { type: "array" });
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      const json = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: "" });
+      const norm = (k: string) => k.toString().trim().toLowerCase();
+      const byNome = new Map(colabs.map((c) => [c.nome.trim().toLowerCase(), c.id]));
+      const records = json
+        .map((r) => {
+          const e: Record<string, string> = {};
+          Object.entries(r).forEach(([k, v]) => {
+            e[norm(k)] = String(v ?? "").trim();
+          });
+          const nomeKey = (e.colaborador || e.nome || "").toLowerCase();
+          const colaborador_id = byNome.get(nomeKey);
+          if (!colaborador_id) return null;
+          const diasArr = (e["dias_semana"] || e["dias"] || "")
+            .split(/[,;|]/)
+            .map((s) => s.trim())
+            .filter((s) => DIAS.includes(s));
+          const st = (e.status || "ativo").toLowerCase();
+          return {
+            user_id: user.id,
+            colaborador_id,
+            dias_semana: diasArr,
+            status: st === "pausado" ? "pausado" : "ativo",
+          } as const;
+        })
+        .filter((r): r is NonNullable<typeof r> => r !== null);
+      if (records.length === 0)
+        throw new Error("Nenhuma linha válida (colaborador deve existir no cadastro)");
+      const { error } = await supabase.from("escala_home_office").insert(records);
+      if (error) throw error;
+      return records.length;
+    },
+    onSuccess: (n) => {
+      toast.success(`${n} escala(s) importada(s)`);
+      qc.invalidateQueries({ queryKey: ["escala_home_office"] });
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Erro ao importar"),
+  });
 
   const add = useMutation({
     mutationFn: async () => {
@@ -97,15 +154,40 @@ export function EscalaHomeOffice() {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader className="flex flex-row items-center justify-between gap-2 flex-wrap">
         <CardTitle>Escala Home Office</CardTitle>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm">
-              <Plus className="h-4 w-4 mr-1" />
-              Adicionar
-            </Button>
-          </DialogTrigger>
+        <div className="flex gap-2 flex-wrap">
+          <Button size="sm" variant="outline" onClick={baixarModelo}>
+            <Download className="h-4 w-4 mr-1" />
+            Modelo
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => fileRef.current?.click()}
+            disabled={importar.isPending}
+          >
+            <Upload className="h-4 w-4 mr-1" />
+            {importar.isPending ? "Importando..." : "Importar"}
+          </Button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".xlsx,.xls,.csv"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) importar.mutate(f);
+              e.target.value = "";
+            }}
+          />
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm">
+                <Plus className="h-4 w-4 mr-1" />
+                Adicionar
+              </Button>
+            </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Nova escala</DialogTitle>
@@ -160,6 +242,7 @@ export function EscalaHomeOffice() {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </CardHeader>
       <CardContent>
         <Table>
