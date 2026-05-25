@@ -245,13 +245,43 @@ export function PerformanceOperacional() {
           {result.embarquesCriticos && result.embarquesCriticos.linhas.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TableIcon className="h-5 w-5 text-destructive" />
-                  Embarques Sinalizados como Críticos
-                </CardTitle>
-                {result.embarquesCriticos.observacao && (
-                  <CardDescription>{result.embarquesCriticos.observacao}</CardDescription>
-                )}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="space-y-1">
+                    <CardTitle className="flex items-center gap-2">
+                      <TableIcon className="h-5 w-5 text-destructive" />
+                      Embarques Sinalizados como Críticos
+                    </CardTitle>
+                    {result.embarquesCriticos.observacao && (
+                      <CardDescription>{result.embarquesCriticos.observacao}</CardDescription>
+                    )}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const { colunas, linhas } = result.embarquesCriticos!;
+                      const aoa = [colunas, ...linhas];
+                      const ws = XLSX.utils.aoa_to_sheet(aoa);
+                      ws["!cols"] = colunas.map((c) => ({
+                        wch: Math.max(
+                          12,
+                          Math.min(
+                            40,
+                            Math.max(c.length, ...linhas.map((l) => (l[0] ?? "").length)) + 2,
+                          ),
+                        ),
+                      }));
+                      const wb = XLSX.utils.book_new();
+                      XLSX.utils.book_append_sheet(wb, ws, "Embarques Críticos");
+                      const ts = new Date().toISOString().slice(0, 10);
+                      XLSX.writeFile(wb, `embarques-criticos-${ts}.xlsx`);
+                      toast.success("Tabela exportada");
+                    }}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Exportar Excel
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="rounded-md border overflow-x-auto">
