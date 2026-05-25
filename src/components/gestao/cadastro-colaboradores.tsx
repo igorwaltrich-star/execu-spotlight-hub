@@ -1,5 +1,6 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRef, useState } from "react";
+import * as XLSX from "xlsx";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useRealtimeTable } from "@/hooks/use-realtime-table";
@@ -22,7 +23,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Download, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { useColaboradores } from "./use-colaboradores";
 
@@ -31,6 +32,7 @@ export function CadastroColaboradores() {
   const qc = useQueryClient();
   useRealtimeTable("colaboradores", ["colaboradores"]);
   const { data: rows = [] } = useColaboradores();
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const [open, setOpen] = useState(false);
   const [nome, setNome] = useState("");
@@ -65,40 +67,111 @@ export function CadastroColaboradores() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["colaboradores"] }),
   });
 
+  const importar = useMutation({
+    mutationFn: async (file: File) => {
+      if (!user) throw new Error("Não autenticado");
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, { type: "array" });
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      const json = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: "" });
+      const norm = (k: string) => k.toString().trim().toLowerCase();
+      const records = json
+        .map((r) => {
+          const entries: Record<string, string> = {};
+          Object.entries(r).forEach(([k, v]) => {
+            entries[norm(k)] = String(v ?? "").trim();
+          });
+          return {
+            user_id: user.id,
+            nome: entries.nome || entries.colaborador || "",
+            cargo: entries.cargo || "",
+            area: entries["área"] || entries.area || "",
+          };
+        })
+        .filter((r) => r.nome);
+      if (records.length === 0) throw new Error("Nenhuma linha válida (coluna 'nome' obrigatória)");
+      const { error } = await supabase.from("colaboradores").insert(records);
+      if (error) throw error;
+      return records.length;
+    },
+    onSuccess: (n) => {
+      toast.success(`${n} colaborador(es) importado(s)`);
+      qc.invalidateQueries({ queryKey: ["colaboradores"] });
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Erro ao importar"),
+  });
+
+  const baixarModelo = () => {
+    const ws = XLSX.utils.json_to_sheet([
+      { nome: "João Silva", cargo: "Analista", area: "Operações" },
+      { nome: "Maria Souza", cargo: "Coordenadora", area: "Logística" },
+    ]);
+    ws["!cols"] = [{ wch: 28 }, { wch: 22 }, { wch: 22 }];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Colaboradores");
+    XLSX.writeFile(wb, "modelo-colaboradores.xlsx");
+  };
+
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader className="flex flex-row items-center justify-between gap-2 flex-wrap">
         <CardTitle>Colaboradores</CardTitle>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm">
-              <Plus className="h-4 w-4 mr-1" />
-              Adicionar
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Novo colaborador</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-3">
-              <div>
-                <Label>Nome</Label>
-                <Input value={nome} onChange={(e) => setNome(e.target.value)} />
-              </div>
-              <div>
-                <Label>Cargo</Label>
-                <Input value={cargo} onChange={(e) => setCargo(e.target.value)} />
-              </div>
-              <div>
-                <Label>Área</Label>
-                <Input value={area} onChange={(e) => setArea(e.target.value)} />
-              </div>
-              <Button onClick={() => add.mutate()} disabled={add.isPending} className="w-full">
-                Salvar
+        <div className="flex gap-2 flex-wrap">
+          <Button size="sm" variant="outline" onClick={baixarModelo}>
+            <Download className="h-4 w-4 mr-1" />
+            Modelo
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => fileRef.current?.click()}
+            disabled={importar.isPending}
+          >
+            <Upload className="h-4 w-4 mr-1" />
+            {importar.isPending ? "Importando..." : "Importar"}
+          </Button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".xlsx,.xls,.csv"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) importar.mutate(f);
+              e.target.value = "";
+            }}
+          />
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm">
+                <Plus className="h-4 w-4 mr-1" />
+                Adicionar
               </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Novo colaborador</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3">
+                <div>
+                  <Label>Nome</Label>
+                  <Input value={nome} onChange={(e) => setNome(e.target.value)} />
+                </div>
+                <div>
+                  <Label>Cargo</Label>
+                  <Input value={cargo} onChange={(e) => setCargo(e.target.value)} />
+                </div>
+                <div>
+                  <Label>Área</Label>
+                  <Input value={area} onChange={(e) => setArea(e.target.value)} />
+                </div>
+                <Button onClick={() => add.mutate()} disabled={add.isPending} className="w-full">
+                  Salvar
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
       </CardHeader>
       <CardContent>
         <Table>
