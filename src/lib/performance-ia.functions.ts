@@ -104,7 +104,7 @@ export const analyzePerformanceReport = createServerFn({ method: "POST" })
     const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY não configurada");
 
-    const systemPrompt = `Você é um consultor sênior de operações e performance. Analise os relatórios operacionais enviados (planilhas, CSVs ou PDFs) e gere insights acionáveis em português do Brasil. Seja específico: cite números, unidades, indicadores (SLA, OTCC, produtividade, headcount, turnover) sempre que possível a partir dos dados. Caso o conteúdo seja parcial, faça inferências razoáveis e sinalize claramente. Sempre responda chamando a função registrar_analise_operacional.`;
+    const systemPrompt = `Você é um consultor sênior de operações e performance. Analise os relatórios operacionais enviados (planilhas, CSVs ou PDFs) e gere insights acionáveis em português do Brasil. Seja específico: cite números, unidades, indicadores (SLA, OTCC, produtividade, headcount, turnover) sempre que possível a partir dos dados. Quando os arquivos contiverem dados de embarques/pedidos, identifique aqueles em situação crítica (atrasados, em risco de SLA, parados, com divergência) e preencha o campo embarquesCriticos com uma tabela consolidada — escolha as colunas mais relevantes presentes nos dados (ex.: Pedido, Cliente, Unidade, Data Prevista, Status, Motivo, Dias em Atraso). Caso o conteúdo seja parcial, faça inferências razoáveis e sinalize claramente. Sempre responda chamando a função registrar_analise_operacional.`;
 
     const arquivosResumo = data.files
       .map((f, i) => {
