@@ -242,6 +242,7 @@ export function EscalaHomeOffice() {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </CardHeader>
       <CardContent>
         <Table>
