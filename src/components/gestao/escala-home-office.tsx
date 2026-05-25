@@ -62,10 +62,66 @@ export function EscalaHomeOffice() {
     },
   });
 
+  const fileRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
   const [colaboradorId, setColaboradorId] = useState("");
   const [dias, setDias] = useState<string[]>([]);
   const [status, setStatus] = useState<"ativo" | "pausado">("ativo");
+
+  const baixarModelo = () => {
+    const ws = XLSX.utils.json_to_sheet([
+      { colaborador: "João Silva", dias_semana: "Seg,Ter,Qua", status: "ativo" },
+      { colaborador: "Maria Souza", dias_semana: "Qui,Sex", status: "pausado" },
+    ]);
+    ws["!cols"] = [{ wch: 28 }, { wch: 24 }, { wch: 14 }];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Home Office");
+    XLSX.writeFile(wb, "modelo-home-office.xlsx");
+  };
+
+  const importar = useMutation({
+    mutationFn: async (file: File) => {
+      if (!user) throw new Error("Não autenticado");
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, { type: "array" });
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      const json = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: "" });
+      const norm = (k: string) => k.toString().trim().toLowerCase();
+      const byNome = new Map(colabs.map((c) => [c.nome.trim().toLowerCase(), c.id]));
+      const records = json
+        .map((r) => {
+          const e: Record<string, string> = {};
+          Object.entries(r).forEach(([k, v]) => {
+            e[norm(k)] = String(v ?? "").trim();
+          });
+          const nomeKey = (e.colaborador || e.nome || "").toLowerCase();
+          const colaborador_id = byNome.get(nomeKey);
+          if (!colaborador_id) return null;
+          const diasArr = (e["dias_semana"] || e["dias"] || "")
+            .split(/[,;|]/)
+            .map((s) => s.trim())
+            .filter((s) => DIAS.includes(s));
+          const st = (e.status || "ativo").toLowerCase();
+          return {
+            user_id: user.id,
+            colaborador_id,
+            dias_semana: diasArr,
+            status: st === "pausado" ? "pausado" : "ativo",
+          } as const;
+        })
+        .filter((r): r is NonNullable<typeof r> => r !== null);
+      if (records.length === 0)
+        throw new Error("Nenhuma linha válida (colaborador deve existir no cadastro)");
+      const { error } = await supabase.from("escala_home_office").insert(records);
+      if (error) throw error;
+      return records.length;
+    },
+    onSuccess: (n) => {
+      toast.success(`${n} escala(s) importada(s)`);
+      qc.invalidateQueries({ queryKey: ["escala_home_office"] });
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Erro ao importar"),
+  });
 
   const add = useMutation({
     mutationFn: async () => {
