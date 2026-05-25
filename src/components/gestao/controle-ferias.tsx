@@ -319,6 +319,7 @@ export function ControleFerias() {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </CardHeader>
       <CardContent>
         <Table>
