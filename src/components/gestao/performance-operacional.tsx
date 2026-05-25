@@ -6,6 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Upload,
   Sparkles,
@@ -19,6 +27,7 @@ import {
   FileType,
   TableIcon,
   Download,
+  ShieldCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -31,12 +40,18 @@ import {
 } from "@/components/ui/table";
 import { analyzePerformanceReport, type AnalyseResult } from "@/lib/performance-ia.functions";
 
+type TipoArquivo = "sla_midea" | "sla_bosch" | "operacional";
+type ArquivoItem = { file: File; tipo: TipoArquivo };
+
 const ACCEPT = {
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
   "application/vnd.ms-excel": [".xls"],
   "text/csv": [".csv"],
   "application/pdf": [".pdf"],
 };
+
+const MAX_CHARS_POR_ARQUIVO = 150_000;
+const MAX_CHARS_POR_ABA = 60_000;
 
 function fileIcon(name: string) {
   const n = name.toLowerCase();
@@ -45,22 +60,44 @@ function fileIcon(name: string) {
   return <FileSpreadsheet className="h-4 w-4 text-success" />;
 }
 
+function sheetToMarkdown(ws: XLSX.WorkSheet): string {
+  const rows = XLSX.utils.sheet_to_json<unknown[]>(ws, { header: 1, blankrows: false, defval: "" });
+  if (rows.length === 0) return "";
+  const maxCols = rows.reduce((m, r) => Math.max(m, r.length), 0);
+  const lines: string[] = [];
+  rows.forEach((r, idx) => {
+    const cells: string[] = [];
+    for (let i = 0; i < maxCols; i++) {
+      const v = r[i];
+      cells.push(v === null || v === undefined ? "" : String(v).replace(/\|/g, "/").replace(/\n/g, " ").trim());
+    }
+    lines.push(`| ${cells.join(" | ")} |`);
+    if (idx === 0) lines.push(`| ${cells.map(() => "---").join(" | ")} |`);
+  });
+  return lines.join("\n");
+}
+
 async function extractExcerpt(file: File): Promise<string | undefined> {
   const name = file.name.toLowerCase();
   try {
     if (name.endsWith(".csv")) {
       const text = await file.text();
-      return text.slice(0, 8000);
+      return text.slice(0, MAX_CHARS_POR_ARQUIVO);
     }
     if (name.endsWith(".xlsx") || name.endsWith(".xls")) {
       const buf = await file.arrayBuffer();
       const wb = XLSX.read(buf, { type: "array" });
       const parts: string[] = [];
-      for (const sheetName of wb.SheetNames.slice(0, 3)) {
-        const csv = XLSX.utils.sheet_to_csv(wb.Sheets[sheetName]);
-        parts.push(`# Aba: ${sheetName}\n${csv.slice(0, 4000)}`);
+      let total = 0;
+      for (const sheetName of wb.SheetNames) {
+        if (total >= MAX_CHARS_POR_ARQUIVO) break;
+        const md = sheetToMarkdown(wb.Sheets[sheetName]);
+        const restante = MAX_CHARS_POR_ARQUIVO - total;
+        const slice = md.slice(0, Math.min(MAX_CHARS_POR_ABA, restante));
+        parts.push(`## Aba: ${sheetName}\n${slice}`);
+        total += slice.length;
       }
-      return parts.join("\n\n").slice(0, 12000);
+      return parts.join("\n\n");
     }
   } catch {
     return undefined;
@@ -68,14 +105,29 @@ async function extractExcerpt(file: File): Promise<string | undefined> {
   return undefined;
 }
 
+const TIPO_LABEL: Record<TipoArquivo, string> = {
+  sla_midea: "SLA Midea",
+  sla_bosch: "SLA Bosch",
+  operacional: "Operacional",
+};
+
+const STATUS_LABEL: Record<"ok" | "atencao" | "critico", { label: string; cls: string }> = {
+  ok: { label: "OK", cls: "bg-success/15 text-success border-success/30" },
+  atencao: { label: "Atenção", cls: "bg-warning/15 text-warning border-warning/30" },
+  critico: { label: "Crítico", cls: "bg-destructive/15 text-destructive border-destructive/30" },
+};
+
 export function PerformanceOperacional() {
-  const [files, setFiles] = useState<File[]>([]);
+  const [items, setItems] = useState<ArquivoItem[]>([]);
   const [contexto, setContexto] = useState("");
+  const [metaPadrao, setMetaPadrao] = useState<number>(95);
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState<AnalyseResult | null>(null);
 
   const onDrop = useCallback((accepted: File[]) => {
-    setFiles((prev) => [...prev, ...accepted].slice(0, 10));
+    setItems((prev) =>
+      [...prev, ...accepted.map((f) => ({ file: f, tipo: "operacional" as TipoArquivo }))].slice(0, 10),
+    );
   }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -86,7 +138,7 @@ export function PerformanceOperacional() {
   });
 
   const handleAnalyze = async () => {
-    if (files.length === 0) {
+    if (items.length === 0) {
       toast.error("Adicione pelo menos um arquivo");
       return;
     }
@@ -94,14 +146,19 @@ export function PerformanceOperacional() {
     setResult(null);
     try {
       const filesPayload = await Promise.all(
-        files.map(async (f) => ({
-          name: f.name,
-          size: f.size,
-          excerpt: await extractExcerpt(f),
+        items.map(async (it) => ({
+          name: it.file.name,
+          size: it.file.size,
+          tipo: it.tipo,
+          excerpt: await extractExcerpt(it.file),
         })),
       );
       const data = await analyzePerformanceReport({
-        data: { files: filesPayload, contexto: contexto.trim() || undefined },
+        data: {
+          files: filesPayload,
+          contexto: contexto.trim() || undefined,
+          metaPadrao,
+        },
       });
       setResult(data);
       toast.success("Análise concluída");
@@ -121,8 +178,8 @@ export function PerformanceOperacional() {
             Análise Inteligente de Performance
           </CardTitle>
           <CardDescription>
-            Envie relatórios operacionais (.xlsx, .csv, .pdf) para receber insights, gargalos e
-            plano de ação gerados por IA.
+            Envie relatórios operacionais (.xlsx, .csv, .pdf) e classifique cada arquivo por tipo de
+            SLA. A IA aplica o checklist completo de validações.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -144,24 +201,41 @@ export function PerformanceOperacional() {
             </p>
           </div>
 
-          {files.length > 0 && (
+          {items.length > 0 && (
             <div className="space-y-2">
-              {files.map((f, i) => (
+              {items.map((it, i) => (
                 <div
                   key={i}
-                  className="flex items-center justify-between p-2 rounded-md border bg-muted/30"
+                  className="flex items-center justify-between p-2 rounded-md border bg-muted/30 gap-2"
                 >
-                  <div className="flex items-center gap-2 min-w-0">
-                    {fileIcon(f.name)}
-                    <span className="text-sm truncate">{f.name}</span>
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    {fileIcon(it.file.name)}
+                    <span className="text-sm truncate">{it.file.name}</span>
                     <span className="text-xs text-muted-foreground">
-                      {(f.size / 1024).toFixed(0)} KB
+                      {(it.file.size / 1024).toFixed(0)} KB
                     </span>
                   </div>
+                  <Select
+                    value={it.tipo}
+                    onValueChange={(v) =>
+                      setItems((prev) =>
+                        prev.map((p, j) => (j === i ? { ...p, tipo: v as TipoArquivo } : p)),
+                      )
+                    }
+                  >
+                    <SelectTrigger className="w-[160px] h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="sla_midea">SLA Midea</SelectItem>
+                      <SelectItem value="sla_bosch">SLA Bosch</SelectItem>
+                      <SelectItem value="operacional">Operacional</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <Button
                     size="icon"
                     variant="ghost"
-                    onClick={() => setFiles((prev) => prev.filter((_, j) => j !== i))}
+                    onClick={() => setItems((prev) => prev.filter((_, j) => j !== i))}
                   >
                     <X className="h-4 w-4" />
                   </Button>
@@ -170,21 +244,34 @@ export function PerformanceOperacional() {
             </div>
           )}
 
-          <div className="space-y-2">
-            <Label htmlFor="contexto-ia">Contexto adicional (opcional)</Label>
-            <Textarea
-              id="contexto-ia"
-              placeholder="Ex.: Foco em SLA OTCC dos últimos 60 dias, unidades Midea SC e RS..."
-              value={contexto}
-              onChange={(e) => setContexto(e.target.value)}
-              rows={3}
-              maxLength={2000}
-            />
+          <div className="grid grid-cols-1 md:grid-cols-[120px_1fr] gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="meta-padrao">Meta padrão (%)</Label>
+              <Input
+                id="meta-padrao"
+                type="number"
+                min={0}
+                max={100}
+                value={metaPadrao}
+                onChange={(e) => setMetaPadrao(Number(e.target.value) || 0)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="contexto-ia">Contexto adicional (opcional)</Label>
+              <Textarea
+                id="contexto-ia"
+                placeholder="Ex.: Foco em SLA OTCC dos últimos 60 dias, unidades Midea SC e RS..."
+                value={contexto}
+                onChange={(e) => setContexto(e.target.value)}
+                rows={3}
+                maxLength={2000}
+              />
+            </div>
           </div>
 
           <Button
             onClick={handleAnalyze}
-            disabled={analyzing || files.length === 0}
+            disabled={analyzing || items.length === 0}
             size="lg"
             className="w-full"
           >
@@ -213,9 +300,95 @@ export function PerformanceOperacional() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm leading-relaxed text-muted-foreground">{result.resumo}</p>
+              <p className="text-sm leading-relaxed text-muted-foreground whitespace-pre-wrap">
+                {result.resumo}
+              </p>
             </CardContent>
           </Card>
+
+          {result.validacoesSLA && result.validacoesSLA.length > 0 && (
+            <Card>
+              <CardHeader>
+                <div className="flex items-start justify-between gap-3">
+                  <CardTitle className="flex items-center gap-2">
+                    <ShieldCheck className="h-5 w-5 text-primary" />
+                    Validações de SLA
+                  </CardTitle>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const v = result.validacoesSLA!;
+                      const aoa = [
+                        ["Indicador", "Unidade", "Meta", "Valor Médio", "Melhor Mês", "Pior Mês", "Status", "Justificativa"],
+                        ...v.map((x) => [
+                          x.indicador,
+                          x.unidade ?? "",
+                          x.meta,
+                          x.valorMedio,
+                          x.melhorMes ?? "",
+                          x.piorMes ?? "",
+                          STATUS_LABEL[x.status].label,
+                          x.justificativa,
+                        ]),
+                      ];
+                      const ws = XLSX.utils.aoa_to_sheet(aoa);
+                      ws["!cols"] = [12, 14, 8, 12, 14, 14, 10, 60].map((w) => ({ wch: w }));
+                      const wb = XLSX.utils.book_new();
+                      XLSX.utils.book_append_sheet(wb, ws, "Validações SLA");
+                      const ts = new Date().toISOString().slice(0, 10);
+                      XLSX.writeFile(wb, `validacoes-sla-${ts}.xlsx`);
+                      toast.success("Validações exportadas");
+                    }}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Exportar Excel
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="rounded-md border overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Indicador</TableHead>
+                        <TableHead>Unidade</TableHead>
+                        <TableHead>Meta</TableHead>
+                        <TableHead>Médio</TableHead>
+                        <TableHead>Melhor</TableHead>
+                        <TableHead>Pior</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="min-w-[280px]">Justificativa</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {result.validacoesSLA.map((v, i) => {
+                        const s = STATUS_LABEL[v.status];
+                        return (
+                          <TableRow key={i}>
+                            <TableCell className="font-medium">{v.indicador}</TableCell>
+                            <TableCell className="text-sm">{v.unidade ?? "-"}</TableCell>
+                            <TableCell className="text-sm">{v.meta}</TableCell>
+                            <TableCell className="text-sm font-medium">{v.valorMedio}</TableCell>
+                            <TableCell className="text-sm">{v.melhorMes ?? "-"}</TableCell>
+                            <TableCell className="text-sm">{v.piorMes ?? "-"}</TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className={s.cls}>
+                                {s.label}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {v.justificativa}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <Card>
             <CardHeader>
@@ -309,8 +482,6 @@ export function PerformanceOperacional() {
               </CardContent>
             </Card>
           )}
-
-
 
           <Card>
             <CardHeader>
