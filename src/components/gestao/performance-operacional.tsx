@@ -241,6 +241,46 @@ export function PerformanceOperacional() {
             </CardContent>
           </Card>
 
+          {result.embarquesCriticos && result.embarquesCriticos.linhas.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TableIcon className="h-5 w-5 text-destructive" />
+                  Embarques Sinalizados como Críticos
+                </CardTitle>
+                {result.embarquesCriticos.observacao && (
+                  <CardDescription>{result.embarquesCriticos.observacao}</CardDescription>
+                )}
+              </CardHeader>
+              <CardContent>
+                <div className="rounded-md border overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        {result.embarquesCriticos.colunas.map((c, i) => (
+                          <TableHead key={i}>{c}</TableHead>
+                        ))}
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {result.embarquesCriticos.linhas.map((linha, i) => (
+                        <TableRow key={i}>
+                          {linha.map((cel, j) => (
+                            <TableCell key={j} className="text-sm">
+                              {cel}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+
+
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
