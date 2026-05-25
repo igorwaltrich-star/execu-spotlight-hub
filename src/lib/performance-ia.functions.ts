@@ -16,6 +16,11 @@ export type AnalyseResult = {
   resumo: string;
   pontosCriticos: { titulo: string; descricao: string; severidade: "alta" | "media" }[];
   oportunidades: { titulo: string; descricao: string; acao: string }[];
+  embarquesCriticos?: {
+    colunas: string[];
+    linhas: string[][];
+    observacao?: string;
+  };
 };
 
 const tool = {
