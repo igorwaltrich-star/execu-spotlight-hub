@@ -66,6 +66,31 @@ const tool = {
             additionalProperties: false,
           },
         },
+        embarquesCriticos: {
+          type: "object",
+          description:
+            "Tabela consolidada dos embarques/pedidos sinalizados como críticos extraídos dos relatórios. Inclua somente registros realmente críticos (atraso, risco de SLA, parado, divergência). Se não houver dados tabulares de embarques nos arquivos, omita este campo.",
+          properties: {
+            colunas: {
+              type: "array",
+              minItems: 2,
+              maxItems: 8,
+              items: { type: "string" },
+              description:
+                "Cabeçalhos das colunas. Sugestões: Pedido, Cliente, Unidade, Data Prevista, Status, Motivo, Dias em Atraso.",
+            },
+            linhas: {
+              type: "array",
+              minItems: 1,
+              maxItems: 30,
+              items: { type: "array", items: { type: "string" } },
+              description: "Cada linha deve ter o mesmo número de elementos que 'colunas'.",
+            },
+            observacao: { type: "string" },
+          },
+          required: ["colunas", "linhas"],
+          additionalProperties: false,
+        },
       },
       required: ["resumo", "pontosCriticos", "oportunidades"],
       additionalProperties: false,
