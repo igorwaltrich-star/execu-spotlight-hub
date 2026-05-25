@@ -17,8 +17,17 @@ import {
   X,
   FileSpreadsheet,
   FileType,
+  TableIcon,
 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { analyzePerformanceReport, type AnalyseResult } from "@/lib/performance-ia.functions";
 
 const ACCEPT = {
