@@ -4,16 +4,30 @@ import { z } from "zod";
 const fileSchema = z.object({
   name: z.string().min(1).max(255),
   size: z.number().min(0),
-  excerpt: z.string().max(20000).optional(),
+  tipo: z.enum(["sla_midea", "sla_bosch", "operacional"]).default("operacional"),
+  excerpt: z.string().max(200000).optional(),
 });
 
 const inputSchema = z.object({
   files: z.array(fileSchema).min(1).max(10),
   contexto: z.string().max(2000).optional(),
+  metaPadrao: z.number().min(0).max(100).default(95),
 });
+
+export type ValidacaoSLA = {
+  indicador: string;
+  unidade?: string;
+  meta: string;
+  valorMedio: string;
+  melhorMes?: string;
+  piorMes?: string;
+  status: "ok" | "atencao" | "critico";
+  justificativa: string;
+};
 
 export type AnalyseResult = {
   resumo: string;
+  validacoesSLA?: ValidacaoSLA[];
   pontosCriticos: { titulo: string; descricao: string; severidade: "alta" | "media" }[];
   oportunidades: { titulo: string; descricao: string; acao: string }[];
   embarquesCriticos?: {
@@ -27,19 +41,44 @@ const tool = {
   type: "function",
   function: {
     name: "registrar_analise_operacional",
-    description: "Registra a análise consolidada de relatórios operacionais.",
+    description: "Registra a análise consolidada de relatórios operacionais e SLA.",
     parameters: {
       type: "object",
       properties: {
         resumo: {
           type: "string",
           description:
-            "Resumo executivo (3-6 frases) sobre o cenário operacional, com números concretos quando possível.",
+            "Resumo executivo (4-8 frases) com números concretos: indicadores médios, % vs meta, melhores e piores períodos, unidades em destaque.",
+        },
+        validacoesSLA: {
+          type: "array",
+          description:
+            "Validações por indicador de SLA encontrado nos arquivos (OTD, OTCC, SOTD, Start-up, Pinho, Dig.Conf, Desvios, etc.). Preencha SEMPRE que os arquivos contiverem dados tabulares de SLA. Status: ok (>= meta), atencao (até 3pp abaixo da meta), critico (mais de 3pp abaixo).",
+          minItems: 0,
+          maxItems: 20,
+          items: {
+            type: "object",
+            properties: {
+              indicador: { type: "string", description: "Nome do indicador. Ex.: OTD, OTCC, SOTD." },
+              unidade: { type: "string", description: "Unidade/cliente quando aplicável (Midea SC, Bosch, etc.)." },
+              meta: { type: "string", description: "Meta usada (ex.: '95%')." },
+              valorMedio: { type: "string", description: "Valor médio do período (ex.: '92,4%')." },
+              melhorMes: { type: "string" },
+              piorMes: { type: "string" },
+              status: { type: "string", enum: ["ok", "atencao", "critico"] },
+              justificativa: {
+                type: "string",
+                description: "Justificativa objetiva (1-3 frases) com tendência, outliers e causas prováveis.",
+              },
+            },
+            required: ["indicador", "meta", "valorMedio", "status", "justificativa"],
+            additionalProperties: false,
+          },
         },
         pontosCriticos: {
           type: "array",
           minItems: 2,
-          maxItems: 6,
+          maxItems: 8,
           items: {
             type: "object",
             properties: {
@@ -54,7 +93,7 @@ const tool = {
         oportunidades: {
           type: "array",
           minItems: 2,
-          maxItems: 6,
+          maxItems: 8,
           items: {
             type: "object",
             properties: {
@@ -76,15 +115,12 @@ const tool = {
               minItems: 2,
               maxItems: 8,
               items: { type: "string" },
-              description:
-                "Cabeçalhos das colunas. Sugestões: Pedido, Cliente, Unidade, Data Prevista, Status, Motivo, Dias em Atraso.",
             },
             linhas: {
               type: "array",
               minItems: 1,
-              maxItems: 30,
+              maxItems: 50,
               items: { type: "array", items: { type: "string" } },
-              description: "Cada linha deve ter o mesmo número de elementos que 'colunas'.",
             },
             observacao: { type: "string" },
           },
@@ -104,16 +140,34 @@ export const analyzePerformanceReport = createServerFn({ method: "POST" })
     const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY não configurada");
 
-    const systemPrompt = `Você é um consultor sênior de operações e performance. Analise os relatórios operacionais enviados (planilhas, CSVs ou PDFs) e gere insights acionáveis em português do Brasil. Seja específico: cite números, unidades, indicadores (SLA, OTCC, produtividade, headcount, turnover) sempre que possível a partir dos dados. Quando os arquivos contiverem dados de embarques/pedidos, identifique aqueles em situação crítica (atrasados, em risco de SLA, parados, com divergência) e preencha o campo embarquesCriticos com uma tabela consolidada — escolha as colunas mais relevantes presentes nos dados (ex.: Pedido, Cliente, Unidade, Data Prevista, Status, Motivo, Dias em Atraso). Caso o conteúdo seja parcial, faça inferências razoáveis e sinalize claramente. Sempre responda chamando a função registrar_analise_operacional.`;
+    const meta = data.metaPadrao ?? 95;
+
+    const systemPrompt = `Você é um consultor sênior de operações logísticas e SLA. Analise os relatórios enviados em português do Brasil com rigor analítico.
+
+META PADRÃO DE TODOS OS INDICADORES: ${meta}% (a menos que o arquivo explicite outra).
+
+CHECKLIST OBRIGATÓRIO DE VALIDAÇÕES DE SLA (preencha validacoesSLA quando houver dados):
+1. Para CADA indicador encontrado (OTD, OTCC, SOTD, Start-up, Pinho, Dig.Conf, Desvios, produtividade, etc.), calcule média do período, melhor mês, pior mês.
+2. Classifique status: "ok" se média >= ${meta}%, "atencao" se entre ${meta - 3}% e ${meta}%, "critico" se < ${meta - 3}%.
+3. Identifique TENDÊNCIA (crescente/decrescente/estável) comparando primeiros vs últimos meses.
+4. Aponte OUTLIERS (meses muito fora da média) e UNIDADES fora da curva.
+5. Verifique CORRELAÇÕES quando aplicável: volume × produtividade × SLA.
+6. Sinalize indicadores PRÓXIMOS DO LIMITE (entre meta e meta+2pp) como risco.
+7. Liste em pontosCriticos os indicadores em "critico" ou com queda relevante (>3pp mês a mês).
+8. Quando houver dados de embarques/pedidos, preencha embarquesCriticos com colunas relevantes (Pedido, Cliente, Unidade, Data Prevista, Status, Motivo, Dias em Atraso).
+
+Seja específico: cite NÚMEROS, MESES, UNIDADES. Nunca generalize sem dado. Sempre responda chamando a função registrar_analise_operacional.`;
 
     const arquivosResumo = data.files
       .map((f, i) => {
-        const head = `Arquivo ${i + 1}: ${f.name} (${(f.size / 1024).toFixed(0)} KB)`;
-        return f.excerpt ? `${head}\nConteúdo (parcial):\n${f.excerpt}` : head;
+        const tipoLabel =
+          f.tipo === "sla_midea" ? "SLA Midea" : f.tipo === "sla_bosch" ? "SLA Bosch" : "Operacional";
+        const head = `=== Arquivo ${i + 1}: ${f.name} (${(f.size / 1024).toFixed(0)} KB) | Tipo: ${tipoLabel} ===`;
+        return f.excerpt ? `${head}\n${f.excerpt}` : `${head}\n[sem conteúdo extraído]`;
       })
-      .join("\n\n---\n\n");
+      .join("\n\n");
 
-    const userPrompt = `${data.contexto ? `Contexto adicional: ${data.contexto}\n\n` : ""}Relatórios recebidos:\n\n${arquivosResumo}\n\nGere a análise estruturada chamando a função.`;
+    const userPrompt = `${data.contexto ? `Contexto adicional do usuário: ${data.contexto}\n\n` : ""}Relatórios recebidos:\n\n${arquivosResumo}\n\nExecute o checklist completo e chame a função registrar_analise_operacional.`;
 
     const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
