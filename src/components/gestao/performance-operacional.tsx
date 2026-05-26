@@ -54,6 +54,38 @@ const ACCEPT = {
 const MAX_CHARS_POR_ARQUIVO = 150_000;
 const MAX_CHARS_POR_ABA = 60_000;
 
+function formatDateBR(value: unknown): string {
+  if (value === null || value === undefined || value === "") return "";
+  const s = String(value).trim();
+  if (!s || s === "-" || s.toLowerCase() === "n/a") return s;
+  const br = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})$/);
+  if (br) {
+    const d = br[1].padStart(2, "0");
+    const m = br[2].padStart(2, "0");
+    const y = br[3].length === 4 ? br[3].slice(-2) : br[3];
+    return `${d}/${m}/${y}`;
+  }
+  if (/^\d{4,6}(\.\d+)?$/.test(s)) {
+    const serial = Number(s);
+    if (serial > 59 && serial < 80000) {
+      const ms = Math.round((serial - 25569) * 86400 * 1000);
+      const dt = new Date(ms);
+      if (!isNaN(dt.getTime())) return fmtDt(dt);
+    }
+  }
+  const dt = new Date(s);
+  if (!isNaN(dt.getTime()) && /\d{4}/.test(s)) return fmtDt(dt);
+  return s;
+}
+
+function fmtDt(dt: Date): string {
+  const d = String(dt.getUTCDate()).padStart(2, "0");
+  const m = String(dt.getUTCMonth() + 1).padStart(2, "0");
+  const y = String(dt.getUTCFullYear()).slice(-2);
+  return `${d}/${m}/${y}`;
+}
+
+
 function fileIcon(name: string) {
   const n = name.toLowerCase();
   if (n.endsWith(".pdf")) return <FileType className="h-4 w-4 text-destructive" />;
