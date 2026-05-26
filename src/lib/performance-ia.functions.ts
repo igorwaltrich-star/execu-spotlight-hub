@@ -119,6 +119,29 @@ const tool = {
             additionalProperties: false,
           },
         },
+        desempenhoAnalistas: {
+          type: "array",
+          description:
+            "Análise comparativa de desempenho por analista/responsável. UMA linha por analista identificado no relatório, comparando atendimento de SLA, qualidade de preenchimento (campos em branco) e performance geral. Ordenar do pior para o melhor scorePerformance.",
+          maxItems: 50,
+          items: {
+            type: "object",
+            properties: {
+              analista: { type: "string", description: "Nome do analista/responsável." },
+              totalProcessos: { type: "string", description: "Quantidade total de processos sob responsabilidade." },
+              slaAtendidos: { type: "string", description: "Quantidade e % de processos dentro do SLA. Ex.: '42 (84%)'." },
+              slaVencidos: { type: "string", description: "Quantidade e % de processos com SLA vencido." },
+              percentualSLA: { type: "string", description: "% geral de atendimento ao SLA. Ex.: '84%'." },
+              camposEmBranco: { type: "string", description: "Quantidade total de campos obrigatórios em branco nos processos do analista (datas de confirmação, ETD, recebimento de docs, pré-alerta, etc.). Ex.: '17 campos'." },
+              backlogs: { type: "string", description: "Contagem de backlogs por tipo. Ex.: 'Produção: 3 | Embarque: 5 | Docs: 2 | Pré-Alerta: 1'." },
+              scorePerformance: { type: "string", description: "Score 0-100 ponderando: 60% atendimento SLA + 25% qualidade de preenchimento + 15% ausência de backlogs. Ex.: '72/100'." },
+              status: { type: "string", enum: ["ok", "atencao", "critico"], description: "ok se score>=85, atencao 70-84, critico <70." },
+              observacao: { type: "string", description: "1-2 frases destacando pontos fortes, fragilidades e principais gargalos do analista." },
+            },
+            required: ["analista", "totalProcessos", "slaAtendidos", "slaVencidos", "percentualSLA", "camposEmBranco", "backlogs", "scorePerformance", "status", "observacao"],
+            additionalProperties: false,
+          },
+        },
         embarquesCriticos: {
           type: "object",
           description:
