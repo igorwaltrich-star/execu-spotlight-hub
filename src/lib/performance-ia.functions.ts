@@ -191,6 +191,15 @@ Use estes prazos contratuais como base de validação para qualquer arquivo do t
 - APRESENTAÇÃO MENSAL DE KPI: mensal até dia 20.
 - RELATÓRIOS DE OPERAÇÃO, SUPORTE A SISTEMAS E PROJETOS: conforme necessidade/projeto.
 
+REGRAS ADICIONAIS DE BACKLOG (aplicar linha a linha quando o relatório tiver colunas de datas previstas/confirmadas/solicitadas):
+- BACKLOG PRODUÇÃO: se "Prev. EX Factory" > "EX Factory Solicitado" → alerta "Backlog Produção".
+- BACKLOG EMBARQUE: se "Prev. ETD" > "ETD Solicitado" → alerta "Backlog Embarque".
+- BACKLOG SEM CONFIRMAÇÃO: qualquer data de previsão de etapa no passado (< hoje) sem a respectiva data de confirmação preenchida → alerta "Backlog Sem Confirmação" (citar a etapa).
+- BACKLOG DOCUMENTOS: se houve confirmação de embarque há ≥ 15 dias e "Recebimento de Docs" está vazio → alerta "Atraso Docs Fornecedor / Backlog Documentos".
+- BACKLOG PRÉ-ALERTA: se passaram ≥ 22 dias da confirmação de embarque (ETD) e "Pré-Alerta KN" não está preenchido → alerta "Backlog Pré-Alerta".
+
+Cada ocorrência destes backlogs deve virar uma linha em embarquesCriticos (colunas sugeridas: Processo, Tipo de Backlog, Data Referência, Dias em Atraso, Etapa Pendente) e ser somarizada em pontosCriticos por tipo de backlog com severidade "alta" quando houver 3+ ocorrências ou risco de free time/SLA contratual.
+
 REGRAS DE VALIDAÇÃO MIDEA:
 a) Para CADA atividade acima encontrada no relatório, gere uma linha em validacoesSLA: "indicador" = nome da atividade, "meta" = prazo contratual (ex.: "72h", "7 dias corridos", "24h úteis"), "valorMedio" = tempo médio real cumprido pelos dados.
 b) Status: "ok" se cumprimento ≥ ${meta}% dos casos dentro do prazo, "atencao" entre ${meta - 3}% e ${meta}%, "critico" abaixo de ${meta - 3}% OU sempre que houver descumprimento de prazo bloqueante (free time, registro DI, LI antes da chegada, danfe pós-carregamento).
