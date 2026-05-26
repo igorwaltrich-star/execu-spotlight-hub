@@ -428,22 +428,63 @@ export function PerformanceOperacional() {
                     size="sm"
                     onClick={() => {
                       const { colunas, linhas } = result.embarquesCriticos!;
-                      const aoa = [colunas, ...linhas];
-                      const ws = XLSX.utils.aoa_to_sheet(aoa);
-                      ws["!cols"] = colunas.map((c) => ({
-                        wch: Math.max(
-                          12,
-                          Math.min(
-                            40,
-                            Math.max(c.length, ...linhas.map((l) => (l[0] ?? "").length)) + 2,
-                          ),
-                        ),
-                      }));
                       const wb = XLSX.utils.book_new();
-                      XLSX.utils.book_append_sheet(wb, ws, "Embarques Críticos");
+
+                      const buildSheet = (rows: string[][]) => {
+                        const ws = XLSX.utils.aoa_to_sheet([colunas, ...rows]);
+                        ws["!cols"] = colunas.map((c, idx) => ({
+                          wch: Math.max(
+                            12,
+                            Math.min(
+                              45,
+                              Math.max(c.length, ...rows.map((l) => (l[idx] ?? "").length)) + 2,
+                            ),
+                          ),
+                        }));
+                        return ws;
+                      };
+
+                      // Aba consolidada
+                      XLSX.utils.book_append_sheet(wb, buildSheet(linhas), "Todos");
+
+                      // Detecta coluna de analista
+                      const analistaIdx = colunas.findIndex((c) =>
+                        /analista|respons|usu[áa]rio|owner|operador|comprador|buyer|pic/i.test(c),
+                      );
+
+                      if (analistaIdx >= 0) {
+                        const grupos = new Map<string, string[][]>();
+                        for (const linha of linhas) {
+                          const nome = (linha[analistaIdx] ?? "").trim() || "Não atribuído";
+                          if (!grupos.has(nome)) grupos.set(nome, []);
+                          grupos.get(nome)!.push(linha);
+                        }
+                        // Resumo por analista
+                        const resumo = [
+                          ["Analista", "Total de Pendências"],
+                          ...Array.from(grupos.entries())
+                            .sort((a, b) => b[1].length - a[1].length)
+                            .map(([nome, rows]) => [nome, String(rows.length)]),
+                        ];
+                        const wsResumo = XLSX.utils.aoa_to_sheet(resumo);
+                        wsResumo["!cols"] = [{ wch: 35 }, { wch: 22 }];
+                        XLSX.utils.book_append_sheet(wb, wsResumo, "Resumo Analistas");
+
+                        // Uma aba por analista (nome sanitizado, max 31 chars)
+                        const usados = new Set<string>(["Todos", "Resumo Analistas"]);
+                        for (const [nome, rows] of grupos.entries()) {
+                          let base = nome.replace(/[\\/?*[\]:]/g, " ").trim().slice(0, 31) || "Sem Nome";
+                          let nomeAba = base;
+                          let n = 2;
+                          while (usados.has(nomeAba)) nomeAba = `${base.slice(0, 28)} ${n++}`;
+                          usados.add(nomeAba);
+                          XLSX.utils.book_append_sheet(wb, buildSheet(rows), nomeAba);
+                        }
+                      }
+
                       const ts = new Date().toISOString().slice(0, 10);
                       XLSX.writeFile(wb, `embarques-criticos-${ts}.xlsx`);
-                      toast.success("Tabela exportada");
+                      toast.success("Tabela exportada com pendências por analista");
                     }}
                   >
                     <Download className="h-4 w-4 mr-2" />
