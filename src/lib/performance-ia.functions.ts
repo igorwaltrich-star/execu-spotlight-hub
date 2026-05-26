@@ -249,6 +249,7 @@ META PADRÃO DE TODOS OS INDICADORES: ${meta}% (a menos que o arquivo explicite 
 
 CHECKLIST OBRIGATÓRIO DE VALIDAÇÕES DE SLA (preencha validacoesSLA quando houver dados):
 1. Para CADA indicador encontrado (OTD, OTCC, SOTD, Start-up, Pinho, Dig.Conf, Desvios, produtividade, etc.), calcule média do período, melhor mês, pior mês.
+   - MÉTRICA SOTD (Ship On Time Date) — REGRA FIXA: para CADA linha/processo, compare "Confirmação de ETD" (ou ETD Realizado/Confirmado) com "ETD Solicitado" (ou ETD Previsto/Planejado). Se Confirmação ETD <= ETD Solicitado → SOTD = "S" (atendido). Se Confirmação ETD > ETD Solicitado → SOTD = "N" (não atendido). Linhas sem confirmação de ETD ainda dentro da previsão NÃO entram no cálculo. % SOTD = (qtd "S" / total avaliado) * 100. Aplique esta regra ao calcular SOTD em validacoesSLA e ao classificar embarques em embarquesCriticos (atraso de ETD).
 2. Classifique status: "ok" se média >= ${meta}%, "atencao" se entre ${meta - 3}% e ${meta}%, "critico" se < ${meta - 3}%.
 3. Identifique TENDÊNCIA (crescente/decrescente/estável) comparando primeiros vs últimos meses.
 4. Aponte OUTLIERS (meses muito fora da média) e UNIDADES fora da curva.
