@@ -25,11 +25,25 @@ export type ValidacaoSLA = {
   justificativa: string;
 };
 
+export type DesempenhoAnalista = {
+  analista: string;
+  totalProcessos: string;
+  slaAtendidos: string;
+  slaVencidos: string;
+  percentualSLA: string;
+  camposEmBranco: string;
+  backlogs: string;
+  scorePerformance: string;
+  status: "ok" | "atencao" | "critico";
+  observacao: string;
+};
+
 export type AnalyseResult = {
   resumo: string;
   validacoesSLA?: ValidacaoSLA[];
   pontosCriticos: { titulo: string; descricao: string; severidade: "alta" | "media" }[];
   oportunidades: { titulo: string; descricao: string; acao: string }[];
+  desempenhoAnalistas?: DesempenhoAnalista[];
   embarquesCriticos?: {
     colunas: string[];
     linhas: string[][];
@@ -102,6 +116,29 @@ const tool = {
               acao: { type: "string" },
             },
             required: ["titulo", "descricao", "acao"],
+            additionalProperties: false,
+          },
+        },
+        desempenhoAnalistas: {
+          type: "array",
+          description:
+            "Análise comparativa de desempenho por analista/responsável. UMA linha por analista identificado no relatório, comparando atendimento de SLA, qualidade de preenchimento (campos em branco) e performance geral. Ordenar do pior para o melhor scorePerformance.",
+          maxItems: 50,
+          items: {
+            type: "object",
+            properties: {
+              analista: { type: "string", description: "Nome do analista/responsável." },
+              totalProcessos: { type: "string", description: "Quantidade total de processos sob responsabilidade." },
+              slaAtendidos: { type: "string", description: "Quantidade e % de processos dentro do SLA. Ex.: '42 (84%)'." },
+              slaVencidos: { type: "string", description: "Quantidade e % de processos com SLA vencido." },
+              percentualSLA: { type: "string", description: "% geral de atendimento ao SLA. Ex.: '84%'." },
+              camposEmBranco: { type: "string", description: "Quantidade total de campos obrigatórios em branco nos processos do analista (datas de confirmação, ETD, recebimento de docs, pré-alerta, etc.). Ex.: '17 campos'." },
+              backlogs: { type: "string", description: "Contagem de backlogs por tipo. Ex.: 'Produção: 3 | Embarque: 5 | Docs: 2 | Pré-Alerta: 1'." },
+              scorePerformance: { type: "string", description: "Score 0-100 ponderando: 60% atendimento SLA + 25% qualidade de preenchimento + 15% ausência de backlogs. Ex.: '72/100'." },
+              status: { type: "string", enum: ["ok", "atencao", "critico"], description: "ok se score>=85, atencao 70-84, critico <70." },
+              observacao: { type: "string", description: "1-2 frases destacando pontos fortes, fragilidades e principais gargalos do analista." },
+            },
+            required: ["analista", "totalProcessos", "slaAtendidos", "slaVencidos", "percentualSLA", "camposEmBranco", "backlogs", "scorePerformance", "status", "observacao"],
             additionalProperties: false,
           },
         },
@@ -222,6 +259,7 @@ CHECKLIST OBRIGATÓRIO DE VALIDAÇÕES DE SLA (preencha validacoesSLA quando hou
 8. EMBARQUES CRÍTICOS — REGRA OBRIGATÓRIA: percorra TODAS as linhas dos relatórios e inclua em embarquesCriticos **TODO E QUALQUER processo/pedido/embarque que tenha vencido ou excedido um prazo** (mesmo que por 1 dia), além de qualquer backlog detectado. NÃO resumir, NÃO agrupar, NÃO limitar por amostragem. Calcule "Dias em Atraso" = data_realizada (ou hoje se ainda em aberto) − data_prazo. Ordene primeiro por Analista (A→Z) e depois pelos maiores atrasos. Se houver mais de 150 ocorrências, liste as 150 piores e registre o total real em "observacao".
 9. COLUNA "ANALISTA" OBRIGATÓRIA: em embarquesCriticos.colunas inclua SEMPRE uma coluna chamada exatamente "Analista" (ou "Responsável"/"Usuário" se for o termo literal do relatório) com o nome do analista/usuário responsável pelo processo. Procure no relatório colunas como: Analista, Responsável, Owner, Usuário, User, Operador, Comprador, Buyer, PIC, Resp. Se a coluna não existir no arquivo, preencha com "Não atribuído". NUNCA omita esta coluna.
 10. Em pontosCriticos, além de sumarizar por TIPO de atraso, inclua pelo menos um item "Pendências por Analista" listando os analistas com mais ocorrências críticas (ex.: "João Silva - 23 pendências, Maria Souza - 17 pendências").
+11. DESEMPENHO POR ANALISTA — OBRIGATÓRIO: preencha SEMPRE desempenhoAnalistas com UMA linha por analista/responsável identificado no relatório (coluna Analista, Responsável, Owner, Usuário, Operador, Comprador, Buyer, PIC). Para CADA analista calcule: totalProcessos, slaAtendidos (qtd e %), slaVencidos (qtd e %), percentualSLA geral, camposEmBranco (some todos os campos obrigatórios vazios: datas de confirmação, ETD, recebimento de docs, pré-alerta KN, etc.), backlogs por tipo (Produção/Embarque/Docs/Pré-Alerta/Sem Confirmação), scorePerformance 0-100 (60% SLA + 25% preenchimento + 15% ausência de backlogs) e status (ok≥85, atencao 70-84, critico<70). Ordene do PIOR para o MELHOR scorePerformance. Na observacao, destaque pontos fortes, fragilidades e principais gargalos com NÚMEROS específicos. Se não houver coluna de analista, retorne uma única linha "Não atribuído" agregando tudo.
 ${temMidea ? slaMideaRef : ""}
 Seja específico: cite NÚMEROS, MESES, UNIDADES, PROCESSOS. Nunca generalize sem dado. Sempre responda chamando a função registrar_analise_operacional.`;
 

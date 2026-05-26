@@ -28,6 +28,7 @@ import {
   TableIcon,
   Download,
   ShieldCheck,
+  Users,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -409,6 +410,92 @@ export function PerformanceOperacional() {
               ))}
             </CardContent>
           </Card>
+
+          {result.desempenhoAnalistas && result.desempenhoAnalistas.length > 0 && (
+            <Card>
+              <CardHeader>
+                <div className="flex items-start justify-between gap-3">
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="h-5 w-5 text-primary" />
+                    Desempenho por Analista
+                  </CardTitle>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const d = result.desempenhoAnalistas!;
+                      const aoa = [
+                        ["Analista", "Total Processos", "SLA Atendidos", "SLA Vencidos", "% SLA", "Campos em Branco", "Backlogs", "Score", "Status", "Observação"],
+                        ...d.map((x) => [
+                          x.analista,
+                          x.totalProcessos,
+                          x.slaAtendidos,
+                          x.slaVencidos,
+                          x.percentualSLA,
+                          x.camposEmBranco,
+                          x.backlogs,
+                          x.scorePerformance,
+                          STATUS_LABEL[x.status].label,
+                          x.observacao,
+                        ]),
+                      ];
+                      const ws = XLSX.utils.aoa_to_sheet(aoa);
+                      ws["!cols"] = [22, 12, 14, 14, 8, 14, 32, 10, 10, 60].map((w) => ({ wch: w }));
+                      const wb = XLSX.utils.book_new();
+                      XLSX.utils.book_append_sheet(wb, ws, "Desempenho Analistas");
+                      const ts = new Date().toISOString().slice(0, 10);
+                      XLSX.writeFile(wb, `desempenho-analistas-${ts}.xlsx`);
+                      toast.success("Desempenho exportado");
+                    }}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Exportar Excel
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="rounded-md border overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Analista</TableHead>
+                        <TableHead className="text-right">Processos</TableHead>
+                        <TableHead>SLA Atendidos</TableHead>
+                        <TableHead>SLA Vencidos</TableHead>
+                        <TableHead className="text-right">% SLA</TableHead>
+                        <TableHead className="text-right">Campos em Branco</TableHead>
+                        <TableHead>Backlogs</TableHead>
+                        <TableHead className="text-right">Score</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="min-w-[260px]">Observação</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {result.desempenhoAnalistas.map((d, i) => {
+                        const s = STATUS_LABEL[d.status];
+                        return (
+                          <TableRow key={i}>
+                            <TableCell className="font-medium">{d.analista}</TableCell>
+                            <TableCell className="text-right text-sm">{d.totalProcessos}</TableCell>
+                            <TableCell className="text-sm text-success">{d.slaAtendidos}</TableCell>
+                            <TableCell className="text-sm text-destructive">{d.slaVencidos}</TableCell>
+                            <TableCell className="text-right text-sm font-medium">{d.percentualSLA}</TableCell>
+                            <TableCell className="text-right text-sm">{d.camposEmBranco}</TableCell>
+                            <TableCell className="text-xs text-muted-foreground">{d.backlogs}</TableCell>
+                            <TableCell className="text-right text-sm font-semibold">{d.scorePerformance}</TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className={s.cls}>{s.label}</Badge>
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">{d.observacao}</TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {result.embarquesCriticos && result.embarquesCriticos.linhas.length > 0 && (
             <Card>
