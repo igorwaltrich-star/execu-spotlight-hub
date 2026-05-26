@@ -108,22 +108,18 @@ const tool = {
         embarquesCriticos: {
           type: "object",
           description:
-            "Tabela EXAUSTIVA com TODOS os embarques/pedidos/processos que VENCERAM ou EXCEDERAM qualquer prazo de SLA, mesmo que por 1 dia. NÃO resuma, NÃO agrupe: liste linha a linha cada ocorrência crítica (atrasos, backlogs, descumprimentos de SLA Midea, free time vencido, docs ausentes, pré-alerta atrasado, DI fora do prazo, LI < 20 dias da chegada, devolução de vazio fora do prazo, etc.).",
+            "Tabela EXAUSTIVA com TODOS os processos/pedidos/embarques que venceram ou excederam qualquer prazo de SLA (mesmo que por 1 dia), incluindo backlogs. Liste linha a linha, ordenado pelos maiores atrasos primeiro.",
           properties: {
             colunas: {
               type: "array",
-              minItems: 3,
-              maxItems: 10,
               items: { type: "string" },
               description:
-                "Colunas sugeridas: Processo/Pedido, Cliente/Unidade, Etapa/Indicador, SLA/Prazo, Realizado, Dias em Atraso, Tipo de Backlog, Status, Observação.",
+                "Colunas sugeridas: Processo/Pedido, Cliente/Unidade, Etapa/Indicador, SLA/Prazo, Realizado, Dias em Atraso, Tipo de Backlog, Status.",
             },
             linhas: {
               type: "array",
-              minItems: 1,
-              maxItems: 300,
               items: { type: "array", items: { type: "string" } },
-              description: "Uma linha por ocorrência crítica. Não omita registros — a tabela deve ser completa.",
+              description: "Uma linha por ocorrência crítica. Inclua até 150 linhas (as piores) e registre o total real em observacao se houver mais.",
             },
             observacao: { type: "string" },
           },
