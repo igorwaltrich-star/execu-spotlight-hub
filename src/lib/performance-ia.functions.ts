@@ -25,11 +25,25 @@ export type ValidacaoSLA = {
   justificativa: string;
 };
 
+export type DesempenhoAnalista = {
+  analista: string;
+  totalProcessos: string;
+  slaAtendidos: string;
+  slaVencidos: string;
+  percentualSLA: string;
+  camposEmBranco: string;
+  backlogs: string;
+  scorePerformance: string;
+  status: "ok" | "atencao" | "critico";
+  observacao: string;
+};
+
 export type AnalyseResult = {
   resumo: string;
   validacoesSLA?: ValidacaoSLA[];
   pontosCriticos: { titulo: string; descricao: string; severidade: "alta" | "media" }[];
   oportunidades: { titulo: string; descricao: string; acao: string }[];
+  desempenhoAnalistas?: DesempenhoAnalista[];
   embarquesCriticos?: {
     colunas: string[];
     linhas: string[][];
