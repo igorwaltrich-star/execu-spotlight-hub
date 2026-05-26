@@ -223,9 +223,10 @@ CHECKLIST OBRIGATÓRIO DE VALIDAÇÕES DE SLA (preencha validacoesSLA quando hou
 5. Verifique CORRELAÇÕES quando aplicável: volume × produtividade × SLA.
 6. Sinalize indicadores PRÓXIMOS DO LIMITE (entre meta e meta+2pp) como risco.
 7. Liste em pontosCriticos os indicadores em "critico" ou com queda relevante (>3pp mês a mês).
-8. Quando houver dados de embarques/pedidos, preencha embarquesCriticos com colunas relevantes (Pedido, Cliente, Unidade, Data Prevista, Status, Motivo, Dias em Atraso).
+8. EMBARQUES CRÍTICOS — REGRA OBRIGATÓRIA: percorra TODAS as linhas dos relatórios e inclua em embarquesCriticos **TODO E QUALQUER processo/pedido/embarque que tenha vencido ou excedido um prazo** (mesmo que por 1 dia), além de qualquer backlog detectado pelas regras adicionais. NÃO resumir, NÃO agrupar, NÃO limitar por amostragem — listar linha a linha até o limite do schema (300 linhas). Calcule "Dias em Atraso" = data_realizada (ou hoje se ainda em aberto) − data_prazo. Ordene da maior para a menor quantidade de dias em atraso. Se houver mais de 300 ocorrências, liste as 300 piores e registre o total real em "observacao".
+9. Em pontosCriticos, sumarize por TIPO de atraso (ex.: "Backlog Produção - 42 pedidos", "Confirmação > 72h - 18 PO", "LI emitida < 20 dias - 7 processos") com severidade "alta" quando o tipo tiver 3+ ocorrências ou risco contratual/free time.
 ${temMidea ? slaMideaRef : ""}
-Seja específico: cite NÚMEROS, MESES, UNIDADES. Nunca generalize sem dado. Sempre responda chamando a função registrar_analise_operacional.`;
+Seja específico: cite NÚMEROS, MESES, UNIDADES, PROCESSOS. Nunca generalize sem dado. Sempre responda chamando a função registrar_analise_operacional.`;
 
     const arquivosResumo = data.files
       .map((f, i) => {
