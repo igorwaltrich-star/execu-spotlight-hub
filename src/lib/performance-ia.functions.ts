@@ -108,19 +108,22 @@ const tool = {
         embarquesCriticos: {
           type: "object",
           description:
-            "Tabela consolidada dos embarques/pedidos sinalizados como críticos extraídos dos relatórios. Inclua somente registros realmente críticos (atraso, risco de SLA, parado, divergência). Se não houver dados tabulares de embarques nos arquivos, omita este campo.",
+            "Tabela EXAUSTIVA com TODOS os embarques/pedidos/processos que VENCERAM ou EXCEDERAM qualquer prazo de SLA, mesmo que por 1 dia. NÃO resuma, NÃO agrupe: liste linha a linha cada ocorrência crítica (atrasos, backlogs, descumprimentos de SLA Midea, free time vencido, docs ausentes, pré-alerta atrasado, DI fora do prazo, LI < 20 dias da chegada, devolução de vazio fora do prazo, etc.).",
           properties: {
             colunas: {
               type: "array",
-              minItems: 2,
-              maxItems: 8,
+              minItems: 3,
+              maxItems: 10,
               items: { type: "string" },
+              description:
+                "Colunas sugeridas: Processo/Pedido, Cliente/Unidade, Etapa/Indicador, SLA/Prazo, Realizado, Dias em Atraso, Tipo de Backlog, Status, Observação.",
             },
             linhas: {
               type: "array",
               minItems: 1,
-              maxItems: 50,
+              maxItems: 300,
               items: { type: "array", items: { type: "string" } },
+              description: "Uma linha por ocorrência crítica. Não omita registros — a tabela deve ser completa.",
             },
             observacao: { type: "string" },
           },
@@ -220,9 +223,10 @@ CHECKLIST OBRIGATÓRIO DE VALIDAÇÕES DE SLA (preencha validacoesSLA quando hou
 5. Verifique CORRELAÇÕES quando aplicável: volume × produtividade × SLA.
 6. Sinalize indicadores PRÓXIMOS DO LIMITE (entre meta e meta+2pp) como risco.
 7. Liste em pontosCriticos os indicadores em "critico" ou com queda relevante (>3pp mês a mês).
-8. Quando houver dados de embarques/pedidos, preencha embarquesCriticos com colunas relevantes (Pedido, Cliente, Unidade, Data Prevista, Status, Motivo, Dias em Atraso).
+8. EMBARQUES CRÍTICOS — REGRA OBRIGATÓRIA: percorra TODAS as linhas dos relatórios e inclua em embarquesCriticos **TODO E QUALQUER processo/pedido/embarque que tenha vencido ou excedido um prazo** (mesmo que por 1 dia), além de qualquer backlog detectado pelas regras adicionais. NÃO resumir, NÃO agrupar, NÃO limitar por amostragem — listar linha a linha até o limite do schema (300 linhas). Calcule "Dias em Atraso" = data_realizada (ou hoje se ainda em aberto) − data_prazo. Ordene da maior para a menor quantidade de dias em atraso. Se houver mais de 300 ocorrências, liste as 300 piores e registre o total real em "observacao".
+9. Em pontosCriticos, sumarize por TIPO de atraso (ex.: "Backlog Produção - 42 pedidos", "Confirmação > 72h - 18 PO", "LI emitida < 20 dias - 7 processos") com severidade "alta" quando o tipo tiver 3+ ocorrências ou risco contratual/free time.
 ${temMidea ? slaMideaRef : ""}
-Seja específico: cite NÚMEROS, MESES, UNIDADES. Nunca generalize sem dado. Sempre responda chamando a função registrar_analise_operacional.`;
+Seja específico: cite NÚMEROS, MESES, UNIDADES, PROCESSOS. Nunca generalize sem dado. Sempre responda chamando a função registrar_analise_operacional.`;
 
     const arquivosResumo = data.files
       .map((f, i) => {
