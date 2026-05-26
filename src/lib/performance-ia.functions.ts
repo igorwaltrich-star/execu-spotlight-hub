@@ -122,8 +122,7 @@ const tool = {
         desempenhoAnalistas: {
           type: "array",
           description:
-            "Análise comparativa de desempenho por analista/responsável. UMA linha por analista identificado no relatório, comparando atendimento de SLA, qualidade de preenchimento (campos em branco) e performance geral. Ordenar do pior para o melhor scorePerformance.",
-          maxItems: 50,
+            "Análise comparativa de desempenho por analista/responsável. UMA linha por analista (até 50), comparando atendimento de SLA, qualidade de preenchimento (campos em branco) e performance. Ordenar do pior para o melhor scorePerformance.",
           items: {
             type: "object",
             properties: {
