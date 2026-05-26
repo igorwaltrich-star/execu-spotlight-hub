@@ -592,11 +592,17 @@ export function PerformanceOperacional() {
                     <TableBody>
                       {result.embarquesCriticos.linhas.map((linha, i) => (
                         <TableRow key={i}>
-                          {linha.map((cel, j) => (
-                            <TableCell key={j} className="text-sm">
-                              {cel}
-                            </TableCell>
-                          ))}
+                          {linha.map((cel, j) => {
+                            const header = result.embarquesCriticos!.colunas[j] ?? "";
+                            const isDateCol = /prazo|realizad|data|dt\b|embarque|sla/i.test(
+                              header,
+                            );
+                            return (
+                              <TableCell key={j} className="text-sm">
+                                {isDateCol ? formatDateBR(cel) : cel}
+                              </TableCell>
+                            );
+                          })}
                         </TableRow>
                       ))}
                     </TableBody>
