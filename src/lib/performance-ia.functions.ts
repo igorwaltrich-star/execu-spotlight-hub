@@ -141,6 +141,63 @@ export const analyzePerformanceReport = createServerFn({ method: "POST" })
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY não configurada");
 
     const meta = data.metaPadrao ?? 95;
+    const temMidea = data.files.some((f) => f.tipo === "sla_midea");
+
+    const slaMideaRef = `
+==== REFERÊNCIA OFICIAL — SLA MIDEA (PO MANAGEMENT) ====
+Use estes prazos contratuais como base de validação para qualquer arquivo do tipo SLA Midea. Compare os dados do relatório com estes SLAs e aponte descumprimentos com o nome da atividade EXATAMENTE como abaixo.
+
+- COLOCAÇÃO PEDIDOS: 1 dia útil do recebimento da RC aprovada (críticos: mesmo dia).
+- CONFIRMAÇÃO DE PEDIDOS: 72h corridas a partir da colocação.
+- FOLLOW UP FORNECEDORES: diário durante o processo.
+- FOLLOW UP SAP/PWCE (ZMM066/ZMM067): diário.
+- DEFINIÇÃO AGENTE DE CARGAS / INSTRUÇÃO DE EMBARQUE: sob demanda.
+- OTIMIZAÇÃO E COMUNICAÇÃO DE EMBARQUES/CONTAINERIZAÇÃO: constante, a cada embarque.
+- RECEBIMENTO DOCUMENTOS EMBARQUE: até 15 dias após ETD Feeder.
+- ANÁLISE DOS DOCUMENTOS (Invoice, Packing, BL etc.): 7 dias corridos após recebimento.
+- ABERTURA DE EMBARQUE NO SAP/PWCE: 7 dias corridos após recebimento dos docs.
+- LICENÇA DE IMPORTAÇÃO: LI deferida até chegada no porto; emissão ≥ 20 dias corridos antes da chegada.
+- DOCUMENTOS FINAIS/ORIGINAIS: disponíveis para desembaraço em até 48h da chegada da carga.
+- CE MERCANTE: conferência até 48h da atracação; correções antes de 48h; liberação solicitada na presença de carga.
+- MAPA: solicitação até 48h antes da chegada ou 1 dia após chegada do BL Original.
+- TAXAS LIBERAÇÃO BL/FRETE: até 24h após presença de carga.
+- REMOÇÃO DTC/DTA: conforme necessidade, com aprovação Midea.
+- CONFECÇÃO DTC/DTA: até 24h úteis após aprovação Midea.
+- ESTIMATIVA DE IMPOSTOS / PROVISÃO: inclusão em 24h da presença de carga; envio até 13h do dia do registro; liberação financeira até 16h.
+- REGISTRO E LIBERAÇÃO DA DI: mesmo dia da liberação de recursos até 22:50h; postagem RFB em 1 dia útil.
+- CI: até 24h úteis após desembaraço.
+- LIBERAÇÃO COMEX PORTOS/TERMINAIS: até 24h úteis após CI.
+- DEFINIÇÃO DATAS CARREGAMENTO: e-mail até 24h úteis após liberação; coleta dentro do 1º período de armazenagem (senão D+1).
+- AGENDAMENTO, CARREGAMENTO E ENTREGA: coleta dentro do 1º período; entrega até 1 dia útil após coleta.
+- ATENDIMENTO/ACOMPANHAMENTO OTD: conforme remessa solicitada pelo requisitante.
+- CONFERÊNCIA DE FATURAMENTOS/DESPESAS: antes do pagamento.
+- APROVAÇÃO DE CUSTOS ANORMAIS LOG INTERNACIONAL: antes do pagamento, assim que identificado.
+- PAGAMENTOS DE DESPESAS: conforme SLAs anteriores ou prazo da fatura.
+- FATURAMENTO E LANÇAMENTO DANFE: emissão antes do carregamento; lançamento SAP/PWCE até 24h úteis após emissão.
+- CONFERÊNCIA E LANÇAMENTO PRESTAÇÃO DE CONTAS SAP/PWCE: 2 a 5 dias úteis após faturamento; fechamento conforme cronograma Midea.
+- REEMBOLSO POR TERCEIROS: cobrar fornecedor em até 7 dias corridos.
+- REPORTE COM PREVISÕES DE ENTREGA: mensal até dia 05.
+- REVISÃO DO REPORTE: dias 11, 21 e 2 do mês seguinte (ou 1º dia útil seguinte).
+- REUNIÕES DE ALINHAMENTO: semanal ou conforme demanda.
+- AÇÕES FECHAMENTO DE MÊS: conforme cronograma.
+- INVENTÁRIO ANUAL: anual, conforme cronograma.
+- DEVOLUÇÃO DO VAZIO (ARMAZÉM e SOBRE RODAS): 4 dias corridos entre disponibilidade e devolução; nunca após free time; acompanhamento diário.
+- PAGAMENTO DEMURRAGE / FRETE CHEIO E VAZIO: conforme prazo da fatura.
+- PAGAMENTO LAVAÇÃO/REPAROS CONTÊINER: sempre que ocorrer, antes do free time e risco de bloqueio CNPJ.
+- ENCERRAMENTO DO PROCESSO: 1 dia útil após aprovação da prestação de contas; todos faturados encerrados no mês.
+- REPORTE DE CONTAS EM ANDAMENTO: último dia do mês.
+- ARQUIVAMENTO DE DOCUMENTOS: mensal até dia 05.
+- SEGURO DE CARGA: constante / conforme datas do financeiro.
+- APRESENTAÇÃO MENSAL DE KPI: mensal até dia 20.
+- RELATÓRIOS DE OPERAÇÃO, SUPORTE A SISTEMAS E PROJETOS: conforme necessidade/projeto.
+
+REGRAS DE VALIDAÇÃO MIDEA:
+a) Para CADA atividade acima encontrada no relatório, gere uma linha em validacoesSLA: "indicador" = nome da atividade, "meta" = prazo contratual (ex.: "72h", "7 dias corridos", "24h úteis"), "valorMedio" = tempo médio real cumprido pelos dados.
+b) Status: "ok" se cumprimento ≥ ${meta}% dos casos dentro do prazo, "atencao" entre ${meta - 3}% e ${meta}%, "critico" abaixo de ${meta - 3}% OU sempre que houver descumprimento de prazo bloqueante (free time, registro DI, LI antes da chegada, danfe pós-carregamento).
+c) Sinalize em pontosCriticos qualquer atividade Midea com risco regulatório/financeiro.
+d) Em embarquesCriticos liste processos individuais violando estes SLAs (colunas sugeridas: Processo, Etapa, SLA Midea, Tempo Real, Atraso, Status).
+==== FIM REFERÊNCIA MIDEA ====
+`;
 
     const systemPrompt = `Você é um consultor sênior de operações logísticas e SLA. Analise os relatórios enviados em português do Brasil com rigor analítico.
 
@@ -155,7 +212,7 @@ CHECKLIST OBRIGATÓRIO DE VALIDAÇÕES DE SLA (preencha validacoesSLA quando hou
 6. Sinalize indicadores PRÓXIMOS DO LIMITE (entre meta e meta+2pp) como risco.
 7. Liste em pontosCriticos os indicadores em "critico" ou com queda relevante (>3pp mês a mês).
 8. Quando houver dados de embarques/pedidos, preencha embarquesCriticos com colunas relevantes (Pedido, Cliente, Unidade, Data Prevista, Status, Motivo, Dias em Atraso).
-
+${temMidea ? slaMideaRef : ""}
 Seja específico: cite NÚMEROS, MESES, UNIDADES. Nunca generalize sem dado. Sempre responda chamando a função registrar_analise_operacional.`;
 
     const arquivosResumo = data.files
@@ -167,7 +224,7 @@ Seja específico: cite NÚMEROS, MESES, UNIDADES. Nunca generalize sem dado. Sem
       })
       .join("\n\n");
 
-    const userPrompt = `${data.contexto ? `Contexto adicional do usuário: ${data.contexto}\n\n` : ""}Relatórios recebidos:\n\n${arquivosResumo}\n\nExecute o checklist completo e chame a função registrar_analise_operacional.`;
+    const userPrompt = `${data.contexto ? `Contexto adicional do usuário: ${data.contexto}\n\n` : ""}Relatórios recebidos:\n\n${arquivosResumo}\n\nExecute o checklist completo${temMidea ? ", aplicando a REFERÊNCIA OFICIAL SLA MIDEA acima a cada arquivo classificado como SLA Midea" : ""}, e chame a função registrar_analise_operacional.`;
 
     const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
