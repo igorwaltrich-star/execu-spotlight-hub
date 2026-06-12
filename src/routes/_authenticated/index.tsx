@@ -48,7 +48,6 @@ import {
   Gauge,
   AlertTriangle,
   Target,
-  CheckCircle2,
   Lightbulb,
   AlertCircle,
 } from "lucide-react";
@@ -80,21 +79,6 @@ type SlaBosch = {
   pinho: number;
 };
 type Gargalo = { id: string; item: string; impacto: string; risco: "alto" | "medio" | "baixo" };
-type Acao = {
-  id: string;
-  iniciativa: string;
-  responsavel: string;
-  prazo: string | null;
-  status: "andamento" | "concluido" | "atrasado";
-};
-type Oport = {
-  id: string;
-  titulo: string;
-  categoria: string;
-  savings: number;
-  custo_extra: number;
-  status: "identificada" | "em_andamento" | "implementada";
-};
 type Melhoria = { id: string; titulo: string; descricao: string; tipo: "atencao" | "oportunidade" };
 
 function DashboardPage() {
@@ -102,7 +86,7 @@ function DashboardPage() {
   useRealtimeTable("sla_midea", ["sla_midea"]);
   useRealtimeTable("sla_bosch", ["sla_bosch"]);
   useRealtimeTable("gargalos", ["gargalos"]);
-  useRealtimeTable("plano_acao", ["plano_acao"]);
+  
   useRealtimeTable("melhorias", ["melhorias"]);
 
   const melhorias = useQuery({
@@ -153,36 +137,6 @@ function DashboardPage() {
     },
   });
 
-  const acoes = useQuery({
-    queryKey: ["plano_acao"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("plano_acao").select("*").order("prazo");
-      if (error) throw error;
-      return data as Acao[];
-    },
-  });
-
-  useRealtimeTable("oportunidades", ["oportunidades"]);
-  const oportunidades = useQuery({
-    queryKey: ["oportunidades"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("oportunidades")
-        .select("id, titulo, categoria, savings, custo_extra, status")
-        .order("data", { ascending: false });
-      if (error) throw error;
-      return data as Oport[];
-    },
-  });
-  const oportRows = oportunidades.data ?? [];
-  const oportStats = {
-    identificada: oportRows.filter((o) => o.status === "identificada").length,
-    em_andamento: oportRows.filter((o) => o.status === "em_andamento").length,
-    implementada: oportRows.filter((o) => o.status === "implementada").length,
-  };
-  const savingsTotal = oportRows.reduce((s, o) => s + Number(o.savings), 0);
-  const custoExtraTotal = oportRows.reduce((s, o) => s + Number(o.custo_extra ?? 0), 0);
-  const saldoLiquido = savingsTotal - custoExtraTotal;
 
   const opAll = op.data ?? [];
   const grupoDe = (u: UnidadeKey) => UNIDADES.find((x) => x.key === u)?.grupo;
@@ -304,6 +258,23 @@ function DashboardPage() {
   ].map(Number);
   const slaMedio = allSla.length ? allSla.reduce((s, n) => s + n, 0) / allSla.length : 0;
 
+  const totMidea = totalizador("midea", "all");
+  const totBosch = totalizador("bosch", "all");
+
+  const slaMideaVals = (midea.data ?? [])
+    .flatMap((r) => [r.start_up, r.otcc, r.otd, r.sotd])
+    .map(Number);
+  const slaMedioMidea = slaMideaVals.length
+    ? slaMideaVals.reduce((s, n) => s + n, 0) / slaMideaVals.length
+    : 0;
+
+  const slaBoschVals = (bosch.data ?? [])
+    .flatMap((r) => [r.dig_conf, r.start_up, r.otcc, r.desvios, r.pinho])
+    .map(Number);
+  const slaMedioBosch = slaBoschVals.length
+    ? slaBoschVals.reduce((s, n) => s + n, 0) / slaBoschVals.length
+    : 0;
+
   const mideaRadar = useMemo(() => {
     const rows = mideaFiltrada;
     if (!rows.length) return [];
@@ -366,11 +337,6 @@ function DashboardPage() {
     return out;
   }, [opAll, filtroUnidadeEvol, filtroMesEvol]);
 
-  const acaoStats = {
-    andamento: (acoes.data ?? []).filter((a) => a.status === "andamento").length,
-    concluido: (acoes.data ?? []).filter((a) => a.status === "concluido").length,
-    atrasado: (acoes.data ?? []).filter((a) => a.status === "atrasado").length,
-  };
 
   return (
     <div className="bg-gradient-to-b from-background via-background to-muted/30">
@@ -411,6 +377,26 @@ function DashboardPage() {
               value={`${slaMedio.toFixed(1)}%`}
               sub={`Meta ${META_SLA}%`}
               good={slaMedio >= META_SLA}
+            />
+          </div>
+
+          {/* KPIs por operação */}
+          <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+            <OpKpiCard
+              titulo="Midea"
+              volume={totMidea.volume}
+              headcount={totMidea.headcount}
+              prod={totMidea.prod}
+              sla={slaMedioMidea}
+              tone="border-primary/40 bg-primary/10"
+            />
+            <OpKpiCard
+              titulo="Bosch"
+              volume={totBosch.volume}
+              headcount={totBosch.headcount}
+              prod={totBosch.prod}
+              sla={slaMedioBosch}
+              tone="border-accent/40 bg-accent/10"
             />
           </div>
         </div>
@@ -495,115 +481,6 @@ function DashboardPage() {
         </Card>
       </Slide>
 
-      {/* Slide — Oportunidades & Savings */}
-      <Slide>
-        <SlideHeader
-          title="Oportunidades e Riscos"
-          subtitle="Iniciativas de melhoria, savings estimados e custos extras gerados"
-        />
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-          <StatCard
-            label="Total"
-            value={oportunidades.data?.length ?? 0}
-            tone="bg-muted text-foreground"
-          />
-          <StatCard label="Identificadas" value={oportStats.identificada} tone="bg-card border" />
-          <StatCard
-            label="Em andamento"
-            value={oportStats.em_andamento}
-            tone="bg-accent text-accent-foreground"
-          />
-          <StatCard
-            label="Implementadas"
-            value={oportStats.implementada}
-            tone="bg-success text-success-foreground"
-            icon={CheckCircle2}
-          />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-xs uppercase text-muted-foreground">Savings totais (R$)</div>
-              <div className="text-3xl font-bold mt-1 text-success">
-                {savingsTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-xs uppercase text-muted-foreground">Custos extras (R$)</div>
-              <div className="text-3xl font-bold mt-1 text-destructive">
-                {custoExtraTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-xs uppercase text-muted-foreground">Saldo líquido (R$)</div>
-              <div
-                className={`text-3xl font-bold mt-1 ${saldoLiquido >= 0 ? "text-success" : "text-destructive"}`}
-              >
-                {saldoLiquido.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-        <Card className="flex-1 min-h-0 overflow-auto">
-          <CardContent className="p-0">
-            <table className="w-full text-sm">
-              <thead className="bg-muted">
-                <tr>
-                  <th className="text-left px-4 py-3">Registro</th>
-                  <th className="text-left px-4 py-3">Categoria</th>
-                  <th className="text-left px-4 py-3">Status</th>
-                  <th className="text-right px-4 py-3">Savings (R$)</th>
-                  <th className="text-right px-4 py-3">Custo extra (R$)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(oportunidades.data ?? []).length === 0 && (
-                  <tr>
-                    <td colSpan={5} className="text-center text-muted-foreground py-8">
-                      Nenhum registro cadastrado.
-                    </td>
-                  </tr>
-                )}
-                {(oportunidades.data ?? []).map((o) => (
-                  <tr key={o.id} className="border-t border-border">
-                    <td className="px-4 py-3 font-medium">{o.titulo}</td>
-                    <td className="px-4 py-3">{o.categoria}</td>
-                    <td className="px-4 py-3">
-                      <Badge
-                        className={
-                          o.status === "implementada"
-                            ? "bg-success text-success-foreground"
-                            : o.status === "em_andamento"
-                              ? "bg-accent text-accent-foreground"
-                              : "bg-muted text-muted-foreground"
-                        }
-                      >
-                        {o.status === "implementada"
-                          ? "Implementada"
-                          : o.status === "em_andamento"
-                            ? "Em andamento"
-                            : "Identificada"}
-                      </Badge>
-                    </td>
-                    <td className="px-4 py-3 text-right font-semibold text-success">
-                      {Number(o.savings).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                    </td>
-                    <td className="px-4 py-3 text-right font-semibold text-destructive">
-                      {Number(o.custo_extra ?? 0).toLocaleString("pt-BR", {
-                        minimumFractionDigits: 2,
-                      })}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </CardContent>
-        </Card>
-      </Slide>
 
       {/* Slide — Melhorias e Pontos de Atenção */}
       <Slide>
@@ -824,78 +701,47 @@ function DashboardPage() {
         </div>
       </Slide>
 
-      {/* Slide 9 — Plano de Ação */}
-      <Slide>
-        <SlideHeader title="Plano de Ação 2026" subtitle="Iniciativas estratégicas" />
-        <div className="grid grid-cols-3 gap-4 mb-4">
-          <StatCard
-            label="Em andamento"
-            value={acaoStats.andamento}
-            tone="bg-accent text-accent-foreground"
+    </div>
+  );
+}
+
+function OpKpiCard({
+  titulo,
+  volume,
+  headcount,
+  prod,
+  sla,
+  tone,
+}: {
+  titulo: string;
+  volume: number;
+  headcount: number;
+  prod: number;
+  sla: number;
+  tone: string;
+}) {
+  return (
+    <Card className={`border-2 ${tone}`}>
+      <CardHeader>
+        <CardTitle className="text-xl">{titulo}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <MiniKpi label="Volume" value={volume.toLocaleString("pt-BR")} />
+          <MiniKpi label="Headcount" value={headcount.toLocaleString("pt-BR")} />
+          <MiniKpi
+            label="Produtividade"
+            value={prod.toFixed(1)}
+            good={prod >= META_PRODUTIVIDADE}
           />
-          <StatCard
-            label="Concluídas"
-            value={acaoStats.concluido}
-            tone="bg-success text-success-foreground"
-            icon={CheckCircle2}
-          />
-          <StatCard
-            label="Atrasadas"
-            value={acaoStats.atrasado}
-            tone="bg-destructive text-destructive-foreground"
+          <MiniKpi
+            label="SLA médio"
+            value={`${sla.toFixed(1)}%`}
+            good={sla >= META_SLA}
           />
         </div>
-        <Card className="flex-1 min-h-0 overflow-auto">
-          <CardContent className="p-0">
-            <table className="w-full text-sm">
-              <thead className="bg-muted">
-                <tr>
-                  <th className="text-left px-4 py-3">Iniciativa</th>
-                  <th className="text-left px-4 py-3">Responsável</th>
-                  <th className="text-left px-4 py-3">Prazo</th>
-                  <th className="text-left px-4 py-3">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(acoes.data ?? []).length === 0 && (
-                  <tr>
-                    <td colSpan={4} className="text-center text-muted-foreground py-8">
-                      Sem iniciativas cadastradas.
-                    </td>
-                  </tr>
-                )}
-                {(acoes.data ?? []).map((a) => (
-                  <tr key={a.id} className="border-t border-border">
-                    <td className="px-4 py-3 font-medium">{a.iniciativa}</td>
-                    <td className="px-4 py-3">{a.responsavel || "—"}</td>
-                    <td className="px-4 py-3">
-                      {a.prazo ? new Date(a.prazo).toLocaleDateString("pt-BR") : "—"}
-                    </td>
-                    <td className="px-4 py-3">
-                      <Badge
-                        className={
-                          a.status === "concluido"
-                            ? "bg-success text-success-foreground"
-                            : a.status === "atrasado"
-                              ? "bg-destructive text-destructive-foreground"
-                              : "bg-accent text-accent-foreground"
-                        }
-                      >
-                        {a.status === "concluido"
-                          ? "Concluído"
-                          : a.status === "atrasado"
-                            ? "Atrasado"
-                            : "Em andamento"}
-                      </Badge>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </CardContent>
-        </Card>
-      </Slide>
-    </div>
+      </CardContent>
+    </Card>
   );
 }
 
