@@ -379,6 +379,26 @@ function DashboardPage() {
               good={slaMedio >= META_SLA}
             />
           </div>
+
+          {/* KPIs por operação */}
+          <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+            <OpKpiCard
+              titulo="Midea"
+              volume={totMidea.volume}
+              headcount={totMidea.headcount}
+              prod={totMidea.prod}
+              sla={slaMedioMidea}
+              tone="border-primary/40 bg-primary/10"
+            />
+            <OpKpiCard
+              titulo="Bosch"
+              volume={totBosch.volume}
+              headcount={totBosch.headcount}
+              prod={totBosch.prod}
+              sla={slaMedioBosch}
+              tone="border-accent/40 bg-accent/10"
+            />
+          </div>
         </div>
       </Slide>
 
