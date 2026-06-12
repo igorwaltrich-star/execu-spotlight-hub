@@ -86,7 +86,7 @@ function DashboardPage() {
   useRealtimeTable("sla_midea", ["sla_midea"]);
   useRealtimeTable("sla_bosch", ["sla_bosch"]);
   useRealtimeTable("gargalos", ["gargalos"]);
-  useRealtimeTable("plano_acao", ["plano_acao"]);
+  
   useRealtimeTable("melhorias", ["melhorias"]);
 
   const melhorias = useQuery({
