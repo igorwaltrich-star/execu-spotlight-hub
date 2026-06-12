@@ -258,6 +258,23 @@ function DashboardPage() {
   ].map(Number);
   const slaMedio = allSla.length ? allSla.reduce((s, n) => s + n, 0) / allSla.length : 0;
 
+  const totMidea = totalizador("midea", "all");
+  const totBosch = totalizador("bosch", "all");
+
+  const slaMideaVals = (midea.data ?? [])
+    .flatMap((r) => [r.start_up, r.otcc, r.otd, r.sotd])
+    .map(Number);
+  const slaMedioMidea = slaMideaVals.length
+    ? slaMideaVals.reduce((s, n) => s + n, 0) / slaMideaVals.length
+    : 0;
+
+  const slaBoschVals = (bosch.data ?? [])
+    .flatMap((r) => [r.dig_conf, r.start_up, r.otcc, r.desvios, r.pinho])
+    .map(Number);
+  const slaMedioBosch = slaBoschVals.length
+    ? slaBoschVals.reduce((s, n) => s + n, 0) / slaBoschVals.length
+    : 0;
+
   const mideaRadar = useMemo(() => {
     const rows = mideaFiltrada;
     if (!rows.length) return [];
