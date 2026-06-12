@@ -321,11 +321,6 @@ function DashboardPage() {
     return out;
   }, [opAll, filtroUnidadeEvol, filtroMesEvol]);
 
-  const acaoStats = {
-    andamento: (acoes.data ?? []).filter((a) => a.status === "andamento").length,
-    concluido: (acoes.data ?? []).filter((a) => a.status === "concluido").length,
-    atrasado: (acoes.data ?? []).filter((a) => a.status === "atrasado").length,
-  };
 
   return (
     <div className="bg-gradient-to-b from-background via-background to-muted/30">
