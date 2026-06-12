@@ -26,6 +26,7 @@ function GerenciamentoOperacionalPage() {
       <Tabs defaultValue="performance" className="w-full">
         <TabsList className="h-auto flex-wrap justify-start">
           <TabsTrigger value="performance">Performance (IA)</TabsTrigger>
+          <TabsTrigger value="indicadores">Indicadores de Performance</TabsTrigger>
           <TabsTrigger value="colaboradores">Colaboradores</TabsTrigger>
           <TabsTrigger value="home-office">Home Office</TabsTrigger>
           <TabsTrigger value="ferias">Férias</TabsTrigger>
