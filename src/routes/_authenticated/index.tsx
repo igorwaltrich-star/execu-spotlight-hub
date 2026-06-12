@@ -138,36 +138,6 @@ function DashboardPage() {
     },
   });
 
-  const acoes = useQuery({
-    queryKey: ["plano_acao"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("plano_acao").select("*").order("prazo");
-      if (error) throw error;
-      return data as Acao[];
-    },
-  });
-
-  useRealtimeTable("oportunidades", ["oportunidades"]);
-  const oportunidades = useQuery({
-    queryKey: ["oportunidades"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("oportunidades")
-        .select("id, titulo, categoria, savings, custo_extra, status")
-        .order("data", { ascending: false });
-      if (error) throw error;
-      return data as Oport[];
-    },
-  });
-  const oportRows = oportunidades.data ?? [];
-  const oportStats = {
-    identificada: oportRows.filter((o) => o.status === "identificada").length,
-    em_andamento: oportRows.filter((o) => o.status === "em_andamento").length,
-    implementada: oportRows.filter((o) => o.status === "implementada").length,
-  };
-  const savingsTotal = oportRows.reduce((s, o) => s + Number(o.savings), 0);
-  const custoExtraTotal = oportRows.reduce((s, o) => s + Number(o.custo_extra ?? 0), 0);
-  const saldoLiquido = savingsTotal - custoExtraTotal;
 
   const opAll = op.data ?? [];
   const grupoDe = (u: UnidadeKey) => UNIDADES.find((x) => x.key === u)?.grupo;
