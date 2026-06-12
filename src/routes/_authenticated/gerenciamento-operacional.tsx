@@ -8,6 +8,7 @@ import { ControleFerias } from "@/components/gestao/controle-ferias";
 import { MatrizLideranca } from "@/components/gestao/matriz-lideranca";
 import { NavySeal } from "@/components/gestao/navy-seal";
 import { PDI } from "@/components/gestao/pdi";
+import { IndicadoresPerformance } from "@/components/gestao/indicadores-performance";
 import { FerramentasGestao } from "@/components/gestao/ferramentas-gestao";
 
 export const Route = createFileRoute("/_authenticated/gerenciamento-operacional")({
