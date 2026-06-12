@@ -48,7 +48,6 @@ import {
   Gauge,
   AlertTriangle,
   Target,
-  CheckCircle2,
   Lightbulb,
   AlertCircle,
 } from "lucide-react";
