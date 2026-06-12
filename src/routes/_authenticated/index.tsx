@@ -705,6 +705,46 @@ function DashboardPage() {
   );
 }
 
+function OpKpiCard({
+  titulo,
+  volume,
+  headcount,
+  prod,
+  sla,
+  tone,
+}: {
+  titulo: string;
+  volume: number;
+  headcount: number;
+  prod: number;
+  sla: number;
+  tone: string;
+}) {
+  return (
+    <Card className={`border-2 ${tone}`}>
+      <CardHeader>
+        <CardTitle className="text-xl">{titulo}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <MiniKpi label="Volume" value={volume.toLocaleString("pt-BR")} />
+          <MiniKpi label="Headcount" value={headcount.toLocaleString("pt-BR")} />
+          <MiniKpi
+            label="Produtividade"
+            value={prod.toFixed(1)}
+            good={prod >= META_PRODUTIVIDADE}
+          />
+          <MiniKpi
+            label="SLA médio"
+            value={`${sla.toFixed(1)}%`}
+            good={sla >= META_SLA}
+          />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function Slide({ children, tone }: { children: React.ReactNode; tone?: "primary" }) {
   return (
     <section
