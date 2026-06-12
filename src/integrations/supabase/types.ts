@@ -287,6 +287,57 @@ export type Database = {
         }
         Relationships: []
       }
+      indicadores_performance: {
+        Row: {
+          colaborador_id: string
+          comportamental: number | null
+          created_at: string
+          id: string
+          meta_individual: number | null
+          nota_zmm: number | null
+          observacoes: string | null
+          referencia: string
+          sla_otd: number | null
+          sla_po: number | null
+          sla_pre_alert: number | null
+          sla_sotd: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          colaborador_id: string
+          comportamental?: number | null
+          created_at?: string
+          id?: string
+          meta_individual?: number | null
+          nota_zmm?: number | null
+          observacoes?: string | null
+          referencia: string
+          sla_otd?: number | null
+          sla_po?: number | null
+          sla_pre_alert?: number | null
+          sla_sotd?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          colaborador_id?: string
+          comportamental?: number | null
+          created_at?: string
+          id?: string
+          meta_individual?: number | null
+          nota_zmm?: number | null
+          observacoes?: string | null
+          referencia?: string
+          sla_otd?: number | null
+          sla_po?: number | null
+          sla_pre_alert?: number | null
+          sla_sotd?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ishikawa: {
         Row: {
           created_at: string

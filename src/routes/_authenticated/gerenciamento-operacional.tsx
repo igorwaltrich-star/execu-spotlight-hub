@@ -8,6 +8,7 @@ import { ControleFerias } from "@/components/gestao/controle-ferias";
 import { MatrizLideranca } from "@/components/gestao/matriz-lideranca";
 import { NavySeal } from "@/components/gestao/navy-seal";
 import { PDI } from "@/components/gestao/pdi";
+import { IndicadoresPerformance } from "@/components/gestao/indicadores-performance";
 import { FerramentasGestao } from "@/components/gestao/ferramentas-gestao";
 
 export const Route = createFileRoute("/_authenticated/gerenciamento-operacional")({
@@ -25,6 +26,7 @@ function GerenciamentoOperacionalPage() {
       <Tabs defaultValue="performance" className="w-full">
         <TabsList className="h-auto flex-wrap justify-start">
           <TabsTrigger value="performance">Performance (IA)</TabsTrigger>
+          <TabsTrigger value="indicadores">Indicadores de Performance</TabsTrigger>
           <TabsTrigger value="colaboradores">Colaboradores</TabsTrigger>
           <TabsTrigger value="home-office">Home Office</TabsTrigger>
           <TabsTrigger value="ferias">Férias</TabsTrigger>
@@ -36,6 +38,9 @@ function GerenciamentoOperacionalPage() {
 
         <TabsContent value="performance" className="mt-4">
           <PerformanceOperacional />
+        </TabsContent>
+        <TabsContent value="indicadores" className="mt-4">
+          <IndicadoresPerformance />
         </TabsContent>
         <TabsContent value="colaboradores" className="mt-4">
           <CadastroColaboradores />
