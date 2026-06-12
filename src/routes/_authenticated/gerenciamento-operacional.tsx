@@ -39,6 +39,9 @@ function GerenciamentoOperacionalPage() {
         <TabsContent value="performance" className="mt-4">
           <PerformanceOperacional />
         </TabsContent>
+        <TabsContent value="indicadores" className="mt-4">
+          <IndicadoresPerformance />
+        </TabsContent>
         <TabsContent value="colaboradores" className="mt-4">
           <CadastroColaboradores />
         </TabsContent>
