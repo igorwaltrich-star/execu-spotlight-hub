@@ -109,14 +109,6 @@ function DashboardPage() {
     },
   });
 
-  const gargalos = useQuery({
-    queryKey: ["gargalos"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("gargalos").select("*");
-      if (error) throw error;
-      return data as Gargalo[];
-    },
-  });
 
 
   const opAll = op.data ?? [];
