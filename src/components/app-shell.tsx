@@ -5,12 +5,9 @@ import {
   LayoutDashboard,
   Database,
   Gauge,
-  AlertTriangle,
   Lightbulb,
-  ListChecks,
   LogOut,
   Activity,
-  DollarSign,
   Briefcase,
 } from "lucide-react";
 import type { ReactNode } from "react";
@@ -19,13 +16,10 @@ type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; exact?
 const NAV: NavItem[] = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/cadastro", label: "Cadastro Operacional", icon: Database },
-  { to: "/cadastro-oportunidades", label: "Oportunidades e Riscos", icon: DollarSign },
   { to: "/gerenciamento-operacional", label: "Gerenciamento Operacional", icon: Briefcase },
   { to: "/sla-midea", label: "SLA Midea", icon: Gauge },
   { to: "/sla-bosch", label: "SLA BOSCH", icon: Gauge },
-  { to: "/diagnostico", label: "Diagnóstico", icon: AlertTriangle },
   { to: "/melhorias", label: "Melhorias", icon: Lightbulb },
-  { to: "/plano-acao", label: "Plano de Ação", icon: ListChecks },
 ];
 
 export function AppShell({ children }: { children: ReactNode }) {
