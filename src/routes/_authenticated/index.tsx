@@ -75,8 +75,6 @@ type SlaBosch = {
   desvios: number;
   pinho: number;
 };
-type Gargalo = { id: string; item: string; impacto: string; risco: "alto" | "medio" | "baixo" };
-type Melhoria = { id: string; titulo: string; descricao: string; tipo: "atencao" | "oportunidade" };
 
 function DashboardPage() {
   useRealtimeTable("operacional_mensal", ["operacional_mensal"]);
