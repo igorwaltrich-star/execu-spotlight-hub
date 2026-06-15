@@ -455,44 +455,6 @@ function DashboardPage() {
       </Slide>
 
 
-      {/* Slide — Melhorias e Pontos de Atenção */}
-      <Slide>
-        <SlideHeader
-          title="Melhorias & Pontos de Atenção"
-          subtitle="Itens de atenção e oportunidades identificadas pela operação"
-        />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 min-h-0">
-          {(["atencao", "oportunidade"] as const).map((t) => {
-            const items = (melhorias.data ?? []).filter((m) => m.tipo === t);
-            const isAtencao = t === "atencao";
-            const Icon = isAtencao ? AlertCircle : Lightbulb;
-            return (
-              <Card key={t} className="flex flex-col min-h-0">
-                <CardHeader className="flex flex-row items-center justify-between flex-shrink-0">
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <Icon className={`h-5 w-5 ${isAtencao ? "text-warning" : "text-success"}`} />
-                    {isAtencao ? "Pontos de Atenção" : "Oportunidades"}
-                  </CardTitle>
-                  <Badge variant="secondary">{items.length}</Badge>
-                </CardHeader>
-                <CardContent className="space-y-3 overflow-auto flex-1">
-                  {items.length === 0 && (
-                    <p className="text-sm text-muted-foreground">Nenhum item cadastrado.</p>
-                  )}
-                  {items.map((m) => (
-                    <div key={m.id} className="border rounded-md p-3">
-                      <div className="font-medium text-sm">{m.titulo}</div>
-                      {m.descricao && (
-                        <div className="text-xs text-muted-foreground mt-1">{m.descricao}</div>
-                      )}
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      </Slide>
 
       {/* Slide 5 — Evolução de Produtividade por Operação */}
       <Slide>
