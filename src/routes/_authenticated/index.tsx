@@ -80,9 +80,6 @@ function DashboardPage() {
   useRealtimeTable("operacional_mensal", ["operacional_mensal"]);
   useRealtimeTable("sla_midea", ["sla_midea"]);
   useRealtimeTable("sla_bosch", ["sla_bosch"]);
-  useRealtimeTable("gargalos", ["gargalos"]);
-  
-  useRealtimeTable("melhorias", ["melhorias"]);
 
   const melhorias = useQuery({
     queryKey: ["melhorias"],
