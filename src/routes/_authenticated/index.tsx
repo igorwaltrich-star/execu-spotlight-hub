@@ -46,10 +46,7 @@ import {
   TrendingUp,
   Users,
   Gauge,
-  AlertTriangle,
   Target,
-  Lightbulb,
-  AlertCircle,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/")({
