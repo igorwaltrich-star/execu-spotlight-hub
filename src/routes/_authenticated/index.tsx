@@ -723,7 +723,7 @@ function OpKpiCard({
   return (
     <Card className={`border-2 ${tone}`}>
       <CardHeader>
-        <CardTitle className="text-xl">{titulo}</CardTitle>
+        <CardTitle className="text-xl text-white">{titulo}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
