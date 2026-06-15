@@ -81,17 +81,6 @@ function DashboardPage() {
   useRealtimeTable("sla_midea", ["sla_midea"]);
   useRealtimeTable("sla_bosch", ["sla_bosch"]);
 
-  const melhorias = useQuery({
-    queryKey: ["melhorias"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("melhorias")
-        .select("id, titulo, descricao, tipo")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data as Melhoria[];
-    },
-  });
 
   const op = useQuery({
     queryKey: ["operacional_mensal"],
