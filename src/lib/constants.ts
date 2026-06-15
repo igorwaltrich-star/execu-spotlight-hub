@@ -21,15 +21,13 @@ export function fmtMes(d: string | Date) {
   return `${MESES_PT[date.getUTCMonth()]}/${String(date.getUTCFullYear()).slice(2)}`;
 }
 
-export type UnidadeKey = "midea_sc" | "midea_am" | "midea_rs" | "midea_mg" | "bosch" | "bosch_hc";
+export type UnidadeKey = "midea_sc" | "midea_am" | "midea_rs" | "bosch";
 
 export const UNIDADES: { key: UnidadeKey; label: string; grupo: "midea" | "bosch" }[] = [
   { key: "midea_sc", label: "Midea SC", grupo: "midea" },
   { key: "midea_am", label: "Midea AM", grupo: "midea" },
   { key: "midea_rs", label: "Midea RS", grupo: "midea" },
-  { key: "midea_mg", label: "Midea MG", grupo: "midea" },
   { key: "bosch", label: "Bosch", grupo: "bosch" },
-  { key: "bosch_hc", label: "Bosch HC", grupo: "bosch" },
 ];
 
 export const UNIDADE_LABEL: Record<UnidadeKey, string> = Object.fromEntries(
