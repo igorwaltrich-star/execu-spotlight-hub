@@ -46,10 +46,7 @@ import {
   TrendingUp,
   Users,
   Gauge,
-  AlertTriangle,
   Target,
-  Lightbulb,
-  AlertCircle,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/")({
@@ -78,28 +75,12 @@ type SlaBosch = {
   desvios: number;
   pinho: number;
 };
-type Gargalo = { id: string; item: string; impacto: string; risco: "alto" | "medio" | "baixo" };
-type Melhoria = { id: string; titulo: string; descricao: string; tipo: "atencao" | "oportunidade" };
 
 function DashboardPage() {
   useRealtimeTable("operacional_mensal", ["operacional_mensal"]);
   useRealtimeTable("sla_midea", ["sla_midea"]);
   useRealtimeTable("sla_bosch", ["sla_bosch"]);
-  useRealtimeTable("gargalos", ["gargalos"]);
-  
-  useRealtimeTable("melhorias", ["melhorias"]);
 
-  const melhorias = useQuery({
-    queryKey: ["melhorias"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("melhorias")
-        .select("id, titulo, descricao, tipo")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data as Melhoria[];
-    },
-  });
 
   const op = useQuery({
     queryKey: ["operacional_mensal"],
@@ -128,14 +109,6 @@ function DashboardPage() {
     },
   });
 
-  const gargalos = useQuery({
-    queryKey: ["gargalos"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("gargalos").select("*");
-      if (error) throw error;
-      return data as Gargalo[];
-    },
-  });
 
 
   const opAll = op.data ?? [];
@@ -482,44 +455,6 @@ function DashboardPage() {
       </Slide>
 
 
-      {/* Slide — Melhorias e Pontos de Atenção */}
-      <Slide>
-        <SlideHeader
-          title="Melhorias & Pontos de Atenção"
-          subtitle="Itens de atenção e oportunidades identificadas pela operação"
-        />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 min-h-0">
-          {(["atencao", "oportunidade"] as const).map((t) => {
-            const items = (melhorias.data ?? []).filter((m) => m.tipo === t);
-            const isAtencao = t === "atencao";
-            const Icon = isAtencao ? AlertCircle : Lightbulb;
-            return (
-              <Card key={t} className="flex flex-col min-h-0">
-                <CardHeader className="flex flex-row items-center justify-between flex-shrink-0">
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <Icon className={`h-5 w-5 ${isAtencao ? "text-warning" : "text-success"}`} />
-                    {isAtencao ? "Pontos de Atenção" : "Oportunidades"}
-                  </CardTitle>
-                  <Badge variant="secondary">{items.length}</Badge>
-                </CardHeader>
-                <CardContent className="space-y-3 overflow-auto flex-1">
-                  {items.length === 0 && (
-                    <p className="text-sm text-muted-foreground">Nenhum item cadastrado.</p>
-                  )}
-                  {items.map((m) => (
-                    <div key={m.id} className="border rounded-md p-3">
-                      <div className="font-medium text-sm">{m.titulo}</div>
-                      {m.descricao && (
-                        <div className="text-xs text-muted-foreground mt-1">{m.descricao}</div>
-                      )}
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      </Slide>
 
       {/* Slide 5 — Evolução de Produtividade por Operação */}
       <Slide>
@@ -661,45 +596,6 @@ function DashboardPage() {
         </Card>
       </Slide>
 
-      {/* Slide 8 — Riscos */}
-      <Slide>
-        <SlideHeader title="Gargalos & Riscos" subtitle="Mapeamento de pontos críticos" />
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1">
-          {(["alto", "medio", "baixo"] as const).map((nivel) => {
-            const items = (gargalos.data ?? []).filter((r) => r.risco === nivel);
-            const tone =
-              nivel === "alto"
-                ? "border-destructive"
-                : nivel === "medio"
-                  ? "border-warning"
-                  : "border-success";
-            return (
-              <Card key={nivel} className={`border-2 ${tone}`}>
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle className="capitalize flex items-center gap-2">
-                    <AlertTriangle className="h-5 w-5" /> Risco{" "}
-                    {nivel === "medio" ? "Médio" : nivel}
-                  </CardTitle>
-                  <Badge variant="secondary">{items.length}</Badge>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {items.length === 0 && (
-                    <p className="text-sm text-muted-foreground">Nenhum item.</p>
-                  )}
-                  {items.map((r) => (
-                    <div key={r.id} className="border rounded p-3">
-                      <div className="font-medium">{r.item}</div>
-                      {r.impacto && (
-                        <div className="text-xs text-muted-foreground mt-1">{r.impacto}</div>
-                      )}
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      </Slide>
 
     </div>
   );
