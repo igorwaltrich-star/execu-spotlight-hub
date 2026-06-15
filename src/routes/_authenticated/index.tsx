@@ -596,45 +596,6 @@ function DashboardPage() {
         </Card>
       </Slide>
 
-      {/* Slide 8 — Riscos */}
-      <Slide>
-        <SlideHeader title="Gargalos & Riscos" subtitle="Mapeamento de pontos críticos" />
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1">
-          {(["alto", "medio", "baixo"] as const).map((nivel) => {
-            const items = (gargalos.data ?? []).filter((r) => r.risco === nivel);
-            const tone =
-              nivel === "alto"
-                ? "border-destructive"
-                : nivel === "medio"
-                  ? "border-warning"
-                  : "border-success";
-            return (
-              <Card key={nivel} className={`border-2 ${tone}`}>
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle className="capitalize flex items-center gap-2">
-                    <AlertTriangle className="h-5 w-5" /> Risco{" "}
-                    {nivel === "medio" ? "Médio" : nivel}
-                  </CardTitle>
-                  <Badge variant="secondary">{items.length}</Badge>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {items.length === 0 && (
-                    <p className="text-sm text-muted-foreground">Nenhum item.</p>
-                  )}
-                  {items.map((r) => (
-                    <div key={r.id} className="border rounded p-3">
-                      <div className="font-medium">{r.item}</div>
-                      {r.impacto && (
-                        <div className="text-xs text-muted-foreground mt-1">{r.impacto}</div>
-                      )}
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      </Slide>
 
     </div>
   );
