@@ -701,6 +701,54 @@ function DashboardPage() {
         </Card>
       </Slide>
 
+      {/* Slide 9 — Análise SWOT */}
+      <Slide>
+        <div className="mb-6">
+          <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Análise SWOT</h2>
+          <p className="text-muted-foreground mt-1">
+            {swot.data?.[0]?.titulo ?? "Cadastre uma análise em Gerenciamento Operacional › Ferramentas › SWOT"}
+          </p>
+        </div>
+        {(() => {
+          const s = swot.data?.[0];
+          const quadrantes = [
+            { key: "forcas", label: "Forças", icon: TrendingUp, cls: "bg-success/10 border-success/30 text-success" },
+            { key: "fraquezas", label: "Fraquezas", icon: TrendingDown, cls: "bg-destructive/10 border-destructive/30 text-destructive" },
+            { key: "oportunidades", label: "Oportunidades", icon: Sparkles, cls: "bg-primary/10 border-primary/30 text-primary" },
+            { key: "ameacas", label: "Ameaças", icon: AlertTriangle, cls: "bg-warning/10 border-warning/30 text-warning" },
+          ] as const;
+          return (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 min-h-0">
+              {quadrantes.map((q) => {
+                const Icon = q.icon;
+                const items = (s?.[q.key] as string[] | undefined) ?? [];
+                return (
+                  <Card key={q.key} className={`border-2 ${q.cls.split(" ").slice(0, 2).join(" ")}`}>
+                    <CardHeader>
+                      <CardTitle className={`flex items-center gap-2 ${q.cls.split(" ").slice(2).join(" ")}`}>
+                        <Icon className="h-5 w-5" />
+                        {q.label}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {items.length === 0 ? (
+                        <p className="text-sm text-muted-foreground italic">Sem itens cadastrados.</p>
+                      ) : (
+                        <ul className="list-disc pl-5 text-sm space-y-1">
+                          {items.map((it, i) => (
+                            <li key={i}>{it}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          );
+        })()}
+      </Slide>
+
     </div>
   );
 }
