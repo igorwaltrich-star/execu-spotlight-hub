@@ -93,6 +93,7 @@ function DashboardPage() {
   useRealtimeTable("sla_midea", ["sla_midea"]);
   useRealtimeTable("sla_bosch", ["sla_bosch"]);
   useRealtimeTable("plano_acao", ["plano_acao_dash"]);
+  useRealtimeTable("swot", ["swot_dash"]);
 
   const op = useQuery({
     queryKey: ["operacional_mensal"],
