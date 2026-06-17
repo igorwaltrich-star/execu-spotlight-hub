@@ -288,15 +288,22 @@ function DashboardPage() {
     ? slaBoschVals.reduce((s, n) => s + n, 0) / slaBoschVals.length
     : 0;
 
-  const mideaRadar = useMemo(() => {
-    const rows = mideaFiltrada;
-    if (!rows.length) return [];
+  const mideaRadarPorUnidade = useMemo(() => {
     const keys = ["start_up", "otcc", "otd", "sotd"] as const;
-    return keys.map((k) => ({
-      indicador: k.toUpperCase(),
-      valor: rows.reduce((s, r) => s + Number(r[k] || 0), 0) / rows.length,
-      meta: META_SLA,
-    }));
+    const unidadesMidea = UNIDADES.filter((u) => u.grupo === "midea");
+    return unidadesMidea.map((u) => {
+      const rows = mideaFiltrada.filter((r) => r.unidade === u.key);
+      const data = keys.map((k) => ({
+        indicador: k.toUpperCase().replace("_", "-"),
+        valor: rows.length
+          ? rows.reduce((s, r) => s + Number(r[k] || 0), 0) / rows.length
+          : 0,
+        meta: META_SLA,
+      }));
+      const valores = data.map((d) => d.valor);
+      const geral = valores.length ? valores.reduce((a, b) => a + b, 0) / valores.length : 0;
+      return { unidade: u, data, rowsCount: rows.length, geral };
+    });
   }, [mideaFiltrada]);
 
   const boschBars = useMemo(() => {
