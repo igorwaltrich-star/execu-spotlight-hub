@@ -301,6 +301,8 @@ export type Database = {
           sla_po: number | null
           sla_pre_alert: number | null
           sla_sotd: number | null
+          uep: number | null
+          ppax: number | null
           updated_at: string
           user_id: string
         }
@@ -317,6 +319,8 @@ export type Database = {
           sla_po?: number | null
           sla_pre_alert?: number | null
           sla_sotd?: number | null
+          uep?: number | null
+          ppax?: number | null
           updated_at?: string
           user_id: string
         }
@@ -333,6 +337,8 @@ export type Database = {
           sla_po?: number | null
           sla_pre_alert?: number | null
           sla_sotd?: number | null
+          uep?: number | null
+          ppax?: number | null
           updated_at?: string
           user_id?: string
         }
@@ -616,6 +622,8 @@ export type Database = {
           created_at: string
           id: string
           iniciativa: string
+          objetivo: string | null
+          meta: string | null
           prazo: string | null
           responsavel: string
           status: Database["public"]["Enums"]["acao_status"]
@@ -626,6 +634,8 @@ export type Database = {
           created_at?: string
           id?: string
           iniciativa: string
+          objetivo?: string | null
+          meta?: string | null
           prazo?: string | null
           responsavel?: string
           status?: Database["public"]["Enums"]["acao_status"]
@@ -636,6 +646,8 @@ export type Database = {
           created_at?: string
           id?: string
           iniciativa?: string
+          objetivo?: string | null
+          meta?: string | null
           prazo?: string | null
           responsavel?: string
           status?: Database["public"]["Enums"]["acao_status"]

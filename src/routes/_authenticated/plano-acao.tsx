@@ -32,6 +32,8 @@ type Status = "andamento" | "concluido" | "atrasado";
 type Row = {
   id: string;
   iniciativa: string;
+  objetivo: string | null;
+  meta: string | null;
   responsavel: string;
   prazo: string | null;
   status: Status;
@@ -69,6 +71,8 @@ function PlanoAcaoPage() {
   });
 
   const [iniciativa, setIniciativa] = useState("");
+  const [objetivo, setObjetivo] = useState("");
+  const [meta, setMeta] = useState("");
   const [responsavel, setResponsavel] = useState("");
   const [prazo, setPrazo] = useState("");
   const [status, setStatus] = useState<Status>("andamento");
@@ -79,6 +83,8 @@ function PlanoAcaoPage() {
       const { error } = await supabase.from("plano_acao").insert({
         user_id: user.id,
         iniciativa,
+        objetivo: objetivo || null,
+        meta: meta || null,
         responsavel,
         prazo: prazo || null,
         status,
@@ -88,6 +94,8 @@ function PlanoAcaoPage() {
     onSuccess: () => {
       toast.success("Iniciativa adicionada");
       setIniciativa("");
+      setObjetivo("");
+      setMeta("");
       setResponsavel("");
       setPrazo("");
       setStatus("andamento");
@@ -123,7 +131,7 @@ function PlanoAcaoPage() {
                 add.mutate();
               }}
             >
-              <div className="space-y-2 md:col-span-5">
+              <div className="space-y-2 md:col-span-4">
                 <Label>Iniciativa</Label>
                 <Input
                   value={iniciativa}
@@ -131,15 +139,29 @@ function PlanoAcaoPage() {
                   required
                 />
               </div>
-              <div className="space-y-2 md:col-span-3">
+              <div className="space-y-2 md:col-span-4">
+                <Label>Objetivo</Label>
+                <Input
+                  value={objetivo}
+                  onChange={(e) => setObjetivo(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2 md:col-span-4">
+                <Label>Meta</Label>
+                <Input
+                  value={meta}
+                  onChange={(e) => setMeta(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2 md:col-span-4">
                 <Label>Responsável</Label>
                 <Input value={responsavel} onChange={(e) => setResponsavel(e.target.value)} />
               </div>
-              <div className="space-y-2 md:col-span-2">
+              <div className="space-y-2 md:col-span-3">
                 <Label>Prazo</Label>
                 <Input type="date" value={prazo} onChange={(e) => setPrazo(e.target.value)} />
               </div>
-              <div className="space-y-2 md:col-span-1">
+              <div className="space-y-2 md:col-span-3">
                 <Label>Status</Label>
                 <Select value={status} onValueChange={(v) => setStatus(v as Status)}>
                   <SelectTrigger>
@@ -152,9 +174,9 @@ function PlanoAcaoPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex items-end md:col-span-1">
+              <div className="flex items-end md:col-span-2">
                 <Button type="submit" className="w-full" disabled={add.isPending}>
-                  +
+                  + Adicionar
                 </Button>
               </div>
             </form>
@@ -170,6 +192,8 @@ function PlanoAcaoPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Iniciativa</TableHead>
+                  <TableHead>Objetivo</TableHead>
+                  <TableHead>Meta</TableHead>
                   <TableHead>Responsável</TableHead>
                   <TableHead>Prazo</TableHead>
                   <TableHead>Status</TableHead>
@@ -179,7 +203,7 @@ function PlanoAcaoPage() {
               <TableBody>
                 {rows.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                       Sem iniciativas.
                     </TableCell>
                   </TableRow>
@@ -187,9 +211,11 @@ function PlanoAcaoPage() {
                 {rows.map((r) => (
                   <TableRow key={r.id}>
                     <TableCell className="font-medium">{r.iniciativa}</TableCell>
+                    <TableCell>{r.objetivo || "—"}</TableCell>
+                    <TableCell>{r.meta || "—"}</TableCell>
                     <TableCell>{r.responsavel || "—"}</TableCell>
                     <TableCell>
-                      {r.prazo ? new Date(r.prazo).toLocaleDateString("pt-BR") : "—"}
+                      {r.prazo ? new Date(r.prazo).toLocaleDateString("pt-BR", { timeZone: 'UTC' }) : "—"}
                     </TableCell>
                     <TableCell>
                       <Badge className={statusColor(r.status)}>{statusLabel(r.status)}</Badge>

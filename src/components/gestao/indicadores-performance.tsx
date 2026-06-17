@@ -46,6 +46,8 @@ type Row = {
   sla_otd: number | null;
   comportamental: number | null;
   meta_individual: number | null;
+  uep: number | null;
+  ppax: number | null;
   observacoes: string | null;
 };
 
@@ -57,6 +59,8 @@ const CAMPOS: { key: keyof Row; label: string }[] = [
   { key: "sla_otd", label: "SLA OTD" },
   { key: "comportamental", label: "Comportamental" },
   { key: "meta_individual", label: "Meta Individual" },
+  { key: "uep", label: "UEP" },
+  { key: "ppax", label: "PPAX" },
 ];
 
 function media(r: Row): number | null {
@@ -84,6 +88,8 @@ const empty = {
   sla_otd: "",
   comportamental: "",
   meta_individual: "",
+  uep: "",
+  ppax: "",
   observacoes: "",
 };
 
@@ -99,7 +105,7 @@ export function IndicadoresPerformance() {
       const { data, error } = await supabase
         .from("indicadores_performance")
         .select(
-          "id, colaborador_id, referencia, nota_zmm, sla_po, sla_sotd, sla_pre_alert, sla_otd, comportamental, meta_individual, observacoes",
+          "id, colaborador_id, referencia, nota_zmm, sla_po, sla_sotd, sla_pre_alert, sla_otd, comportamental, meta_individual, uep, ppax, observacoes",
         )
         .order("referencia", { ascending: false });
       if (error) throw error;
@@ -146,6 +152,8 @@ export function IndicadoresPerformance() {
         sla_otd: num(form.sla_otd),
         comportamental: num(form.comportamental),
         meta_individual: num(form.meta_individual),
+        uep: num(form.uep),
+        ppax: num(form.ppax),
         observacoes: form.observacoes || null,
       });
       if (error) throw error;

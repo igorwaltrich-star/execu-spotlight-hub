@@ -75,12 +75,21 @@ type SlaBosch = {
   desvios: number;
   pinho: number;
 };
+type PlanoAcaoRow = {
+  id: string;
+  iniciativa: string;
+  objetivo: string | null;
+  meta: string | null;
+  responsavel: string;
+  prazo: string | null;
+  status: "andamento" | "concluido" | "atrasado";
+};
 
 function DashboardPage() {
   useRealtimeTable("operacional_mensal", ["operacional_mensal"]);
   useRealtimeTable("sla_midea", ["sla_midea"]);
   useRealtimeTable("sla_bosch", ["sla_bosch"]);
-
+  useRealtimeTable("plano_acao", ["plano_acao_dash"]);
 
   const op = useQuery({
     queryKey: ["operacional_mensal"],
@@ -109,7 +118,14 @@ function DashboardPage() {
     },
   });
 
-
+  const planoAcao = useQuery({
+    queryKey: ["plano_acao_dash"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("plano_acao").select("*").order("prazo", { ascending: true });
+      if (error) throw error;
+      return data as PlanoAcaoRow[];
+    },
+  });
 
   const opAll = op.data ?? [];
   const grupoDe = (u: UnidadeKey) => UNIDADES.find((x) => x.key === u)?.grupo;
@@ -596,6 +612,70 @@ function DashboardPage() {
         </Card>
       </Slide>
 
+
+      {/* Slide 8 — Plano de Ação */}
+      <Slide>
+        <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
+          <div>
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Plano de Ação Estratégico</h2>
+            <p className="text-muted-foreground mt-1">Iniciativas, metas e acompanhamento</p>
+          </div>
+        </div>
+        <Card className="flex-1 min-h-0 overflow-auto">
+          <CardContent className="p-0">
+            <div className="w-full">
+              <table className="w-full caption-bottom text-sm">
+                <thead className="[&_tr]:border-b border-border bg-muted/50">
+                  <tr className="border-b border-border transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Iniciativa</th>
+                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Objetivo</th>
+                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Meta</th>
+                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Responsável</th>
+                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Prazo</th>
+                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="[&_tr:last-child]:border-0">
+                  {!planoAcao.data?.length ? (
+                    <tr>
+                      <td colSpan={6} className="p-4 text-center text-muted-foreground">
+                        Sem iniciativas cadastradas.
+                      </td>
+                    </tr>
+                  ) : (
+                    planoAcao.data.map((r) => {
+                      const statusColors: Record<string, string> = {
+                        andamento: "bg-accent text-accent-foreground",
+                        concluido: "bg-success text-success-foreground",
+                        atrasado: "bg-destructive text-destructive-foreground",
+                      };
+                      const statusLabels: Record<string, string> = {
+                        andamento: "Em andamento",
+                        concluido: "Concluído",
+                        atrasado: "Atrasado",
+                      };
+                      return (
+                        <tr key={r.id} className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                          <td className="p-4 align-middle font-medium">{r.iniciativa}</td>
+                          <td className="p-4 align-middle">{r.objetivo || "—"}</td>
+                          <td className="p-4 align-middle">{r.meta || "—"}</td>
+                          <td className="p-4 align-middle">{r.responsavel || "—"}</td>
+                          <td className="p-4 align-middle">
+                            {r.prazo ? new Date(r.prazo).toLocaleDateString("pt-BR", { timeZone: 'UTC' }) : "—"}
+                          </td>
+                          <td className="p-4 align-middle">
+                            <Badge className={statusColors[r.status]}>{statusLabels[r.status]}</Badge>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      </Slide>
 
     </div>
   );
