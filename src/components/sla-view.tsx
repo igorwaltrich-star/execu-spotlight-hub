@@ -8,6 +8,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -21,19 +28,22 @@ import { fmtMes, META_SLA } from "@/lib/constants";
 import { PageHeader } from "./cadastro-operacional-view";
 
 export type SlaField = { key: string; label: string };
+export type UnidadeOption = { key: string; label: string };
 
-type AnyRow = Record<string, unknown> & { id: string; mes: string };
+type AnyRow = Record<string, unknown> & { id: string; mes: string; unidade?: string | null };
 
 export function SlaView({
   table,
   title,
   description,
   fields,
+  unidadeOptions,
 }: {
   table: "sla_midea" | "sla_bosch";
   title: string;
   description: string;
   fields: SlaField[];
+  unidadeOptions?: UnidadeOption[];
 }) {
   const { user } = useAuth();
   const qc = useQueryClient();
@@ -54,22 +64,33 @@ export function SlaView({
 
   const empty = Object.fromEntries(fields.map((f) => [f.key, ""])) as Record<string, string>;
   const [mes, setMes] = useState("");
+  const [unidade, setUnidade] = useState<string>("");
   const [vals, setVals] = useState<Record<string, string>>(empty);
 
   const upsert = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error("Não autenticado");
       if (!mes) throw new Error("Informe o mês");
+      if (unidadeOptions && !unidade) throw new Error("Selecione a operação");
       const numeric: Record<string, number> = {};
       for (const f of fields) numeric[f.key] = Number(vals[f.key] || 0);
+      const payload: Record<string, unknown> = {
+        user_id: user.id,
+        mes: `${mes}-01`,
+        ...numeric,
+      };
+      if (unidadeOptions) payload.unidade = unidade;
       const { error } = await supabase
         .from(table)
-        .upsert({ user_id: user.id, mes: `${mes}-01`, ...numeric }, { onConflict: "user_id,mes" });
+        .upsert(payload as never, {
+          onConflict: unidadeOptions ? "user_id,mes,unidade" : "user_id,mes",
+        });
       if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Registro salvo");
       setMes("");
+      setUnidade("");
       setVals(empty);
       qc.invalidateQueries({ queryKey });
     },
@@ -83,6 +104,9 @@ export function SlaView({
     },
     onSuccess: () => qc.invalidateQueries({ queryKey }),
   });
+
+  const unidadeLabel = (key: string | null | undefined) =>
+    unidadeOptions?.find((u) => u.key === key)?.label ?? "—";
 
   return (
     <>
@@ -105,6 +129,23 @@ export function SlaView({
                 <Label>Mês</Label>
                 <Input type="month" value={mes} onChange={(e) => setMes(e.target.value)} required />
               </div>
+              {unidadeOptions && (
+                <div className="space-y-2 col-span-2 md:col-span-1">
+                  <Label>Operação</Label>
+                  <Select value={unidade} onValueChange={setUnidade}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {unidadeOptions.map((u) => (
+                        <SelectItem key={u.key} value={u.key}>
+                          {u.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               {fields.map((f) => (
                 <div key={f.key} className="space-y-2">
                   <Label>{f.label}</Label>
@@ -136,6 +177,7 @@ export function SlaView({
               <TableHeader>
                 <TableRow>
                   <TableHead>Mês</TableHead>
+                  {unidadeOptions && <TableHead>Operação</TableHead>}
                   {fields.map((f) => (
                     <TableHead key={f.key} className="text-right">
                       {f.label}
@@ -148,7 +190,7 @@ export function SlaView({
                 {rows.length === 0 && (
                   <TableRow>
                     <TableCell
-                      colSpan={fields.length + 2}
+                      colSpan={fields.length + (unidadeOptions ? 3 : 2)}
                       className="text-center text-muted-foreground py-8"
                     >
                       Sem registros.
@@ -158,6 +200,9 @@ export function SlaView({
                 {rows.map((r) => (
                   <TableRow key={r.id}>
                     <TableCell>{fmtMes(r.mes)}</TableCell>
+                    {unidadeOptions && (
+                      <TableCell>{unidadeLabel(r.unidade as string | null)}</TableCell>
+                    )}
                     {fields.map((f) => {
                       const v = Number(r[f.key] ?? 0);
                       const ok = v >= META_SLA;
