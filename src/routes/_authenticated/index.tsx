@@ -69,7 +69,7 @@ type OpRow = {
   produtividade: number | null;
   unidade: UnidadeKey;
 };
-type SlaMidea = { mes: string; start_up: number; otcc: number; otd: number; sotd: number };
+type SlaMidea = { mes: string; start_up: number; otcc: number; otd: number; sotd: number; unidade: UnidadeKey | null };
 type SlaBosch = {
   mes: string;
   dig_conf: number;
