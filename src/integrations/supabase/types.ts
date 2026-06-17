@@ -704,6 +704,7 @@ export type Database = {
           otd: number
           sotd: number
           start_up: number
+          unidade: string | null
           updated_at: string
           user_id: string
         }
@@ -715,6 +716,7 @@ export type Database = {
           otd?: number
           sotd?: number
           start_up?: number
+          unidade?: string | null
           updated_at?: string
           user_id: string
         }
@@ -726,6 +728,7 @@ export type Database = {
           otd?: number
           sotd?: number
           start_up?: number
+          unidade?: string | null
           updated_at?: string
           user_id?: string
         }
