@@ -131,6 +131,26 @@ function DashboardPage() {
     },
   });
 
+  const swot = useQuery({
+    queryKey: ["swot_dash"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("swot")
+        .select("id, titulo, forcas, fraquezas, oportunidades, ameacas, created_at")
+        .order("created_at", { ascending: false })
+        .limit(1);
+      if (error) throw error;
+      return (data ?? []) as Array<{
+        id: string;
+        titulo: string;
+        forcas: string[];
+        fraquezas: string[];
+        oportunidades: string[];
+        ameacas: string[];
+      }>;
+    },
+  });
+
   const opAll = op.data ?? [];
   const grupoDe = (u: UnidadeKey) => UNIDADES.find((x) => x.key === u)?.grupo;
 
