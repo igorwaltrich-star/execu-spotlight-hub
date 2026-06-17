@@ -562,34 +562,50 @@ function DashboardPage() {
         </Card>
       </Slide>
 
-      {/* Slide 6 — SLA Midea */}
+      {/* Slide 6 — SLA Midea por Operação */}
       <Slide>
         <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
           <div>
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight">SLA — Midea</h2>
-            <p className="text-muted-foreground mt-1">{`Meta ${META_SLA}% por indicador`}</p>
+            <p className="text-muted-foreground mt-1">{`SLA Geral por operação — Meta ${META_SLA}%`}</p>
           </div>
           <FiltroMes value={filtroMesMidea} onChange={setFiltroMesMidea} meses={mesesMidea} />
         </div>
-        <Card className="flex-1 min-h-0">
-          <CardContent className="pt-6 h-[460px]">
-            {mideaRadar.length === 0 ? (
-              <Empty msg="Sem dados de SLA Midea cadastrados." />
-            ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <RadarChart data={mideaRadar}>
-                  <PolarGrid />
-                  <PolarAngleAxis dataKey="indicador" />
-                  <PolarRadiusAxis domain={[0, 100]} />
-                  <Radar name="Real" dataKey="valor" stroke={C1} fill={C1} fillOpacity={0.4} />
-                  <Radar name="Meta" dataKey="meta" stroke={CD} fill={CD} fillOpacity={0.05} />
-                  <Legend />
-                  <Tooltip />
-                </RadarChart>
-              </ResponsiveContainer>
-            )}
-          </CardContent>
-        </Card>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 min-h-0">
+          {mideaRadarPorUnidade.map(({ unidade, data, rowsCount, geral }) => {
+            const ok = geral >= META_SLA;
+            return (
+              <Card key={unidade.key} className="min-h-0 flex flex-col">
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span>{unidade.label}</span>
+                    <span className={`text-base font-semibold ${ok ? "text-success" : "text-destructive"}`}>
+                      {geral.toFixed(1)}%
+                    </span>
+                  </CardTitle>
+                  <CardDescription>SLA Geral (média dos indicadores)</CardDescription>
+                </CardHeader>
+                <CardContent className="flex-1 min-h-[320px]">
+                  {rowsCount === 0 ? (
+                    <Empty msg="Sem dados cadastrados." />
+                  ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RadarChart data={data}>
+                        <PolarGrid />
+                        <PolarAngleAxis dataKey="indicador" />
+                        <PolarRadiusAxis domain={[0, 100]} />
+                        <Radar name="Real" dataKey="valor" stroke={C1} fill={C1} fillOpacity={0.4} />
+                        <Radar name="Meta" dataKey="meta" stroke={CD} fill={CD} fillOpacity={0.05} />
+                        <Legend />
+                        <Tooltip />
+                      </RadarChart>
+                    </ResponsiveContainer>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
       </Slide>
 
       {/* Slide 7 — SLA BOSCH */}
