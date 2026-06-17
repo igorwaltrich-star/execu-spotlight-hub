@@ -82,7 +82,7 @@ export function SlaView({
       if (unidadeOptions) payload.unidade = unidade;
       const { error } = await supabase
         .from(table)
-        .upsert(payload, {
+        .upsert(payload as never, {
           onConflict: unidadeOptions ? "user_id,mes,unidade" : "user_id,mes",
         });
       if (error) throw error;
