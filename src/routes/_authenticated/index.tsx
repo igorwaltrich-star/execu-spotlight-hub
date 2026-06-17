@@ -44,9 +44,12 @@ import {
 } from "recharts";
 import {
   TrendingUp,
+  TrendingDown,
   Users,
   Gauge,
   Target,
+  Sparkles,
+  AlertTriangle,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/")({
