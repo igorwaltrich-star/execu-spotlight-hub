@@ -148,7 +148,7 @@ const STATUS_LABEL: Record<"ok" | "atencao" | "critico", { label: string; cls: s
 export function PerformanceOperacional() {
   const [items, setItems] = useState<ArquivoItem[]>([]);
   const [contexto, setContexto] = useState("");
-  const [metaPadrao, setMetaPadrao] = useState<number>(95);
+  const [metaPadrao, setMetaPadrao] = useState<number>(90);
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState<AnalyseResult | null>(null);
 

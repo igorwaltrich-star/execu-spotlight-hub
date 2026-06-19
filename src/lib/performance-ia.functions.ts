@@ -11,7 +11,7 @@ const fileSchema = z.object({
 const inputSchema = z.object({
   files: z.array(fileSchema).min(1).max(10),
   contexto: z.string().max(2000).optional(),
-  metaPadrao: z.number().min(0).max(100).default(95),
+  metaPadrao: z.number().min(0).max(100).default(90),
 });
 
 export type ValidacaoSLA = {
@@ -75,7 +75,7 @@ const tool = {
             properties: {
               indicador: { type: "string", description: "Nome do indicador. Ex.: OTD, OTCC, SOTD." },
               unidade: { type: "string", description: "Unidade/cliente quando aplicável (Midea SC, Bosch, etc.)." },
-              meta: { type: "string", description: "Meta usada (ex.: '95%')." },
+              meta: { type: "string", description: "Meta usada (ex.: '90%')." },
               valorMedio: { type: "string", description: "Valor médio do período (ex.: '92,4%')." },
               melhorMes: { type: "string" },
               piorMes: { type: "string" },
@@ -175,7 +175,7 @@ export const analyzePerformanceReport = createServerFn({ method: "POST" })
     const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY não configurada");
 
-    const meta = data.metaPadrao ?? 95;
+    const meta = data.metaPadrao ?? 90;
     const temMidea = data.files.some((f) => f.tipo === "sla_midea");
 
     const slaMideaRef = `
