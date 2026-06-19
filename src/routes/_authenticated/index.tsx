@@ -167,7 +167,10 @@ function DashboardPage() {
     [bosch.data],
   );
 
-  // Per-chart filters
+  // Global month filter (applies to every slide)
+  const [filtroMesGlobal, setFiltroMesGlobal] = useState<string>("all");
+
+  // Per-chart filters (used when global = "all")
   const [filtroGrupoVol, setFiltroGrupoVol] = useState<"all" | "midea" | "bosch">("all");
   const [filtroMesVol, setFiltroMesVol] = useState<string>("all");
   const [filtroGrupoProd, setFiltroGrupoProd] = useState<"all" | "midea" | "bosch">("all");
@@ -178,6 +181,15 @@ function DashboardPage() {
   const [filtroMesBosch, setFiltroMesBosch] = useState<string>("all");
   const [filtroUnidadeEvol, setFiltroUnidadeEvol] = useState<"all" | UnidadeKey>("all");
   const [filtroMesEvol, setFiltroMesEvol] = useState<string>("all");
+
+  const effMes = (local: string) => (filtroMesGlobal !== "all" ? filtroMesGlobal : local);
+  const mesesGlobais = useMemo(
+    () =>
+      [...new Set([...mesesOp, ...mesesMidea, ...mesesBosch])].sort((a, b) =>
+        b.localeCompare(a),
+      ),
+    [mesesOp, mesesMidea, mesesBosch],
+  );
 
   const matchesMes = (m: string, f: string) => f === "all" || m === f;
 
