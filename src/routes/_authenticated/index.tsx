@@ -387,7 +387,7 @@ function DashboardPage() {
       out.push(row);
     }
     return out;
-  }, [opAll, filtroUnidadeEvol, filtroMesEvol]);
+  }, [opAll, filtroUnidadeEvol, filtroMesEvol, filtroMesGlobal]);
 
 
   return (
