@@ -637,15 +637,19 @@ function DashboardPage() {
                     <Empty msg="Sem dados cadastrados." />
                   ) : (
                     <ResponsiveContainer width="100%" height="100%">
-                      <RadarChart data={data}>
-                        <PolarGrid />
-                        <PolarAngleAxis dataKey="indicador" />
-                        <PolarRadiusAxis domain={[0, 100]} />
-                        <Radar name="Real" dataKey="valor" stroke={C1} fill={C1} fillOpacity={0.4} />
-                        <Radar name="Meta" dataKey="meta" stroke={CD} fill={CD} fillOpacity={0.05} />
-                        <Legend />
-                        <Tooltip />
-                      </RadarChart>
+                      <BarChart data={data} layout="vertical" margin={{ left: 16, right: 24 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                        <XAxis type="number" domain={[0, 100]} />
+                        <YAxis type="category" dataKey="indicador" width={80} />
+                        <Tooltip formatter={(v: number) => `${Number(v).toFixed(1)}%`} />
+                        <ReferenceLine
+                          x={META_SLA}
+                          stroke={CD}
+                          strokeDasharray="4 4"
+                          label={{ value: `Meta ${META_SLA}%`, fill: CD, position: "top" }}
+                        />
+                        <Bar dataKey="valor" name="Real" fill={C1} radius={[0, 4, 4, 0]} />
+                      </BarChart>
                     </ResponsiveContainer>
                   )}
                 </CardContent>
