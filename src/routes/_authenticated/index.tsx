@@ -258,7 +258,7 @@ function DashboardPage() {
       (r) =>
         grupoDe(r.unidade) === grupo &&
         (uniFilter === "all" || r.unidade === uniFilter) &&
-        matchesMes(r.mes, filtroMesCart),
+        matchesMes(r.mes, effMes(filtroMesCart)),
     );
     const totalPessoas = rows.reduce((s, r) => s + Number(r.pessoas ?? 0), 0);
     const prod = totalPessoas > 0 ? volume / totalPessoas : 0;
