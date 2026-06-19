@@ -357,7 +357,8 @@ function DashboardPage() {
   // Evolução de produtividade por operação (Jan até mês atual)
   const evolucaoProd = useMemo(() => {
     const currentMonth = new Date().getUTCMonth();
-    const mesFiltroIdx = filtroMesEvol === "all" ? null : new Date(filtroMesEvol).getUTCMonth();
+    const mesEvolEff = effMes(filtroMesEvol);
+    const mesFiltroIdx = mesEvolEff === "all" ? null : new Date(mesEvolEff).getUTCMonth();
     // mes -> unidade -> { volume, pessoas }
     const map = new Map<number, Map<UnidadeKey, { volume: number; pessoas: number }>>();
     for (const r of opAll) {
