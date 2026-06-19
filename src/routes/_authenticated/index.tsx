@@ -234,7 +234,9 @@ function DashboardPage() {
   const kpiPorUnidade = useMemo(
     () =>
       UNIDADES.map((u) => {
-        const rows = opAll.filter((r) => r.unidade === u.key && matchesMes(r.mes, filtroMesCart));
+        const rows = opAll.filter(
+          (r) => r.unidade === u.key && matchesMes(r.mes, effMes(filtroMesCart)),
+        );
         const volume = rows.reduce((s, r) => s + r.volume, 0);
         // Headcount não soma o mesmo time mês a mês: usa o máximo do período.
         const headcount = rows.reduce((m, r) => Math.max(m, Number(r.pessoas ?? 0)), 0);
@@ -242,7 +244,7 @@ function DashboardPage() {
         const prod = totalPessoas > 0 ? volume / totalPessoas : 0;
         return { ...u, volume, headcount, prod, meses: rows.length };
       }),
-    [opAll, filtroMesCart],
+    [opAll, filtroMesCart, filtroMesGlobal],
   );
 
   const totalizador = (grupo: "midea" | "bosch", uniFilter: "all" | UnidadeKey = "all") => {
