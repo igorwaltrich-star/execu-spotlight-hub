@@ -404,6 +404,21 @@ function DashboardPage() {
           <p className="text-lg md:text-xl text-primary-foreground/80 mt-4 max-w-3xl">
             Resultados, indicadores de SLA, riscos identificados e plano estratégico para 2026.
           </p>
+          <div className="mt-6 flex items-center gap-3">
+            <span className="text-sm text-primary-foreground/80 uppercase tracking-wide">
+              Filtro global de mês
+            </span>
+            <div className="bg-card/95 backdrop-blur rounded-md">
+              <FiltroMes
+                value={filtroMesGlobal}
+                onChange={setFiltroMesGlobal}
+                meses={mesesGlobais}
+              />
+            </div>
+            {filtroMesGlobal !== "all" && (
+              <Badge variant="secondary">{fmtMes(filtroMesGlobal)}</Badge>
+            )}
+          </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-12 w-full">
             <Kpi
               icon={TrendingUp}
