@@ -265,37 +265,54 @@ function DashboardPage() {
     return { volume, headcount, prod };
   };
 
-  // KPIs do topo (todos os meses)
-  const allMonthly = aggByMonth(opAll);
+  // KPIs do topo (respeitam o filtro global de mês)
+  const opGlobal = useMemo(
+    () => opAll.filter((r) => matchesMes(r.mes, filtroMesGlobal)),
+    [opAll, filtroMesGlobal],
+  );
+  const mideaGlobal = useMemo(
+    () => (midea.data ?? []).filter((r) => matchesMes(r.mes, filtroMesGlobal)),
+    [midea.data, filtroMesGlobal],
+  );
+  const boschGlobal = useMemo(
+    () => (bosch.data ?? []).filter((r) => matchesMes(r.mes, filtroMesGlobal)),
+    [bosch.data, filtroMesGlobal],
+  );
+
+  const allMonthly = aggByMonth(opGlobal);
   const totalVolume = allMonthly.reduce((s, r) => s + r.volume, 0);
   const totalPessoasMes = allMonthly.reduce((s, r) => s + r.pessoas, 0);
   const avgProd = totalPessoasMes > 0 ? totalVolume / totalPessoasMes : 0;
   // Headcount total = soma do MAX(pessoas) de cada unidade (sem dupla contagem)
   const headcountTotal = UNIDADES.reduce((sum, u) => {
-    const rows = opAll.filter((r) => r.unidade === u.key);
+    const rows = opGlobal.filter((r) => r.unidade === u.key);
     return sum + rows.reduce((m, r) => Math.max(m, Number(r.pessoas ?? 0)), 0);
   }, 0);
 
-  const mideaFiltrada = (midea.data ?? []).filter((r) => matchesMes(r.mes, filtroMesMidea));
-  const boschFiltrada = (bosch.data ?? []).filter((r) => matchesMes(r.mes, filtroMesBosch));
+  const mideaFiltrada = (midea.data ?? []).filter((r) =>
+    matchesMes(r.mes, effMes(filtroMesMidea)),
+  );
+  const boschFiltrada = (bosch.data ?? []).filter((r) =>
+    matchesMes(r.mes, effMes(filtroMesBosch)),
+  );
 
   const allSla = [
-    ...(midea.data ?? []).flatMap((r) => [r.start_up, r.otcc, r.otd, r.sotd]),
-    ...(bosch.data ?? []).flatMap((r) => [r.dig_conf, r.start_up, r.otcc, r.desvios, r.pinho]),
+    ...mideaGlobal.flatMap((r) => [r.start_up, r.otcc, r.otd, r.sotd]),
+    ...boschGlobal.flatMap((r) => [r.dig_conf, r.start_up, r.otcc, r.desvios, r.pinho]),
   ].map(Number);
   const slaMedio = allSla.length ? allSla.reduce((s, n) => s + n, 0) / allSla.length : 0;
 
   const totMidea = totalizador("midea", "all");
   const totBosch = totalizador("bosch", "all");
 
-  const slaMideaVals = (midea.data ?? [])
+  const slaMideaVals = mideaGlobal
     .flatMap((r) => [r.start_up, r.otcc, r.otd, r.sotd])
     .map(Number);
   const slaMedioMidea = slaMideaVals.length
     ? slaMideaVals.reduce((s, n) => s + n, 0) / slaMideaVals.length
     : 0;
 
-  const slaBoschVals = (bosch.data ?? [])
+  const slaBoschVals = boschGlobal
     .flatMap((r) => [r.dig_conf, r.start_up, r.otcc, r.desvios, r.pinho])
     .map(Number);
   const slaMedioBosch = slaBoschVals.length
