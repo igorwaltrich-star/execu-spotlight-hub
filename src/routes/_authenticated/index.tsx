@@ -167,7 +167,10 @@ function DashboardPage() {
     [bosch.data],
   );
 
-  // Per-chart filters
+  // Global month filter (applies to every slide)
+  const [filtroMesGlobal, setFiltroMesGlobal] = useState<string>("all");
+
+  // Per-chart filters (used when global = "all")
   const [filtroGrupoVol, setFiltroGrupoVol] = useState<"all" | "midea" | "bosch">("all");
   const [filtroMesVol, setFiltroMesVol] = useState<string>("all");
   const [filtroGrupoProd, setFiltroGrupoProd] = useState<"all" | "midea" | "bosch">("all");
@@ -178,6 +181,15 @@ function DashboardPage() {
   const [filtroMesBosch, setFiltroMesBosch] = useState<string>("all");
   const [filtroUnidadeEvol, setFiltroUnidadeEvol] = useState<"all" | UnidadeKey>("all");
   const [filtroMesEvol, setFiltroMesEvol] = useState<string>("all");
+
+  const effMes = (local: string) => (filtroMesGlobal !== "all" ? filtroMesGlobal : local);
+  const mesesGlobais = useMemo(
+    () =>
+      [...new Set([...mesesOp, ...mesesMidea, ...mesesBosch])].sort((a, b) =>
+        b.localeCompare(a),
+      ),
+    [mesesOp, mesesMidea, mesesBosch],
+  );
 
   const matchesMes = (m: string, f: string) => f === "all" || m === f;
 
@@ -204,25 +216,27 @@ function DashboardPage() {
     const rows = opAll.filter(
       (r) =>
         (filtroGrupoVol === "all" || grupoDe(r.unidade) === filtroGrupoVol) &&
-        matchesMes(r.mes, filtroMesVol),
+        matchesMes(r.mes, effMes(filtroMesVol)),
     );
     return aggByMonth(rows);
-  }, [opAll, filtroGrupoVol, filtroMesVol]);
+  }, [opAll, filtroGrupoVol, filtroMesVol, filtroMesGlobal]);
 
   const prodData = useMemo(() => {
     const rows = opAll.filter(
       (r) =>
         (filtroGrupoProd === "all" || grupoDe(r.unidade) === filtroGrupoProd) &&
-        matchesMes(r.mes, filtroMesProd),
+        matchesMes(r.mes, effMes(filtroMesProd)),
     );
     return aggByMonth(rows);
-  }, [opAll, filtroGrupoProd, filtroMesProd]);
+  }, [opAll, filtroGrupoProd, filtroMesProd, filtroMesGlobal]);
 
   // KPI por unidade respeitando filtro do slide carteiras
   const kpiPorUnidade = useMemo(
     () =>
       UNIDADES.map((u) => {
-        const rows = opAll.filter((r) => r.unidade === u.key && matchesMes(r.mes, filtroMesCart));
+        const rows = opAll.filter(
+          (r) => r.unidade === u.key && matchesMes(r.mes, effMes(filtroMesCart)),
+        );
         const volume = rows.reduce((s, r) => s + r.volume, 0);
         // Headcount não soma o mesmo time mês a mês: usa o máximo do período.
         const headcount = rows.reduce((m, r) => Math.max(m, Number(r.pessoas ?? 0)), 0);
@@ -230,7 +244,7 @@ function DashboardPage() {
         const prod = totalPessoas > 0 ? volume / totalPessoas : 0;
         return { ...u, volume, headcount, prod, meses: rows.length };
       }),
-    [opAll, filtroMesCart],
+    [opAll, filtroMesCart, filtroMesGlobal],
   );
 
   const totalizador = (grupo: "midea" | "bosch", uniFilter: "all" | UnidadeKey = "all") => {
@@ -244,44 +258,61 @@ function DashboardPage() {
       (r) =>
         grupoDe(r.unidade) === grupo &&
         (uniFilter === "all" || r.unidade === uniFilter) &&
-        matchesMes(r.mes, filtroMesCart),
+        matchesMes(r.mes, effMes(filtroMesCart)),
     );
     const totalPessoas = rows.reduce((s, r) => s + Number(r.pessoas ?? 0), 0);
     const prod = totalPessoas > 0 ? volume / totalPessoas : 0;
     return { volume, headcount, prod };
   };
 
-  // KPIs do topo (todos os meses)
-  const allMonthly = aggByMonth(opAll);
+  // KPIs do topo (respeitam o filtro global de mês)
+  const opGlobal = useMemo(
+    () => opAll.filter((r) => matchesMes(r.mes, filtroMesGlobal)),
+    [opAll, filtroMesGlobal],
+  );
+  const mideaGlobal = useMemo(
+    () => (midea.data ?? []).filter((r) => matchesMes(r.mes, filtroMesGlobal)),
+    [midea.data, filtroMesGlobal],
+  );
+  const boschGlobal = useMemo(
+    () => (bosch.data ?? []).filter((r) => matchesMes(r.mes, filtroMesGlobal)),
+    [bosch.data, filtroMesGlobal],
+  );
+
+  const allMonthly = aggByMonth(opGlobal);
   const totalVolume = allMonthly.reduce((s, r) => s + r.volume, 0);
   const totalPessoasMes = allMonthly.reduce((s, r) => s + r.pessoas, 0);
   const avgProd = totalPessoasMes > 0 ? totalVolume / totalPessoasMes : 0;
   // Headcount total = soma do MAX(pessoas) de cada unidade (sem dupla contagem)
   const headcountTotal = UNIDADES.reduce((sum, u) => {
-    const rows = opAll.filter((r) => r.unidade === u.key);
+    const rows = opGlobal.filter((r) => r.unidade === u.key);
     return sum + rows.reduce((m, r) => Math.max(m, Number(r.pessoas ?? 0)), 0);
   }, 0);
 
-  const mideaFiltrada = (midea.data ?? []).filter((r) => matchesMes(r.mes, filtroMesMidea));
-  const boschFiltrada = (bosch.data ?? []).filter((r) => matchesMes(r.mes, filtroMesBosch));
+  const mideaFiltrada = (midea.data ?? []).filter((r) =>
+    matchesMes(r.mes, effMes(filtroMesMidea)),
+  );
+  const boschFiltrada = (bosch.data ?? []).filter((r) =>
+    matchesMes(r.mes, effMes(filtroMesBosch)),
+  );
 
   const allSla = [
-    ...(midea.data ?? []).flatMap((r) => [r.start_up, r.otcc, r.otd, r.sotd]),
-    ...(bosch.data ?? []).flatMap((r) => [r.dig_conf, r.start_up, r.otcc, r.desvios, r.pinho]),
+    ...mideaGlobal.flatMap((r) => [r.start_up, r.otcc, r.otd, r.sotd]),
+    ...boschGlobal.flatMap((r) => [r.dig_conf, r.start_up, r.otcc, r.desvios, r.pinho]),
   ].map(Number);
   const slaMedio = allSla.length ? allSla.reduce((s, n) => s + n, 0) / allSla.length : 0;
 
   const totMidea = totalizador("midea", "all");
   const totBosch = totalizador("bosch", "all");
 
-  const slaMideaVals = (midea.data ?? [])
+  const slaMideaVals = mideaGlobal
     .flatMap((r) => [r.start_up, r.otcc, r.otd, r.sotd])
     .map(Number);
   const slaMedioMidea = slaMideaVals.length
     ? slaMideaVals.reduce((s, n) => s + n, 0) / slaMideaVals.length
     : 0;
 
-  const slaBoschVals = (bosch.data ?? [])
+  const slaBoschVals = boschGlobal
     .flatMap((r) => [r.dig_conf, r.start_up, r.otcc, r.desvios, r.pinho])
     .map(Number);
   const slaMedioBosch = slaBoschVals.length
@@ -326,7 +357,8 @@ function DashboardPage() {
   // Evolução de produtividade por operação (Jan até mês atual)
   const evolucaoProd = useMemo(() => {
     const currentMonth = new Date().getUTCMonth();
-    const mesFiltroIdx = filtroMesEvol === "all" ? null : new Date(filtroMesEvol).getUTCMonth();
+    const mesEvolEff = effMes(filtroMesEvol);
+    const mesFiltroIdx = mesEvolEff === "all" ? null : new Date(mesEvolEff).getUTCMonth();
     // mes -> unidade -> { volume, pessoas }
     const map = new Map<number, Map<UnidadeKey, { volume: number; pessoas: number }>>();
     for (const r of opAll) {
@@ -355,7 +387,7 @@ function DashboardPage() {
       out.push(row);
     }
     return out;
-  }, [opAll, filtroUnidadeEvol, filtroMesEvol]);
+  }, [opAll, filtroUnidadeEvol, filtroMesEvol, filtroMesGlobal]);
 
 
   return (
@@ -372,6 +404,21 @@ function DashboardPage() {
           <p className="text-lg md:text-xl text-primary-foreground/80 mt-4 max-w-3xl">
             Resultados, indicadores de SLA, riscos identificados e plano estratégico para 2026.
           </p>
+          <div className="mt-6 flex items-center gap-3">
+            <span className="text-sm text-primary-foreground/80 uppercase tracking-wide">
+              Filtro global de mês
+            </span>
+            <div className="bg-card/95 backdrop-blur rounded-md">
+              <FiltroMes
+                value={filtroMesGlobal}
+                onChange={setFiltroMesGlobal}
+                meses={mesesGlobais}
+              />
+            </div>
+            {filtroMesGlobal !== "all" && (
+              <Badge variant="secondary">{fmtMes(filtroMesGlobal)}</Badge>
+            )}
+          </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-12 w-full">
             <Kpi
               icon={TrendingUp}
