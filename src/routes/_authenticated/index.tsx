@@ -216,19 +216,19 @@ function DashboardPage() {
     const rows = opAll.filter(
       (r) =>
         (filtroGrupoVol === "all" || grupoDe(r.unidade) === filtroGrupoVol) &&
-        matchesMes(r.mes, filtroMesVol),
+        matchesMes(r.mes, effMes(filtroMesVol)),
     );
     return aggByMonth(rows);
-  }, [opAll, filtroGrupoVol, filtroMesVol]);
+  }, [opAll, filtroGrupoVol, filtroMesVol, filtroMesGlobal]);
 
   const prodData = useMemo(() => {
     const rows = opAll.filter(
       (r) =>
         (filtroGrupoProd === "all" || grupoDe(r.unidade) === filtroGrupoProd) &&
-        matchesMes(r.mes, filtroMesProd),
+        matchesMes(r.mes, effMes(filtroMesProd)),
     );
     return aggByMonth(rows);
-  }, [opAll, filtroGrupoProd, filtroMesProd]);
+  }, [opAll, filtroGrupoProd, filtroMesProd, filtroMesGlobal]);
 
   // KPI por unidade respeitando filtro do slide carteiras
   const kpiPorUnidade = useMemo(
