@@ -1,5 +1,5 @@
 export const META_PRODUTIVIDADE = 60;
-export const META_SLA = 95;
+export const META_SLA = 90;
 
 export const MESES_PT = [
   "Jan",
