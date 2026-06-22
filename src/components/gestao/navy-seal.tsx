@@ -7,22 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { useColaboradores } from "./use-colaboradores";
 
@@ -34,6 +22,8 @@ const TAG_META: Record<Tag, { label: string; className: string }> = {
   b_player: { label: "B-Player", className: "bg-secondary text-secondary-foreground" },
   c_player: { label: "C-Player", className: "bg-destructive text-destructive-foreground" },
 };
+
+const emptyForm = { colaborador_id: "", tag: "b_player" as Tag, observacoes: "" };
 
 export function NavySeal() {
   const { user } = useAuth();
@@ -54,11 +44,19 @@ export function NavySeal() {
   });
 
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState<{ colaborador_id: string; tag: Tag; observacoes: string }>({
-    colaborador_id: "",
-    tag: "b_player",
-    observacoes: "",
-  });
+  const [editId, setEditId] = useState<string | null>(null);
+  const [form, setForm] = useState(emptyForm);
+
+  const handleClose = (v: boolean) => {
+    if (!v) { setEditId(null); setForm(emptyForm); }
+    setOpen(v);
+  };
+
+  const startEdit = (r: Row) => {
+    setForm({ colaborador_id: r.colaborador_id, tag: r.tag, observacoes: r.observacoes ?? "" });
+    setEditId(r.id);
+    setOpen(true);
+  };
 
   const add = useMutation({
     mutationFn: async () => {
@@ -69,8 +67,21 @@ export function NavySeal() {
     onSuccess: () => {
       toast.success("Classificação salva");
       qc.invalidateQueries({ queryKey: ["navy_seal"] });
-      setOpen(false);
-      setForm({ colaborador_id: "", tag: "b_player", observacoes: "" });
+      setOpen(false); setForm(emptyForm);
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Erro"),
+  });
+
+  const update = useMutation({
+    mutationFn: async () => {
+      if (!editId || !form.colaborador_id) throw new Error("Selecione um colaborador");
+      const { error } = await supabase.from("navy_seal").update(form).eq("id", editId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Classificação atualizada");
+      qc.invalidateQueries({ queryKey: ["navy_seal"] });
+      setOpen(false); setEditId(null); setForm(emptyForm);
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Erro"),
   });
@@ -90,65 +101,40 @@ export function NavySeal() {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>NavySeal — Classificação de Talentos</CardTitle>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm">
-              <Plus className="h-4 w-4 mr-1" />
-              Classificar
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Classificar talento</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-3">
-              <div>
-                <Label>Colaborador</Label>
-                <Select
-                  value={form.colaborador_id}
-                  onValueChange={(v) => setForm({ ...form, colaborador_id: v })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {colabs.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
-                        {c.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Classificação</Label>
-                <Select value={form.tag} onValueChange={(v) => setForm({ ...form, tag: v as Tag })}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(Object.keys(TAG_META) as Tag[]).map((t) => (
-                      <SelectItem key={t} value={t}>
-                        {TAG_META[t].label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Observações</Label>
-                <Textarea
-                  value={form.observacoes}
-                  onChange={(e) => setForm({ ...form, observacoes: e.target.value })}
-                />
-              </div>
-              <Button onClick={() => add.mutate()} disabled={add.isPending} className="w-full">
-                Salvar
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <Button size="sm" onClick={() => { setForm(emptyForm); setEditId(null); setOpen(true); }}>
+          <Plus className="h-4 w-4 mr-1" />Classificar
+        </Button>
       </CardHeader>
+
+      <Dialog open={open} onOpenChange={handleClose}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editId ? "Editar classificação" : "Classificar talento"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label>Colaborador</Label>
+              <Select value={form.colaborador_id} onValueChange={(v) => setForm({ ...form, colaborador_id: v })}>
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>{colabs.map((c) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Classificação</Label>
+              <Select value={form.tag} onValueChange={(v) => setForm({ ...form, tag: v as Tag })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>{(Object.keys(TAG_META) as Tag[]).map((t) => <SelectItem key={t} value={t}>{TAG_META[t].label}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Observações</Label>
+              <Textarea value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} />
+            </div>
+            <Button onClick={() => editId ? update.mutate() : add.mutate()} disabled={add.isPending || update.isPending} className="w-full">Salvar</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {(Object.keys(TAG_META) as Tag[]).map((t) => (
@@ -163,13 +149,12 @@ export function NavySeal() {
                   <div key={r.id} className="p-3 rounded-md border bg-card">
                     <div className="flex items-center justify-between">
                       <span className="font-medium text-sm">{nome(r.colaborador_id)}</span>
-                      <Button size="icon" variant="ghost" onClick={() => del.mutate(r.id)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div className="flex gap-1">
+                        <Button size="icon" variant="ghost" onClick={() => startEdit(r)}><Pencil className="h-4 w-4" /></Button>
+                        <Button size="icon" variant="ghost" onClick={() => del.mutate(r.id)}><Trash2 className="h-4 w-4" /></Button>
+                      </div>
                     </div>
-                    {r.observacoes && (
-                      <p className="text-xs text-muted-foreground mt-1">{r.observacoes}</p>
-                    )}
+                    {r.observacoes && <p className="text-xs text-muted-foreground mt-1">{r.observacoes}</p>}
                   </div>
                 ))}
               </div>

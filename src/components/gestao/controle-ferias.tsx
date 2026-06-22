@@ -8,29 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Plus, Trash2, Download, Upload } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Plus, Trash2, Download, Upload, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { useColaboradores } from "./use-colaboradores";
 
@@ -46,6 +27,8 @@ type Row = {
 
 const fmt = (d: string | null) => (d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR") : "—");
 
+const emptyForm = { colaborador_id: "", periodo_inicio: "", periodo_fim: "", previsao_saida: "", retorno: "", saldo_dias: 30 };
+
 export function ControleFerias() {
   const { user } = useAuth();
   const qc = useQueryClient();
@@ -57,9 +40,7 @@ export function ControleFerias() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("controle_ferias")
-        .select(
-          "id, colaborador_id, periodo_inicio, periodo_fim, previsao_saida, retorno, saldo_dias",
-        )
+        .select("id, colaborador_id, periodo_inicio, periodo_fim, previsao_saida, retorno, saldo_dias")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as Row[];
@@ -68,56 +49,33 @@ export function ControleFerias() {
 
   const fileRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({
-    colaborador_id: "",
-    periodo_inicio: "",
-    periodo_fim: "",
-    previsao_saida: "",
-    retorno: "",
-    saldo_dias: 30,
-  });
+  const [editId, setEditId] = useState<string | null>(null);
+  const [form, setForm] = useState(emptyForm);
 
-  const baixarModelo = () => {
-    const ws = XLSX.utils.json_to_sheet([
-      {
-        colaborador: "João Silva",
-        periodo_inicio: "2025-01-01",
-        periodo_fim: "2025-12-31",
-        previsao_saida: "2026-01-15",
-        retorno: "2026-02-14",
-        saldo_dias: 30,
-      },
-      {
-        colaborador: "Maria Souza",
-        periodo_inicio: "2024-06-01",
-        periodo_fim: "2025-05-31",
-        previsao_saida: "2025-07-01",
-        retorno: "2025-07-30",
-        saldo_dias: 20,
-      },
-    ]);
-    ws["!cols"] = [
-      { wch: 28 },
-      { wch: 16 },
-      { wch: 16 },
-      { wch: 16 },
-      { wch: 16 },
-      { wch: 12 },
-    ];
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Férias");
-    XLSX.writeFile(wb, "modelo-ferias.xlsx");
+  const handleClose = (v: boolean) => {
+    if (!v) { setEditId(null); setForm(emptyForm); }
+    setOpen(v);
+  };
+
+  const startEdit = (r: Row) => {
+    setForm({
+      colaborador_id: r.colaborador_id,
+      periodo_inicio: r.periodo_inicio ?? "",
+      periodo_fim: r.periodo_fim ?? "",
+      previsao_saida: r.previsao_saida ?? "",
+      retorno: r.retorno ?? "",
+      saldo_dias: r.saldo_dias,
+    });
+    setEditId(r.id);
+    setOpen(true);
   };
 
   const parseDate = (v: string): string | null => {
     const s = v.trim();
     if (!s) return null;
-    // ISO yyyy-mm-dd
     if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-    // dd/mm/yyyy
     const br = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
     if (br) return `${br[3]}-${br[2]}-${br[1]}`;
-    // Excel serial
     const n = Number(s);
     if (Number.isFinite(n) && n > 20000 && n < 80000) {
       const d = XLSX.SSF.parse_date_code(n);
@@ -129,6 +87,51 @@ export function ControleFerias() {
     }
     return null;
   };
+
+  const payload = () => ({
+    colaborador_id: form.colaborador_id,
+    periodo_inicio: form.periodo_inicio || null,
+    periodo_fim: form.periodo_fim || null,
+    previsao_saida: form.previsao_saida || null,
+    retorno: form.retorno || null,
+    saldo_dias: Number(form.saldo_dias),
+  });
+
+  const add = useMutation({
+    mutationFn: async () => {
+      if (!user || !form.colaborador_id) throw new Error("Selecione um colaborador");
+      const { error } = await supabase.from("controle_ferias").insert({ user_id: user.id, ...payload() });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Registro de férias adicionado");
+      qc.invalidateQueries({ queryKey: ["controle_ferias"] });
+      setOpen(false); setForm(emptyForm);
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Erro"),
+  });
+
+  const update = useMutation({
+    mutationFn: async () => {
+      if (!editId || !form.colaborador_id) throw new Error("Selecione um colaborador");
+      const { error } = await supabase.from("controle_ferias").update(payload()).eq("id", editId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Registro atualizado");
+      qc.invalidateQueries({ queryKey: ["controle_ferias"] });
+      setOpen(false); setEditId(null); setForm(emptyForm);
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Erro"),
+  });
+
+  const del = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("controle_ferias").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["controle_ferias"] }),
+  });
 
   const importar = useMutation({
     mutationFn: async (file: File) => {
@@ -142,9 +145,7 @@ export function ControleFerias() {
       const records = json
         .map((r) => {
           const e: Record<string, string> = {};
-          Object.entries(r).forEach(([k, v]) => {
-            e[norm(k)] = String(v ?? "").trim();
-          });
+          Object.entries(r).forEach(([k, v]) => { e[norm(k)] = String(v ?? "").trim(); });
           const colaborador_id = byNome.get((e.colaborador || e.nome || "").toLowerCase());
           if (!colaborador_id) return null;
           return {
@@ -158,8 +159,7 @@ export function ControleFerias() {
           };
         })
         .filter((r): r is NonNullable<typeof r> => r !== null);
-      if (records.length === 0)
-        throw new Error("Nenhuma linha válida (colaborador deve existir no cadastro)");
+      if (records.length === 0) throw new Error("Nenhuma linha válida (colaborador deve existir no cadastro)");
       const { error } = await supabase.from("controle_ferias").insert(records);
       if (error) throw error;
       return records.length;
@@ -171,44 +171,16 @@ export function ControleFerias() {
     onError: (e) => toast.error(e instanceof Error ? e.message : "Erro ao importar"),
   });
 
-  const add = useMutation({
-    mutationFn: async () => {
-      if (!user || !form.colaborador_id) throw new Error("Selecione um colaborador");
-      const payload = {
-        user_id: user.id,
-        colaborador_id: form.colaborador_id,
-        periodo_inicio: form.periodo_inicio || null,
-        periodo_fim: form.periodo_fim || null,
-        previsao_saida: form.previsao_saida || null,
-        retorno: form.retorno || null,
-        saldo_dias: Number(form.saldo_dias),
-      };
-      const { error } = await supabase.from("controle_ferias").insert(payload);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("Registro de férias adicionado");
-      qc.invalidateQueries({ queryKey: ["controle_ferias"] });
-      setOpen(false);
-      setForm({
-        colaborador_id: "",
-        periodo_inicio: "",
-        periodo_fim: "",
-        previsao_saida: "",
-        retorno: "",
-        saldo_dias: 30,
-      });
-    },
-    onError: (e) => toast.error(e instanceof Error ? e.message : "Erro"),
-  });
-
-  const del = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("controle_ferias").delete().eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["controle_ferias"] }),
-  });
+  const baixarModelo = () => {
+    const ws = XLSX.utils.json_to_sheet([
+      { colaborador: "João Silva", periodo_inicio: "2025-01-01", periodo_fim: "2025-12-31", previsao_saida: "2026-01-15", retorno: "2026-02-14", saldo_dias: 30 },
+      { colaborador: "Maria Souza", periodo_inicio: "2024-06-01", periodo_fim: "2025-05-31", previsao_saida: "2025-07-01", retorno: "2025-07-30", saldo_dias: 20 },
+    ]);
+    ws["!cols"] = [{ wch: 28 }, { wch: 16 }, { wch: 16 }, { wch: 16 }, { wch: 16 }, { wch: 12 }];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Férias");
+    XLSX.writeFile(wb, "modelo-ferias.xlsx");
+  };
 
   const nome = (id: string) => colabs.find((c) => c.id === id)?.nome ?? "—";
 
@@ -217,110 +189,43 @@ export function ControleFerias() {
       <CardHeader className="flex flex-row items-center justify-between gap-2 flex-wrap">
         <CardTitle>Controle de Férias</CardTitle>
         <div className="flex gap-2 flex-wrap">
-          <Button size="sm" variant="outline" onClick={baixarModelo}>
-            <Download className="h-4 w-4 mr-1" />
-            Modelo
+          <Button size="sm" variant="outline" onClick={baixarModelo}><Download className="h-4 w-4 mr-1" />Modelo</Button>
+          <Button size="sm" variant="outline" onClick={() => fileRef.current?.click()} disabled={importar.isPending}>
+            <Upload className="h-4 w-4 mr-1" />{importar.isPending ? "Importando..." : "Importar"}
           </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => fileRef.current?.click()}
-            disabled={importar.isPending}
-          >
-            <Upload className="h-4 w-4 mr-1" />
-            {importar.isPending ? "Importando..." : "Importar"}
+          <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv" className="hidden"
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) importar.mutate(f); e.target.value = ""; }} />
+          <Button size="sm" onClick={() => { setForm(emptyForm); setEditId(null); setOpen(true); }}>
+            <Plus className="h-4 w-4 mr-1" />Adicionar
           </Button>
-          <input
-            ref={fileRef}
-            type="file"
-            accept=".xlsx,.xls,.csv"
-            className="hidden"
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) importar.mutate(f);
-              e.target.value = "";
-            }}
-          />
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm">
-                <Plus className="h-4 w-4 mr-1" />
-                Adicionar
-              </Button>
-            </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Novo registro</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-3">
-              <div>
-                <Label>Colaborador</Label>
-                <Select
-                  value={form.colaborador_id}
-                  onValueChange={(v) => setForm({ ...form, colaborador_id: v })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {colabs.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
-                        {c.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label>Período aquisitivo (início)</Label>
-                  <Input
-                    type="date"
-                    value={form.periodo_inicio}
-                    onChange={(e) => setForm({ ...form, periodo_inicio: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label>Período aquisitivo (fim)</Label>
-                  <Input
-                    type="date"
-                    value={form.periodo_fim}
-                    onChange={(e) => setForm({ ...form, periodo_fim: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label>Previsão de saída</Label>
-                  <Input
-                    type="date"
-                    value={form.previsao_saida}
-                    onChange={(e) => setForm({ ...form, previsao_saida: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label>Retorno</Label>
-                  <Input
-                    type="date"
-                    value={form.retorno}
-                    onChange={(e) => setForm({ ...form, retorno: e.target.value })}
-                  />
-                </div>
-                <div className="col-span-2">
-                  <Label>Saldo de dias</Label>
-                  <Input
-                    type="number"
-                    value={form.saldo_dias}
-                    onChange={(e) => setForm({ ...form, saldo_dias: Number(e.target.value) })}
-                  />
-                </div>
-              </div>
-              <Button onClick={() => add.mutate()} disabled={add.isPending} className="w-full">
-                Salvar
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
         </div>
       </CardHeader>
+
+      <Dialog open={open} onOpenChange={handleClose}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editId ? "Editar férias" : "Novo registro"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label>Colaborador</Label>
+              <Select value={form.colaborador_id} onValueChange={(v) => setForm({ ...form, colaborador_id: v })}>
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>{colabs.map((c) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div><Label>Período aquisitivo (início)</Label><Input type="date" value={form.periodo_inicio} onChange={(e) => setForm({ ...form, periodo_inicio: e.target.value })} /></div>
+              <div><Label>Período aquisitivo (fim)</Label><Input type="date" value={form.periodo_fim} onChange={(e) => setForm({ ...form, periodo_fim: e.target.value })} /></div>
+              <div><Label>Previsão de saída</Label><Input type="date" value={form.previsao_saida} onChange={(e) => setForm({ ...form, previsao_saida: e.target.value })} /></div>
+              <div><Label>Retorno</Label><Input type="date" value={form.retorno} onChange={(e) => setForm({ ...form, retorno: e.target.value })} /></div>
+              <div className="col-span-2"><Label>Saldo de dias</Label><Input type="number" value={form.saldo_dias} onChange={(e) => setForm({ ...form, saldo_dias: Number(e.target.value) })} /></div>
+            </div>
+            <Button onClick={() => editId ? update.mutate() : add.mutate()} disabled={add.isPending || update.isPending} className="w-full">Salvar</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <CardContent>
         <Table>
           <TableHeader>
@@ -330,30 +235,23 @@ export function ControleFerias() {
               <TableHead>Previsão Saída</TableHead>
               <TableHead>Retorno</TableHead>
               <TableHead>Saldo</TableHead>
-              <TableHead className="w-12"></TableHead>
+              <TableHead className="w-20"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {rows.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground py-6">
-                  Sem registros
-                </TableCell>
-              </TableRow>
-            )}
+            {rows.length === 0 && <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-6">Sem registros</TableCell></TableRow>}
             {rows.map((r) => (
               <TableRow key={r.id}>
                 <TableCell className="font-medium">{nome(r.colaborador_id)}</TableCell>
-                <TableCell>
-                  {fmt(r.periodo_inicio)} → {fmt(r.periodo_fim)}
-                </TableCell>
+                <TableCell>{fmt(r.periodo_inicio)} → {fmt(r.periodo_fim)}</TableCell>
                 <TableCell>{fmt(r.previsao_saida)}</TableCell>
                 <TableCell>{fmt(r.retorno)}</TableCell>
                 <TableCell>{r.saldo_dias} dias</TableCell>
                 <TableCell>
-                  <Button size="icon" variant="ghost" onClick={() => del.mutate(r.id)}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <div className="flex gap-1">
+                    <Button size="icon" variant="ghost" onClick={() => startEdit(r)}><Pencil className="h-4 w-4" /></Button>
+                    <Button size="icon" variant="ghost" onClick={() => del.mutate(r.id)}><Trash2 className="h-4 w-4" /></Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}

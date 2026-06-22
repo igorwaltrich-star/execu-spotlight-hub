@@ -21,9 +21,8 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Trash2, Download, Upload } from "lucide-react";
+import { Plus, Trash2, Download, Upload, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { useColaboradores } from "./use-colaboradores";
 
@@ -35,9 +34,25 @@ export function CadastroColaboradores() {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [open, setOpen] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
   const [nome, setNome] = useState("");
   const [cargo, setCargo] = useState("");
   const [area, setArea] = useState("");
+
+  const resetForm = () => { setNome(""); setCargo(""); setArea(""); };
+
+  const handleClose = (v: boolean) => {
+    if (!v) { setEditId(null); resetForm(); }
+    setOpen(v);
+  };
+
+  const startEdit = (r: { id: string; nome: string; cargo: string; area: string }) => {
+    setNome(r.nome);
+    setCargo(r.cargo ?? "");
+    setArea(r.area ?? "");
+    setEditId(r.id);
+    setOpen(true);
+  };
 
   const add = useMutation({
     mutationFn: async () => {
@@ -51,10 +66,25 @@ export function CadastroColaboradores() {
     onSuccess: () => {
       toast.success("Colaborador adicionado");
       qc.invalidateQueries({ queryKey: ["colaboradores"] });
-      setOpen(false);
-      setNome("");
-      setCargo("");
-      setArea("");
+      setOpen(false); resetForm();
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Erro"),
+  });
+
+  const update = useMutation({
+    mutationFn: async () => {
+      if (!editId) return;
+      if (!nome) throw new Error("Nome obrigatório");
+      const { error } = await supabase
+        .from("colaboradores")
+        .update({ nome, cargo, area })
+        .eq("id", editId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Colaborador atualizado");
+      qc.invalidateQueries({ queryKey: ["colaboradores"] });
+      setOpen(false); setEditId(null); resetForm();
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Erro"),
   });
@@ -118,61 +148,36 @@ export function CadastroColaboradores() {
         <CardTitle>Colaboradores</CardTitle>
         <div className="flex gap-2 flex-wrap">
           <Button size="sm" variant="outline" onClick={baixarModelo}>
-            <Download className="h-4 w-4 mr-1" />
-            Modelo
+            <Download className="h-4 w-4 mr-1" />Modelo
           </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => fileRef.current?.click()}
-            disabled={importar.isPending}
-          >
-            <Upload className="h-4 w-4 mr-1" />
-            {importar.isPending ? "Importando..." : "Importar"}
+          <Button size="sm" variant="outline" onClick={() => fileRef.current?.click()} disabled={importar.isPending}>
+            <Upload className="h-4 w-4 mr-1" />{importar.isPending ? "Importando..." : "Importar"}
           </Button>
-          <input
-            ref={fileRef}
-            type="file"
-            accept=".xlsx,.xls,.csv"
-            className="hidden"
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) importar.mutate(f);
-              e.target.value = "";
-            }}
-          />
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm">
-                <Plus className="h-4 w-4 mr-1" />
-                Adicionar
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Novo colaborador</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-3">
-                <div>
-                  <Label>Nome</Label>
-                  <Input value={nome} onChange={(e) => setNome(e.target.value)} />
-                </div>
-                <div>
-                  <Label>Cargo</Label>
-                  <Input value={cargo} onChange={(e) => setCargo(e.target.value)} />
-                </div>
-                <div>
-                  <Label>Área</Label>
-                  <Input value={area} onChange={(e) => setArea(e.target.value)} />
-                </div>
-                <Button onClick={() => add.mutate()} disabled={add.isPending} className="w-full">
-                  Salvar
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+          <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv" className="hidden"
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) importar.mutate(f); e.target.value = ""; }} />
+          <Button size="sm" onClick={() => { resetForm(); setEditId(null); setOpen(true); }}>
+            <Plus className="h-4 w-4 mr-1" />Adicionar
+          </Button>
         </div>
       </CardHeader>
+
+      <Dialog open={open} onOpenChange={handleClose}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editId ? "Editar colaborador" : "Novo colaborador"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div><Label>Nome</Label><Input value={nome} onChange={(e) => setNome(e.target.value)} /></div>
+            <div><Label>Cargo</Label><Input value={cargo} onChange={(e) => setCargo(e.target.value)} /></div>
+            <div><Label>Área</Label><Input value={area} onChange={(e) => setArea(e.target.value)} /></div>
+            <Button onClick={() => editId ? update.mutate() : add.mutate()}
+              disabled={add.isPending || update.isPending} className="w-full">
+              Salvar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <CardContent>
         <Table>
           <TableHeader>
@@ -180,7 +185,7 @@ export function CadastroColaboradores() {
               <TableHead>Nome</TableHead>
               <TableHead>Cargo</TableHead>
               <TableHead>Área</TableHead>
-              <TableHead className="w-12"></TableHead>
+              <TableHead className="w-20"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -197,9 +202,14 @@ export function CadastroColaboradores() {
                 <TableCell>{r.cargo}</TableCell>
                 <TableCell>{r.area}</TableCell>
                 <TableCell>
-                  <Button size="icon" variant="ghost" onClick={() => del.mutate(r.id)}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <div className="flex gap-1">
+                    <Button size="icon" variant="ghost" onClick={() => startEdit(r)}>
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button size="icon" variant="ghost" onClick={() => del.mutate(r.id)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}

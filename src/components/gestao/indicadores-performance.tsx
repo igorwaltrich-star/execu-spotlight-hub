@@ -8,30 +8,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Trophy } from "lucide-react";
+import { Plus, Trash2, Trophy, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { useColaboradores } from "./use-colaboradores";
 
@@ -64,9 +45,7 @@ const CAMPOS: { key: keyof Row; label: string }[] = [
 ];
 
 function media(r: Row): number | null {
-  const vals = CAMPOS.map((c) => r[c.key]).filter(
-    (v): v is number => typeof v === "number" && !Number.isNaN(v),
-  );
+  const vals = CAMPOS.map((c) => r[c.key]).filter((v): v is number => typeof v === "number" && !Number.isNaN(v));
   if (vals.length === 0) return null;
   return vals.reduce((a, b) => a + b, 0) / vals.length;
 }
@@ -78,19 +57,11 @@ function notaBadge(n: number | null): "default" | "secondary" | "destructive" | 
   return "destructive";
 }
 
-const empty = {
+const emptyForm = {
   colaborador_id: "",
   referencia: new Date().toISOString().slice(0, 7),
-  nota_zmm: "",
-  sla_po: "",
-  sla_sotd: "",
-  sla_pre_alert: "",
-  sla_otd: "",
-  comportamental: "",
-  meta_individual: "",
-  uep: "",
-  ppax: "",
-  observacoes: "",
+  nota_zmm: "", sla_po: "", sla_sotd: "", sla_pre_alert: "", sla_otd: "",
+  comportamental: "", meta_individual: "", uep: "", ppax: "", observacoes: "",
 };
 
 export function IndicadoresPerformance() {
@@ -104,9 +75,7 @@ export function IndicadoresPerformance() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("indicadores_performance")
-        .select(
-          "id, colaborador_id, referencia, nota_zmm, sla_po, sla_sotd, sla_pre_alert, sla_otd, comportamental, meta_individual, uep, ppax, observacoes",
-        )
+        .select("id, colaborador_id, referencia, nota_zmm, sla_po, sla_sotd, sla_pre_alert, sla_otd, comportamental, meta_individual, uep, ppax, observacoes")
         .order("referencia", { ascending: false });
       if (error) throw error;
       return (data ?? []) as Row[];
@@ -114,7 +83,8 @@ export function IndicadoresPerformance() {
   });
 
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState(empty);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [form, setForm] = useState(emptyForm);
 
   const nome = (id: string) => colabs.find((c) => c.id === id)?.nome ?? "—";
 
@@ -128,41 +98,75 @@ export function IndicadoresPerformance() {
       byColab.set(r.colaborador_id, arr);
     });
     return Array.from(byColab.entries())
-      .map(([id, arr]) => ({
-        colaborador_id: id,
-        nota: arr.reduce((a, b) => a + b, 0) / arr.length,
-        avaliacoes: arr.length,
-      }))
+      .map(([id, arr]) => ({ colaborador_id: id, nota: arr.reduce((a, b) => a + b, 0) / arr.length, avaliacoes: arr.length }))
       .sort((a, b) => b.nota - a.nota);
   }, [rows]);
 
+  const handleClose = (v: boolean) => {
+    if (!v) { setEditId(null); setForm(emptyForm); }
+    setOpen(v);
+  };
+
+  const startEdit = (r: Row) => {
+    setForm({
+      colaborador_id: r.colaborador_id,
+      referencia: r.referencia,
+      nota_zmm: r.nota_zmm?.toString() ?? "",
+      sla_po: r.sla_po?.toString() ?? "",
+      sla_sotd: r.sla_sotd?.toString() ?? "",
+      sla_pre_alert: r.sla_pre_alert?.toString() ?? "",
+      sla_otd: r.sla_otd?.toString() ?? "",
+      comportamental: r.comportamental?.toString() ?? "",
+      meta_individual: r.meta_individual?.toString() ?? "",
+      uep: r.uep?.toString() ?? "",
+      ppax: r.ppax?.toString() ?? "",
+      observacoes: r.observacoes ?? "",
+    });
+    setEditId(r.id);
+    setOpen(true);
+  };
+
+  const num = (v: string) => (v === "" ? null : Number(v));
+
+  const buildPayload = () => ({
+    colaborador_id: form.colaborador_id,
+    referencia: form.referencia,
+    nota_zmm: num(form.nota_zmm),
+    sla_po: num(form.sla_po),
+    sla_sotd: num(form.sla_sotd),
+    sla_pre_alert: num(form.sla_pre_alert),
+    sla_otd: num(form.sla_otd),
+    comportamental: num(form.comportamental),
+    meta_individual: num(form.meta_individual),
+    uep: num(form.uep),
+    ppax: num(form.ppax),
+    observacoes: form.observacoes || null,
+  });
+
   const add = useMutation({
     mutationFn: async () => {
-      if (!user || !form.colaborador_id || !form.referencia)
-        throw new Error("Selecione colaborador e referência");
-      const num = (v: string) => (v === "" ? null : Number(v));
-      const { error } = await supabase.from("indicadores_performance").insert({
-        user_id: user.id,
-        colaborador_id: form.colaborador_id,
-        referencia: form.referencia,
-        nota_zmm: num(form.nota_zmm),
-        sla_po: num(form.sla_po),
-        sla_sotd: num(form.sla_sotd),
-        sla_pre_alert: num(form.sla_pre_alert),
-        sla_otd: num(form.sla_otd),
-        comportamental: num(form.comportamental),
-        meta_individual: num(form.meta_individual),
-        uep: num(form.uep),
-        ppax: num(form.ppax),
-        observacoes: form.observacoes || null,
-      });
+      if (!user || !form.colaborador_id || !form.referencia) throw new Error("Selecione colaborador e referência");
+      const { error } = await supabase.from("indicadores_performance").insert({ user_id: user.id, ...buildPayload() });
       if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Indicadores salvos");
       qc.invalidateQueries({ queryKey: ["indicadores_performance"] });
-      setOpen(false);
-      setForm(empty);
+      setOpen(false); setForm(emptyForm);
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Erro"),
+  });
+
+  const update = useMutation({
+    mutationFn: async () => {
+      if (!editId || !form.colaborador_id || !form.referencia) throw new Error("Selecione colaborador e referência");
+      const { error } = await supabase.from("indicadores_performance").update(buildPayload()).eq("id", editId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Indicadores atualizados");
+      qc.invalidateQueries({ queryKey: ["indicadores_performance"] });
+      setOpen(false); setEditId(null); setForm(emptyForm);
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Erro"),
   });
@@ -196,23 +200,13 @@ export function IndicadoresPerformance() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {ranking.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={4} className="text-center text-muted-foreground py-6">
-                    Sem dados para gerar ranking
-                  </TableCell>
-                </TableRow>
-              )}
+              {ranking.length === 0 && <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-6">Sem dados para gerar ranking</TableCell></TableRow>}
               {ranking.map((r, i) => (
                 <TableRow key={r.colaborador_id}>
-                  <TableCell className="font-bold">
-                    {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1}
-                  </TableCell>
+                  <TableCell className="font-bold">{i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1}</TableCell>
                   <TableCell className="font-medium">{nome(r.colaborador_id)}</TableCell>
                   <TableCell className="text-right">{r.avaliacoes}</TableCell>
-                  <TableCell className="text-right">
-                    <Badge variant={notaBadge(r.nota)}>{r.nota.toFixed(2)}</Badge>
-                  </TableCell>
+                  <TableCell className="text-right"><Badge variant={notaBadge(r.nota)}>{r.nota.toFixed(2)}</Badge></TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -223,121 +217,75 @@ export function IndicadoresPerformance() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Indicadores cadastrados</CardTitle>
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm">
-                <Plus className="h-4 w-4 mr-1" /> Novo indicador
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Novo indicador de performance</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label>Analista</Label>
-                    <Select
-                      value={form.colaborador_id}
-                      onValueChange={(v) => setForm({ ...form, colaborador_id: v })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {colabs.map((c) => (
-                          <SelectItem key={c.id} value={c.id}>
-                            {c.nome}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Referência (AAAA-MM)</Label>
-                    <Input
-                      type="month"
-                      value={form.referencia}
-                      onChange={(e) => setForm({ ...form, referencia: e.target.value })}
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {CAMPOS.map((c) => (
-                    <div key={c.key as string}>
-                      <Label>{c.label}</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        max="10"
-                        placeholder="0 - 10"
-                        value={form[c.key as keyof typeof form] as string}
-                        onChange={(e) =>
-                          setForm({ ...form, [c.key]: e.target.value } as typeof form)
-                        }
-                      />
-                    </div>
-                  ))}
+          <Button size="sm" onClick={() => { setForm(emptyForm); setEditId(null); setOpen(true); }}>
+            <Plus className="h-4 w-4 mr-1" />Novo indicador
+          </Button>
+        </CardHeader>
+
+        <Dialog open={open} onOpenChange={handleClose}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>{editId ? "Editar indicador" : "Novo indicador de performance"}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Analista</Label>
+                  <Select value={form.colaborador_id} onValueChange={(v) => setForm({ ...form, colaborador_id: v })}>
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>{colabs.map((c) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}</SelectContent>
+                  </Select>
                 </div>
                 <div>
-                  <Label>Observações</Label>
-                  <Textarea
-                    value={form.observacoes}
-                    onChange={(e) => setForm({ ...form, observacoes: e.target.value })}
-                  />
+                  <Label>Referência (AAAA-MM)</Label>
+                  <Input type="month" value={form.referencia} onChange={(e) => setForm({ ...form, referencia: e.target.value })} />
                 </div>
-                <Button onClick={() => add.mutate()} disabled={add.isPending} className="w-full">
-                  Salvar
-                </Button>
               </div>
-            </DialogContent>
-          </Dialog>
-        </CardHeader>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {CAMPOS.map((c) => (
+                  <div key={c.key as string}>
+                    <Label>{c.label}</Label>
+                    <Input type="number" step="0.01" min="0" max="10" placeholder="0 - 10"
+                      value={form[c.key as keyof typeof form] as string}
+                      onChange={(e) => setForm({ ...form, [c.key]: e.target.value } as typeof form)} />
+                  </div>
+                ))}
+              </div>
+              <div>
+                <Label>Observações</Label>
+                <Textarea value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} />
+              </div>
+              <Button onClick={() => editId ? update.mutate() : add.mutate()} disabled={add.isPending || update.isPending} className="w-full">Salvar</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Analista</TableHead>
                 <TableHead>Ref.</TableHead>
-                {CAMPOS.map((c) => (
-                  <TableHead key={c.key as string} className="text-right">
-                    {c.label}
-                  </TableHead>
-                ))}
+                {CAMPOS.map((c) => <TableHead key={c.key as string} className="text-right">{c.label}</TableHead>)}
                 <TableHead className="text-right">Média</TableHead>
-                <TableHead className="w-12"></TableHead>
+                <TableHead className="w-20"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rows.length === 0 && (
-                <TableRow>
-                  <TableCell
-                    colSpan={CAMPOS.length + 4}
-                    className="text-center text-muted-foreground py-6"
-                  >
-                    Nenhum indicador cadastrado
-                  </TableCell>
-                </TableRow>
-              )}
+              {rows.length === 0 && <TableRow><TableCell colSpan={CAMPOS.length + 4} className="text-center text-muted-foreground py-6">Nenhum indicador cadastrado</TableCell></TableRow>}
               {rows.map((r) => {
                 const m = media(r);
                 return (
                   <TableRow key={r.id}>
                     <TableCell className="font-medium">{nome(r.colaborador_id)}</TableCell>
                     <TableCell>{r.referencia}</TableCell>
-                    {CAMPOS.map((c) => (
-                      <TableCell key={c.key as string} className="text-right">
-                        {fmt(r[c.key] as number | null)}
-                      </TableCell>
-                    ))}
-                    <TableCell className="text-right">
-                      <Badge variant={notaBadge(m)}>{fmt(m)}</Badge>
-                    </TableCell>
+                    {CAMPOS.map((c) => <TableCell key={c.key as string} className="text-right">{fmt(r[c.key] as number | null)}</TableCell>)}
+                    <TableCell className="text-right"><Badge variant={notaBadge(m)}>{fmt(m)}</Badge></TableCell>
                     <TableCell>
-                      <Button size="icon" variant="ghost" onClick={() => del.mutate(r.id)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div className="flex gap-1">
+                        <Button size="icon" variant="ghost" onClick={() => startEdit(r)}><Pencil className="h-4 w-4" /></Button>
+                        <Button size="icon" variant="ghost" onClick={() => del.mutate(r.id)}><Trash2 className="h-4 w-4" /></Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 );
