@@ -77,7 +77,6 @@ type SlaBosch = {
   dig_conf: number;
   start_up: number;
   otcc: number;
-  desvios: number;
   pinho: number;
 };
 type PlanoAcaoRow = {
@@ -300,7 +299,7 @@ function DashboardPage() {
 
   const allSla = [
     ...mideaGlobal.flatMap((r) => [r.start_up, r.otcc, r.otd, r.sotd]),
-    ...boschGlobal.flatMap((r) => [r.dig_conf, r.start_up, r.otcc, r.desvios, r.pinho]),
+    ...boschGlobal.flatMap((r) => [r.dig_conf, r.start_up, r.otcc, r.pinho]),
   ].map(Number);
   const slaMedio = allSla.length ? allSla.reduce((s, n) => s + n, 0) / allSla.length : 0;
 
@@ -315,7 +314,7 @@ function DashboardPage() {
     : 0;
 
   const slaBoschVals = boschGlobal
-    .flatMap((r) => [r.dig_conf, r.start_up, r.otcc, r.desvios, r.pinho])
+    .flatMap((r) => [r.dig_conf, r.start_up, r.otcc, r.pinho])
     .map(Number);
   const slaMedioBosch = slaBoschVals.length
     ? slaBoschVals.reduce((s, n) => s + n, 0) / slaBoschVals.length
@@ -340,12 +339,11 @@ function DashboardPage() {
   }, [mideaFiltrada]);
 
   const boschBarsPorPlanta = useMemo(() => {
-    const keys = ["dig_conf", "start_up", "otcc", "desvios", "pinho"] as const;
+    const keys = ["dig_conf", "start_up", "otcc", "pinho"] as const;
     const labels: Record<string, string> = {
       dig_conf: "Digitação/Conferência",
       start_up: "Registro DI/DUIMP",
       otcc: "Liberação Transporte",
-      desvios: "Desvios",
       pinho: "Pinho",
     };
     return BOSCH_PLANTAS.map((p) => {

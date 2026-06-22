@@ -15,7 +15,6 @@ export const Route = createFileRoute("/_authenticated/sla-bosch")({
         { key: "dig_conf", label: "Digitação/Conferência" },
         { key: "start_up", label: "Registro DI/DUIMP" },
         { key: "otcc", label: "Liberação Transporte" },
-        { key: "desvios", label: "Desvios" },
         { key: "pinho", label: "Pinho" },
         { key: "proc_aereos", label: "Processos Aéreos", kind: "number" },
         { key: "proc_maritimos", label: "Processos Marítimos", kind: "number" },
