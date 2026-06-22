@@ -1,147 +1,47 @@
-
 ## Objetivo
+Habilitar SLA Bosch com cadastro/métricas por planta (21F0, 6854, W275), renomeando indicadores e adicionando KPIs operacionais mostrados na imagem. Dashboard principal passa a ter 3 gráficos (um por planta), no mesmo padrão do Midea.
 
-Adicionar módulo NOVO e ISOLADO **Gerenciamento Operacional**, sem alterar rotas/componentes/tabelas existentes. Apenas pontos de toque:
+## 1. Banco — migration em `sla_bosch`
+- Adicionar coluna `planta text not null` com valores permitidos `21F0 | 6854 | W275`.
+- Adicionar colunas numéricas para os KPIs extras (todas `numeric not null default 0`):
+  - `proc_aereos`, `proc_maritimos`, `proc_canal_verde`, `proc_canal_vermelho` (contagens)
+  - `tm_dig_conf_h` (tempo médio Dig/Conf em horas)
+  - `tm_registro_dias` (tempo médio Registro, dias)
+  - `tm_liberacao_dias` (tempo médio Liberação Transporte, dias)
+- Trocar unique key: de `(user_id, mes)` para `(user_id, mes, planta)`.
+- Indicadores existentes (`dig_conf`, `start_up`, `otcc`, `desvios`, `pinho`) permanecem — apenas relabelados na UI:
+  - `dig_conf` → "Digitação/Conferência"
+  - `start_up` → "Registro DI/DUIMP"
+  - `otcc` → "Liberação Transporte"
+  - `pinho` → "Pinho"
+  - `desvios` → "Desvios"
+- RLS já existente continua válida (escopo por `user_id`). GRANTs continuam os mesmos.
 
-1. `src/components/app-shell.tsx` → append 1 item no array `NAV`.
-2. Migration nova no Supabase (apenas CREATE, nenhum ALTER em tabelas existentes).
-3. `bun add react-dropzone` (dep nova).
+## 2. Constantes (`src/lib/constants.ts`)
+- Adicionar `BOSCH_PLANTAS = [{ key: "21F0", label: "21F0" }, { key: "6854", label: "6854" }, { key: "W275", label: "W275" }]`.
 
-Todo o resto = arquivos novos.
+## 3. Cadastro (`src/routes/_authenticated/sla-bosch.tsx`)
+Substituir o placeholder por `<SlaView ...>` usando `table="sla_bosch"`, passando:
+- `unidadeOptions = BOSCH_PLANTAS` (reutiliza o seletor de operação do `SlaView`, mas rotulado "Planta")
+- `fields`: os 5 indicadores percentuais + 7 KPIs operacionais com os novos labels.
 
----
+Pequeno ajuste no `SlaView` (`src/components/sla-view.tsx`):
+- Aceitar prop opcional `unidadeLabel` (default "Operação") para renderizar "Planta" no formulário/tabela.
+- Demais comportamentos (upsert, delete, realtime, comparação com `META_SLA = 90`) ficam iguais; o `onConflict` já usa `user_id,mes,unidade` quando há `unidadeOptions`, então mapeamos `planta` para a coluna `unidade`… **importante:** como a coluna no banco se chama `planta`, ajustar o `SlaView` para usar um prop `unidadeColumn` (default `"unidade"`) e passar `"planta"` no Bosch. Isso evita renomear a coluna no Midea.
 
-## 1. Rotas e estrutura de arquivos (novos)
+## 4. Dashboard principal (`src/routes/_authenticated/index.tsx`)
+- Query de `sla_bosch` passa a trazer também `planta` e os novos campos.
+- Slide de SLA Bosch: substituir o gráfico único por **3 gráficos horizontais** (um para cada planta), no mesmo formato do SLA Midea — barras horizontais por indicador com linha vermelha tracejada em `META_SLA = 90`.
+  - Cada card mostra o nome da planta + SLA médio dos 5 indicadores percentuais daquela planta no mês filtrado (ou média do período, se "Todos").
+- KPI top-level "SLA Bosch" passa a ser a média geral das 3 plantas (mesma lógica atual, só recalculada sobre o universo filtrado).
+- Filtros (mês global / mês local Bosch) continuam funcionando — os 3 gráficos respeitam o mesmo filtro.
 
-```text
-src/routes/_authenticated/
-  gerenciamento-operacional.tsx          ← Tabs principais (7 abas)
+## 5. Validação
+- `bunx tsc --noEmit` limpo após migration + regeneração de tipos.
+- Cadastrar uma linha em cada planta no preview; conferir que:
+  - aparece na tabela do cadastro com a coluna "Planta",
+  - os 3 cards no dashboard mostram os valores corretos,
+  - a linha de meta 90% aparece em todos.
 
-src/components/gestao/
-  performance-operacional.tsx            ← Upload + IA (mock)
-  escala-home-office.tsx
-  controle-ferias.tsx
-  matriz-lideranca.tsx
-  navy-seal.tsx
-  pdi.tsx
-  ferramentas-gestao.tsx                 ← Tabs verticais
-  ferramentas/
-    ishikawa.tsx
-    pareto.tsx
-    cinco-porques.tsx
-    cinco-w-dois-h.tsx
-    swot.tsx
-
-src/lib/
-  performance-ia.functions.ts            ← server fn mock (setTimeout 3s)
-```
-
-Item no menu: `{ to: "/gerenciamento-operacional", label: "Gerenciamento Operacional", icon: Briefcase }`, inserido após "Oportunidades e Riscos". Nada existente é tocado.
-
----
-
-## 2. Aba 1 — Performance Operacional (Upload + IA)
-
-- Drag-and-drop com `react-dropzone` aceitando `.xlsx`, `.csv`, `.pdf` (até 10MB). Lista de arquivos aceitos com remover.
-- Botão **"Analisar com IA"** dispara estado `analyzing` → spinner (`Loader2`) + texto "Analisando dados e gerando insights...".
-- Backend: `analyzePerformanceReport` (createServerFn POST) que hoje retorna mock após `await new Promise(r => setTimeout(r, 3000))`. Estrutura de retorno preparada para futura troca pela Edge Function `analyze-performance-report`:
-
-```ts
-{
-  resumo: string,
-  pontosCriticos: { titulo: string; descricao: string; severidade: "alta"|"media" }[],
-  oportunidades: { titulo: string; descricao: string; acao: string }[],
-}
-```
-
-- Layout de resultados em 3 Cards verticais:
-  - **Resumo Executivo** (texto corrido, ícone `FileText`).
-  - **Pontos Críticos / Gargalos** — lista com `AlertCircle` vermelho (`text-destructive`), Badge de severidade.
-  - **Oportunidades e Plano de Ação** — lista com `Lightbulb`/`CheckCircle2` (`text-success`/`text-primary`).
-- Persistência opcional: salvar cada análise em `analises_performance` (ver migração) para histórico.
-
-Observação: por enquanto NÃO criar Edge Function nem chamar OpenAI — apenas o mock no server fn, conforme pedido.
-
----
-
-## 3. Demais abas (CRUD shadcn + Supabase)
-
-Cada uma: `Card` + `Table` + `Dialog` de cadastro/edição + `useQuery`/`useMutation` no padrão de `cadastro-oportunidades.tsx`.
-
-- **Escala Home Office**: Colaborador, Dias da Semana (multi-select Seg–Sex), Status (Ativo/Pausado, Badge).
-- **Controle de Férias**: Colaborador, Período Aquisitivo (início/fim), Previsão Saída, Retorno, Saldo de Dias.
-- **Matriz de Liderança**: Grid de cards (ou tabela) com Badge classificatória — cores via tokens: Alta perf→success, Zona desenvolvimento→primary, Zona risco→warning, Zona desalinhamento→destructive.
-- **NavySeal**: idem com A→success, B→secondary, C→destructive.
-- **PDI**: Colaborador, Meta, Prazo, Status (não iniciado/em andamento/concluído/atrasado).
-
----
-
-## 4. Aba "Ferramentas de Gestão"
-
-`Tabs` em `orientation="vertical"` (lista à esquerda, conteúdo à direita):
-
-- **Ishikawa**: campo Efeito + 6 textareas categorizadas (Método, Máquina, Mão-de-obra, Materiais, Medida, Meio Ambiente), cada uma armazenada como `text[]`.
-- **Pareto**: tabela editável (Causa, Frequência). Espaço com placeholder "Gráfico 80/20" (futuro Recharts) — sem implementar gráfico agora, só o slot preparado.
-- **5 Porquês**: Problema + 5 inputs encadeados + Causa Raiz.
-- **5W2H**: Tabela com colunas What, Why, Where, When (date), Who, How, How Much (numeric).
-- **SWOT**: Grid 2x2 (`grid-cols-2 gap-4`), cada quadrante = Card colorido suave com lista editável.
-
----
-
-## 5. Banco de Dados (migration única)
-
-Padrão para todas: `id uuid pk`, `user_id uuid not null`, `created_at`, `updated_at`, RLS habilitada + 4 policies `own_*` com `user_id = auth.uid()`, trigger `set_updated_at` (função já existe).
-
-Enums novos (sufixados para não colidir):
-- `home_office_status` (`ativo`, `pausado`)
-- `matriz_lideranca_tag` (`alta_performance`, `zona_desenvolvimento`, `zona_risco`, `zona_desalinhamento`)
-- `navy_seal_tag` (`a_player`, `b_player`, `c_player`)
-- `pdi_status` (`nao_iniciado`, `em_andamento`, `concluido`, `atrasado`)
-
-Tabelas:
-
-| Tabela | Campos de domínio |
-|---|---|
-| `colaboradores` | nome, cargo, area |
-| `escala_home_office` | colaborador_id, dias_semana text[], status |
-| `controle_ferias` | colaborador_id, periodo_inicio, periodo_fim, previsao_saida, retorno, saldo_dias int |
-| `matriz_lideranca` | colaborador_id, tag, observacoes |
-| `navy_seal` | colaborador_id, tag, observacoes |
-| `pdi` | colaborador_id, meta, prazo, status |
-| `analises_performance` | titulo, arquivos jsonb, resumo, pontos_criticos jsonb, oportunidades jsonb |
-| `ishikawa` | efeito, metodo text[], maquina text[], mao_obra text[], materiais text[], medida text[], meio_ambiente text[] |
-| `pareto` | titulo, causa, frequencia numeric |
-| `cinco_porques` | problema, por_que_1..5, causa_raiz |
-| `cinco_w_dois_h` | what, why, where, who, when date, how, how_much numeric |
-| `swot` | titulo, forcas text[], fraquezas text[], oportunidades text[], ameacas text[] |
-
-`colaborador_id` uuid simples (sem FK), seguindo padrão atual.
-
----
-
-## 6. UI / Design
-
-- 100% shadcn/ui: `Tabs`, `Card`, `Table`, `Badge`, `Dialog`, `Input`, `Select`, `Textarea`, `Button`, `Form`, `Loader2`.
-- Reutiliza tokens semânticos existentes (`--success`, `--warning`, `--destructive`, `--primary`, `--muted`). Nenhuma alteração em `styles.css`.
-- Lucide para ícones: `Briefcase`, `Upload`, `Sparkles`, `AlertCircle`, `Lightbulb`, `CheckCircle2`, `Target`, `Users`, `Calendar`, `Award`.
-
----
-
-## 7. Garantias de não-regressão
-
-- Zero edição em rotas/dashboards/componentes existentes (exceto append no `app-shell.tsx`).
-- Zero alteração em tabelas/enums existentes.
-- `routeTree.gen.ts` regenera automaticamente.
-- Nenhuma migração mexe em `auth`, `storage`, `realtime`.
-
----
-
-## 8. Ordem de execução
-
-1. Migration Supabase (aguardar aprovação).
-2. `bun add react-dropzone`.
-3. Server fn mock `performance-ia.functions.ts`.
-4. Componentes em `src/components/gestao/**`.
-5. Rota `gerenciamento-operacional.tsx`.
-6. Append no `app-shell.tsx`.
-7. Verificar build.
+## Fora do escopo
+- Visualização dedicada dos KPIs operacionais (Processos Aéreos, Tempo Médio, etc.) no dashboard — por enquanto só são armazenados/exibidos na tela de cadastro. Se quiser cards desses indicadores no dashboard, fazemos numa próxima rodada.

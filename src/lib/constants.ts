@@ -33,3 +33,10 @@ export const UNIDADES: { key: UnidadeKey; label: string; grupo: "midea" | "bosch
 export const UNIDADE_LABEL: Record<UnidadeKey, string> = Object.fromEntries(
   UNIDADES.map((u) => [u.key, u.label]),
 ) as Record<UnidadeKey, string>;
+
+export type BoschPlantaKey = "21F0" | "6854" | "W275";
+export const BOSCH_PLANTAS: { key: BoschPlantaKey; label: string }[] = [
+  { key: "21F0", label: "21F0" },
+  { key: "6854", label: "6854" },
+  { key: "W275", label: "W275" },
+];
