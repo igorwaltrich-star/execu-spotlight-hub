@@ -339,22 +339,29 @@ function DashboardPage() {
     });
   }, [mideaFiltrada]);
 
-  const boschBars = useMemo(() => {
-    const rows = boschFiltrada;
-    if (!rows.length) return [];
+  const boschBarsPorPlanta = useMemo(() => {
     const keys = ["dig_conf", "start_up", "otcc", "desvios", "pinho"] as const;
     const labels: Record<string, string> = {
-      dig_conf: "Dig.Conf.",
-      start_up: "Start-up",
-      otcc: "OTCC",
+      dig_conf: "Digitação/Conferência",
+      start_up: "Registro DI/DUIMP",
+      otcc: "Liberação Transporte",
       desvios: "Desvios",
       pinho: "Pinho",
     };
-    return keys.map((k) => ({
-      indicador: labels[k],
-      valor: rows.reduce((s, r) => s + Number(r[k] || 0), 0) / rows.length,
-    }));
+    return BOSCH_PLANTAS.map((p) => {
+      const rows = boschFiltrada.filter((r) => r.planta === p.key);
+      const data = keys.map((k) => ({
+        indicador: labels[k],
+        valor: rows.length
+          ? rows.reduce((s, r) => s + Number(r[k] || 0), 0) / rows.length
+          : 0,
+      }));
+      const valores = data.map((d) => d.valor);
+      const geral = valores.length ? valores.reduce((a, b) => a + b, 0) / valores.length : 0;
+      return { planta: p, data, rowsCount: rows.length, geral };
+    });
   }, [boschFiltrada]);
+
 
   // Evolução de produtividade por operação (Jan até mês atual)
   const evolucaoProd = useMemo(() => {
