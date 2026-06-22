@@ -73,6 +73,7 @@ type OpRow = {
 type SlaMidea = { mes: string; start_up: number; otcc: number; otd: number; sotd: number; unidade: UnidadeKey | null };
 type SlaBosch = {
   mes: string;
+  planta: string;
   dig_conf: number;
   start_up: number;
   otcc: number;
