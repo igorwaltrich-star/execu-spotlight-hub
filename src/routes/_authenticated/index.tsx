@@ -668,56 +668,58 @@ function DashboardPage() {
         </div>
       </Slide>
 
-      {/* Slide 7 — SLA BOSCH */}
+      {/* Slide 7 — SLA BOSCH por Planta */}
       <Slide>
         <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
           <div>
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight">SLA — BOSCH</h2>
-            <p className="text-muted-foreground mt-1">{`Média por indicador vs meta ${META_SLA}%`}</p>
+            <p className="text-muted-foreground mt-1">{`SLA Geral por planta — Meta ${META_SLA}%`}</p>
           </div>
           <FiltroMes value={filtroMesBosch} onChange={setFiltroMesBosch} meses={mesesBosch} />
         </div>
-        <Card className="flex-1 min-h-0">
-          <CardContent className="pt-6 h-[460px]">
-            {boschBars.length === 0 ? (
-              <Empty msg="Sem dados de SLA BOSCH cadastrados." />
-            ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={boschBars}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                  <XAxis dataKey="indicador" />
-                  <YAxis domain={[0, 100]} />
-                  <Tooltip />
-                  <ReferenceLine
-                    y={META_SLA}
-                    stroke={CD}
-                    strokeDasharray="6 4"
-                    label={{ value: `Meta ${META_SLA}%`, position: "right", fill: CD }}
-                  />
-                  <Bar
-                    dataKey="valor"
-                    radius={[6, 6, 0, 0]}
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    shape={(props: any) => {
-                      const ok = props.payload.valor >= META_SLA;
-                      return (
-                        <rect
-                          x={props.x}
-                          y={props.y}
-                          width={props.width}
-                          height={props.height}
-                          rx={6}
-                          fill={ok ? C3 : CD}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 min-h-0">
+          {boschBarsPorPlanta.map(({ planta, data, rowsCount, geral }) => {
+            const ok = geral >= META_SLA;
+            return (
+              <Card key={planta.key} className="min-h-0 flex flex-col">
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span>Planta {planta.label}</span>
+                    <span
+                      className={`text-base font-semibold ${ok ? "text-success" : "text-destructive"}`}
+                    >
+                      {geral.toFixed(1)}%
+                    </span>
+                  </CardTitle>
+                  <CardDescription>SLA Geral (média dos indicadores)</CardDescription>
+                </CardHeader>
+                <CardContent className="flex-1 min-h-[320px]">
+                  {rowsCount === 0 ? (
+                    <Empty msg="Sem dados cadastrados." />
+                  ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={data} layout="vertical" margin={{ left: 16, right: 24 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                        <XAxis type="number" domain={[0, 100]} />
+                        <YAxis type="category" dataKey="indicador" width={140} />
+                        <Tooltip formatter={(v: number) => `${Number(v).toFixed(1)}%`} />
+                        <ReferenceLine
+                          x={META_SLA}
+                          stroke={CD}
+                          strokeDasharray="4 4"
+                          label={{ value: `Meta ${META_SLA}%`, fill: CD, position: "top" }}
                         />
-                      );
-                    }}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </CardContent>
-        </Card>
+                        <Bar dataKey="valor" name="Real" fill={C1} radius={[0, 4, 4, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
       </Slide>
+
 
 
       {/* Slide 8 — Plano de Ação */}
