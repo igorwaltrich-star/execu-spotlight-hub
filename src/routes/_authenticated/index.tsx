@@ -12,6 +12,7 @@ import {
   META_SLA,
   UNIDADES,
   UNIDADE_LABEL,
+  BOSCH_PLANTAS,
   type UnidadeKey,
 } from "@/lib/constants";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
