@@ -665,7 +665,15 @@ export type Database = {
           mes: string
           otcc: number
           pinho: number
+          planta: string
+          proc_aereos: number
+          proc_canal_verde: number
+          proc_canal_vermelho: number
+          proc_maritimos: number
           start_up: number
+          tm_dig_conf_h: number
+          tm_liberacao_dias: number
+          tm_registro_dias: number
           updated_at: string
           user_id: string
         }
@@ -677,7 +685,15 @@ export type Database = {
           mes: string
           otcc?: number
           pinho?: number
+          planta: string
+          proc_aereos?: number
+          proc_canal_verde?: number
+          proc_canal_vermelho?: number
+          proc_maritimos?: number
           start_up?: number
+          tm_dig_conf_h?: number
+          tm_liberacao_dias?: number
+          tm_registro_dias?: number
           updated_at?: string
           user_id: string
         }
@@ -689,7 +705,15 @@ export type Database = {
           mes?: string
           otcc?: number
           pinho?: number
+          planta?: string
+          proc_aereos?: number
+          proc_canal_verde?: number
+          proc_canal_vermelho?: number
+          proc_maritimos?: number
           start_up?: number
+          tm_dig_conf_h?: number
+          tm_liberacao_dias?: number
+          tm_registro_dias?: number
           updated_at?: string
           user_id?: string
         }
