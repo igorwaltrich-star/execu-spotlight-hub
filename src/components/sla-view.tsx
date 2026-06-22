@@ -27,10 +27,17 @@ import { toast } from "sonner";
 import { fmtMes, META_SLA } from "@/lib/constants";
 import { PageHeader } from "./cadastro-operacional-view";
 
-export type SlaField = { key: string; label: string };
+export type SlaField = {
+  key: string;
+  label: string;
+  /** "percent" (default, 0–100, colored vs META_SLA) or "number" (raw count / time) */
+  kind?: "percent" | "number";
+  /** unit suffix shown for number kind (ex.: "h", "dias") */
+  unit?: string;
+};
 export type UnidadeOption = { key: string; label: string };
 
-type AnyRow = Record<string, unknown> & { id: string; mes: string; unidade?: string | null };
+type AnyRow = Record<string, unknown> & { id: string; mes: string };
 
 export function SlaView({
   table,
@@ -38,12 +45,18 @@ export function SlaView({
   description,
   fields,
   unidadeOptions,
+  unidadeColumn = "unidade",
+  unidadeLabel = "Operação",
 }: {
   table: "sla_midea" | "sla_bosch";
   title: string;
   description: string;
   fields: SlaField[];
   unidadeOptions?: UnidadeOption[];
+  /** DB column for the segment selector (default "unidade"; Bosch uses "planta") */
+  unidadeColumn?: string;
+  /** UI label for the segment selector (default "Operação") */
+  unidadeLabel?: string;
 }) {
   const { user } = useAuth();
   const qc = useQueryClient();
@@ -71,7 +84,7 @@ export function SlaView({
     mutationFn: async () => {
       if (!user) throw new Error("Não autenticado");
       if (!mes) throw new Error("Informe o mês");
-      if (unidadeOptions && !unidade) throw new Error("Selecione a operação");
+      if (unidadeOptions && !unidade) throw new Error(`Selecione a ${unidadeLabel.toLowerCase()}`);
       const numeric: Record<string, number> = {};
       for (const f of fields) numeric[f.key] = Number(vals[f.key] || 0);
       const payload: Record<string, unknown> = {
@@ -79,11 +92,11 @@ export function SlaView({
         mes: `${mes}-01`,
         ...numeric,
       };
-      if (unidadeOptions) payload.unidade = unidade;
+      if (unidadeOptions) payload[unidadeColumn] = unidade;
       const { error } = await supabase
         .from(table)
         .upsert(payload as never, {
-          onConflict: unidadeOptions ? "user_id,mes,unidade" : "user_id,mes",
+          onConflict: unidadeOptions ? `user_id,mes,${unidadeColumn}` : "user_id,mes",
         });
       if (error) throw error;
     },
@@ -105,8 +118,13 @@ export function SlaView({
     onSuccess: () => qc.invalidateQueries({ queryKey }),
   });
 
-  const unidadeLabel = (key: string | null | undefined) =>
+  const optionLabel = (key: string | null | undefined) =>
     unidadeOptions?.find((u) => u.key === key)?.label ?? "—";
+
+  const fmtVal = (f: SlaField, v: number) => {
+    if (f.kind === "number") return `${v.toFixed(2)}${f.unit ? ` ${f.unit}` : ""}`;
+    return `${v.toFixed(1)}%`;
+  };
 
   return (
     <>
@@ -115,7 +133,10 @@ export function SlaView({
         <Card>
           <CardHeader>
             <CardTitle>Novo registro</CardTitle>
-            <CardDescription>Valores em % (0–100). Meta: {META_SLA}%.</CardDescription>
+            <CardDescription>
+              Indicadores de SLA em % (0–100). Meta: {META_SLA}%. KPIs operacionais em valor
+              absoluto.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <form
@@ -131,7 +152,7 @@ export function SlaView({
               </div>
               {unidadeOptions && (
                 <div className="space-y-2 col-span-2 md:col-span-1">
-                  <Label>Operação</Label>
+                  <Label>{unidadeLabel}</Label>
                   <Select value={unidade} onValueChange={setUnidade}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione" />
@@ -146,19 +167,25 @@ export function SlaView({
                   </Select>
                 </div>
               )}
-              {fields.map((f) => (
-                <div key={f.key} className="space-y-2">
-                  <Label>{f.label}</Label>
-                  <Input
-                    type="number"
-                    min={0}
-                    max={100}
-                    step="0.1"
-                    value={vals[f.key]}
-                    onChange={(e) => setVals({ ...vals, [f.key]: e.target.value })}
-                  />
-                </div>
-              ))}
+              {fields.map((f) => {
+                const isPct = f.kind !== "number";
+                return (
+                  <div key={f.key} className="space-y-2">
+                    <Label>
+                      {f.label}
+                      {!isPct && f.unit ? ` (${f.unit})` : ""}
+                    </Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={isPct ? 100 : undefined}
+                      step={isPct ? "0.1" : "0.01"}
+                      value={vals[f.key]}
+                      onChange={(e) => setVals({ ...vals, [f.key]: e.target.value })}
+                    />
+                  </div>
+                );
+              })}
               <div className="flex items-end col-span-2 md:col-span-1">
                 <Button type="submit" className="w-full" disabled={upsert.isPending}>
                   Salvar
@@ -172,12 +199,12 @@ export function SlaView({
           <CardHeader>
             <CardTitle>Histórico</CardTitle>
           </CardHeader>
-          <CardContent className="p-0">
+          <CardContent className="p-0 overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Mês</TableHead>
-                  {unidadeOptions && <TableHead>Operação</TableHead>}
+                  {unidadeOptions && <TableHead>{unidadeLabel}</TableHead>}
                   {fields.map((f) => (
                     <TableHead key={f.key} className="text-right">
                       {f.label}
@@ -201,17 +228,18 @@ export function SlaView({
                   <TableRow key={r.id}>
                     <TableCell>{fmtMes(r.mes)}</TableCell>
                     {unidadeOptions && (
-                      <TableCell>{unidadeLabel(r.unidade as string | null)}</TableCell>
+                      <TableCell>{optionLabel(r[unidadeColumn] as string | null)}</TableCell>
                     )}
                     {fields.map((f) => {
                       const v = Number(r[f.key] ?? 0);
+                      const isPct = f.kind !== "number";
                       const ok = v >= META_SLA;
+                      const className = isPct
+                        ? `text-right font-medium ${ok ? "text-success" : "text-destructive"}`
+                        : "text-right font-medium";
                       return (
-                        <TableCell
-                          key={f.key}
-                          className={`text-right font-medium ${ok ? "text-success" : "text-destructive"}`}
-                        >
-                          {v.toFixed(1)}%
+                        <TableCell key={f.key} className={className}>
+                          {fmtVal(f, v)}
                         </TableCell>
                       );
                     })}
