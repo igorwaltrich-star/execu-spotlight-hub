@@ -1,20 +1,30 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Construction } from "lucide-react";
-import { PageHeader } from "@/components/cadastro-operacional-view";
+import { SlaView } from "@/components/sla-view";
+import { BOSCH_PLANTAS } from "@/lib/constants";
 
 export const Route = createFileRoute("/_authenticated/sla-bosch")({
   component: () => (
-    <>
-      <PageHeader title="SLA — BOSCH" description="Indicadores de SLA do cliente BOSCH." />
-      <div className="p-8">
-        <div className="flex flex-col items-center justify-center text-center border border-dashed rounded-lg p-16 bg-muted/30">
-          <Construction className="h-12 w-12 text-muted-foreground mb-4" />
-          <h2 className="text-xl font-semibold">Em construção</h2>
-          <p className="text-muted-foreground mt-2 max-w-md">
-            Esta seção está sendo preparada e estará disponível em breve.
-          </p>
-        </div>
-      </div>
-    </>
+    <SlaView
+      table="sla_bosch"
+      title="SLA — Bosch"
+      description="Indicadores de SLA do cliente Bosch por planta."
+      unidadeOptions={BOSCH_PLANTAS}
+      unidadeColumn="planta"
+      unidadeLabel="Planta"
+      fields={[
+        { key: "dig_conf", label: "Digitação/Conferência" },
+        { key: "start_up", label: "Registro DI/DUIMP" },
+        { key: "otcc", label: "Liberação Transporte" },
+        { key: "desvios", label: "Desvios" },
+        { key: "pinho", label: "Pinho" },
+        { key: "proc_aereos", label: "Processos Aéreos", kind: "number" },
+        { key: "proc_maritimos", label: "Processos Marítimos", kind: "number" },
+        { key: "proc_canal_verde", label: "Canal Verde", kind: "number" },
+        { key: "proc_canal_vermelho", label: "Canal Vermelho", kind: "number" },
+        { key: "tm_dig_conf_h", label: "T.M. Dig/Conf", kind: "number", unit: "h" },
+        { key: "tm_registro_dias", label: "T.M. Registro", kind: "number", unit: "dias" },
+        { key: "tm_liberacao_dias", label: "T.M. Liberação Transp", kind: "number", unit: "dias" },
+      ]}
+    />
   ),
 });
