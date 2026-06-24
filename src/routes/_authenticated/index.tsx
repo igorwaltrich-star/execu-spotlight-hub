@@ -79,6 +79,13 @@ type SlaBosch = {
   start_up: number;
   otcc: number;
   pinho: number;
+  proc_aereos: number | null;
+  proc_maritimos: number | null;
+  proc_canal_verde: number | null;
+  proc_canal_vermelho: number | null;
+  tm_dig_conf_h: number | null;
+  tm_registro_dias: number | null;
+  tm_liberacao_dias: number | null;
 };
 type PlanoAcaoRow = {
   id: string;
@@ -385,6 +392,30 @@ function DashboardPage() {
       return { planta: p, data };
     });
   }, [bosch.data]);
+
+  // KPIs operacionais Bosch por planta (médias do período filtrado globalmente)
+  const kpisBoschPorPlanta = useMemo(() => {
+    const kpiDefs = [
+      { key: "proc_aereos", label: "Aéreos", unit: "" },
+      { key: "proc_maritimos", label: "Marítimos", unit: "" },
+      { key: "proc_canal_verde", label: "C. Verde", unit: "" },
+      { key: "proc_canal_vermelho", label: "C. Vermelho", unit: "" },
+      { key: "tm_dig_conf_h", label: "TM Dig/Conf", unit: "h" },
+      { key: "tm_registro_dias", label: "TM Registro", unit: "d" },
+      { key: "tm_liberacao_dias", label: "TM Liberação", unit: "d" },
+    ] as const;
+    const map = new Map<string, Array<{ label: string; value: number; unit: string }>>();
+    for (const p of BOSCH_PLANTAS) {
+      const rows = boschGlobal.filter((r) => r.planta === p.key);
+      const kpis = kpiDefs.map(({ key, label, unit }) => {
+        const vals = rows.map((r) => Number(r[key as keyof SlaBosch] ?? 0)).filter((n) => !Number.isNaN(n));
+        const avg = vals.length ? vals.reduce((s, n) => s + n, 0) / vals.length : 0;
+        return { label, value: avg, unit };
+      });
+      map.set(p.key, kpis);
+    }
+    return map;
+  }, [boschGlobal]);
 
   // Evolução de produtividade por operação (Jan até mês atual)
   const evolucaoProd = useMemo(() => {
@@ -707,7 +738,7 @@ function DashboardPage() {
                   </CardTitle>
                   <CardDescription>Evolução mensal por indicador</CardDescription>
                 </CardHeader>
-                <CardContent className="flex-1 min-h-[320px]">
+                <CardContent className="flex-1 min-h-[320px] flex flex-col">
                   {data.length === 0 ? (
                     <Empty msg="Sem dados cadastrados." />
                   ) : (
@@ -726,6 +757,24 @@ function DashboardPage() {
                       </BarChart>
                     </ResponsiveContainer>
                   )}
+                  {(() => {
+                    const kpis = kpisBoschPorPlanta.get(planta.key) ?? [];
+                    const hasAny = kpis.some((k) => k.value > 0);
+                    if (!hasAny) return null;
+                    return (
+                      <div className="mt-3 pt-3 border-t border-border grid grid-cols-4 gap-2">
+                        {kpis.map((k) => (
+                          <div key={k.label} className="text-center">
+                            <div className="text-[10px] text-muted-foreground uppercase tracking-wide truncate">{k.label}</div>
+                            <div className="text-sm font-semibold tabular-nums">
+                              {k.value % 1 === 0 ? k.value.toLocaleString("pt-BR") : k.value.toFixed(1)}
+                              {k.unit && <span className="text-[10px] text-muted-foreground ml-0.5">{k.unit}</span>}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
                 </CardContent>
               </Card>
             );
