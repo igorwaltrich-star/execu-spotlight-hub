@@ -9,6 +9,7 @@ import {
   fmtMes,
   MESES_PT,
   META_PRODUTIVIDADE,
+  metaProdUnidade,
   META_SLA,
   UNIDADES,
   UNIDADE_LABEL,
@@ -1054,14 +1055,16 @@ function GrupoBlock({
           <MiniKpi
             label="Produtividade"
             value={total.prod.toFixed(1)}
-            good={total.prod >= META_PRODUTIVIDADE}
+            good={total.prod >= (unidades.length > 0
+              ? unidades.reduce((s, u) => s + metaProdUnidade(u.key), 0) / unidades.length
+              : META_PRODUTIVIDADE)}
           />
         </div>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {unidades.map((u) => {
-            const ok = u.prod >= META_PRODUTIVIDADE;
+            const ok = u.prod >= metaProdUnidade(u.key);
             return (
               <div key={u.key} className="rounded-lg border bg-card p-4">
                 <div className="text-xs uppercase tracking-wide text-muted-foreground">

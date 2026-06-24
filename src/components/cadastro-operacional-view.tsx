@@ -27,6 +27,7 @@ import { toast } from "sonner";
 import {
   fmtMes,
   META_PRODUTIVIDADE,
+  metaProdUnidade,
   UNIDADES,
   UNIDADE_LABEL,
   type UnidadeKey,
@@ -108,7 +109,7 @@ export function CadastroOperacionalView() {
     <>
       <PageHeader
         title="Cadastro Operacional"
-        description={`Volume e número de pessoas por carteira/mês. Produtividade = volume / pessoas. Meta: ${META_PRODUTIVIDADE} processos/pessoa.`}
+        description={`Volume e número de pessoas por carteira/mês. Produtividade = volume / pessoas. Metas: Bosch 86 · Midea SC/RS 74 · Midea AM 69 · demais ${META_PRODUTIVIDADE}.`}
       />
       <div className="p-8 space-y-6">
         <Card>
@@ -200,7 +201,7 @@ export function CadastroOperacionalView() {
                 )}
                 {rows.map((r) => {
                   const p = r.pessoas > 0 ? r.volume / r.pessoas : 0;
-                  const ok = p >= META_PRODUTIVIDADE;
+                  const ok = p >= metaProdUnidade(r.unidade);
                   return (
                     <TableRow key={r.id}>
                       <TableCell className="font-medium">

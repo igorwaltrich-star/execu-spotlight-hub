@@ -1,4 +1,17 @@
 export const META_PRODUTIVIDADE = 60;
+
+/** Metas individuais de produtividade por unidade (processos/pessoa) — Projeção 2026 */
+export const META_PRODUTIVIDADE_UNIDADE: Record<string, number> = {
+  bosch:    86,
+  midea_sc: 74,
+  midea_rs: 74,
+  midea_am: 69,
+};
+
+/** Retorna a meta de produtividade para uma unidade específica, com fallback para a meta padrão */
+export function metaProdUnidade(unidade: string): number {
+  return META_PRODUTIVIDADE_UNIDADE[unidade] ?? META_PRODUTIVIDADE;
+}
 export const META_SLA = 90;
 
 export const MESES_PT = [
