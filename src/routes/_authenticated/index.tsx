@@ -393,6 +393,30 @@ function DashboardPage() {
     });
   }, [bosch.data]);
 
+  // KPIs operacionais Bosch por planta (médias do período filtrado globalmente)
+  const kpisBoschPorPlanta = useMemo(() => {
+    const kpiDefs = [
+      { key: "proc_aereos", label: "Aéreos", unit: "" },
+      { key: "proc_maritimos", label: "Marítimos", unit: "" },
+      { key: "proc_canal_verde", label: "C. Verde", unit: "" },
+      { key: "proc_canal_vermelho", label: "C. Vermelho", unit: "" },
+      { key: "tm_dig_conf_h", label: "TM Dig/Conf", unit: "h" },
+      { key: "tm_registro_dias", label: "TM Registro", unit: "d" },
+      { key: "tm_liberacao_dias", label: "TM Liberação", unit: "d" },
+    ] as const;
+    const map = new Map<string, Array<{ label: string; value: number; unit: string }>>();
+    for (const p of BOSCH_PLANTAS) {
+      const rows = boschGlobal.filter((r) => r.planta === p.key);
+      const kpis = kpiDefs.map(({ key, label, unit }) => {
+        const vals = rows.map((r) => Number(r[key as keyof SlaBosch] ?? 0)).filter((n) => !Number.isNaN(n));
+        const avg = vals.length ? vals.reduce((s, n) => s + n, 0) / vals.length : 0;
+        return { label, value: avg, unit };
+      });
+      map.set(p.key, kpis);
+    }
+    return map;
+  }, [boschGlobal]);
+
   // Evolução de produtividade por operação (Jan até mês atual)
   const evolucaoProd = useMemo(() => {
     const currentMonth = new Date().getUTCMonth();
