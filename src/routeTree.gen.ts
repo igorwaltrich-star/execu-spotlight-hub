@@ -232,6 +232,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardGestaoRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/gerenciamento-operacional': {
+      id: '/_authenticated/gerenciamento-operacional'
+      path: '/gerenciamento-operacional'
+      fullPath: '/gerenciamento-operacional'
+      preLoaderRoute: typeof AuthenticatedGerenciamentoOperacionalRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/diagnostico': {
       id: '/_authenticated/diagnostico'
       path: '/diagnostico'
