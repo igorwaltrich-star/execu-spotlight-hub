@@ -738,7 +738,7 @@ function DashboardPage() {
                   </CardTitle>
                   <CardDescription>Evolução mensal por indicador</CardDescription>
                 </CardHeader>
-                <CardContent className="flex-1 min-h-[320px]">
+                <CardContent className="flex-1 min-h-[320px] flex flex-col">
                   {data.length === 0 ? (
                     <Empty msg="Sem dados cadastrados." />
                   ) : (
@@ -757,6 +757,24 @@ function DashboardPage() {
                       </BarChart>
                     </ResponsiveContainer>
                   )}
+                  {(() => {
+                    const kpis = kpisBoschPorPlanta.get(planta.key) ?? [];
+                    const hasAny = kpis.some((k) => k.value > 0);
+                    if (!hasAny) return null;
+                    return (
+                      <div className="mt-3 pt-3 border-t border-border grid grid-cols-4 gap-2">
+                        {kpis.map((k) => (
+                          <div key={k.label} className="text-center">
+                            <div className="text-[10px] text-muted-foreground uppercase tracking-wide truncate">{k.label}</div>
+                            <div className="text-sm font-semibold tabular-nums">
+                              {k.value % 1 === 0 ? k.value.toLocaleString("pt-BR") : k.value.toFixed(1)}
+                              {k.unit && <span className="text-[10px] text-muted-foreground ml-0.5">{k.unit}</span>}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
                 </CardContent>
               </Card>
             );
