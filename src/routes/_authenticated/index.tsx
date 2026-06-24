@@ -298,9 +298,12 @@ function DashboardPage() {
     return sum + rows.reduce((m, r) => Math.max(m, Number(r.pessoas ?? 0)), 0);
   }, 0);
 
-  const mideaFiltrada = (midea.data ?? []);
-  const boschFiltrada = (bosch.data ?? []);
-  void mideaFiltrada; void boschFiltrada;
+  const mideaFiltrada = (midea.data ?? []).filter((r) =>
+    matchesMes(r.mes, effMes(filtroMesMidea)),
+  );
+  const boschFiltrada = (bosch.data ?? []).filter((r) =>
+    matchesMes(r.mes, effMes(filtroMesBosch)),
+  );
 
   const allSla = [
     ...mideaGlobal.flatMap((r) => [r.start_up, r.otcc, r.otd, r.sotd]),
@@ -348,50 +351,41 @@ function DashboardPage() {
     });
   }, [opAll]);
 
-  // Evolução mensal de SLA por unidade Midea
-  const evolucaoSlaMideaPorUnidade = useMemo(() => {
+  const mideaRadarPorUnidade = useMemo(() => {
     const keys = ["start_up", "otcc", "otd", "sotd"] as const;
     const unidadesMidea = UNIDADES.filter((u) => u.grupo === "midea");
     return unidadesMidea.map((u) => {
-      const rows = (midea.data ?? []).filter((r) => r.unidade === u.key);
-      const meses = [...new Set(rows.map((r) => r.mes))].sort();
-      const data = meses.map((mes) => {
-        const perMes = rows.filter((r) => r.mes === mes);
-        const avg = (k: typeof keys[number]) =>
-          perMes.length ? perMes.reduce((s, r) => s + Number(r[k] || 0), 0) / perMes.length : 0;
-        const slaGeral = keys.reduce((s, k) => s + avg(k), 0) / keys.length;
-        return {
-          mes: fmtMes(mes),
-          "Start-Up": Number(avg("start_up").toFixed(1)),
-          "OTCC": Number(avg("otcc").toFixed(1)),
-          "OTD": Number(avg("otd").toFixed(1)),
-          "SOTD": Number(avg("sotd").toFixed(1)),
-          "SLA Geral": Number(slaGeral.toFixed(1)),
-        };
-      });
-      return { unidade: u, data };
+      const rows = mideaFiltrada.filter((r) => r.unidade === u.key);
+      const data = keys.map((k) => ({
+        indicador: k.toUpperCase().replace("_", "-"),
+        valor: rows.length ? rows.reduce((s, r) => s + Number(r[k] || 0), 0) / rows.length : 0,
+        meta: META_SLA,
+      }));
+      const valores = data.map((d) => d.valor);
+      const geral = valores.length ? valores.reduce((a, b) => a + b, 0) / valores.length : 0;
+      return { unidade: u, data, rowsCount: rows.length, geral };
     });
-  }, [midea.data]);
+  }, [mideaFiltrada]);
 
-  // Evolução mensal de SLA por planta Bosch
-  const evolucaoSlaBoschPorPlanta = useMemo(() => {
+  const boschBarsPorPlanta = useMemo(() => {
     const keys = ["dig_conf", "start_up", "otcc", "pinho"] as const;
-    const labels: Record<string, string> = { dig_conf: "Dig/Conf", start_up: "Reg. DI", otcc: "Lib. Transp.", pinho: "Pinho" };
+    const labels: Record<string, string> = {
+      dig_conf: "Digitação/Conferência",
+      start_up: "Registro DI/DUIMP",
+      otcc: "Liberação Transporte",
+      pinho: "Pinho",
+    };
     return BOSCH_PLANTAS.map((p) => {
-      const rows = (bosch.data ?? []).filter((r) => r.planta === p.key);
-      const meses = [...new Set(rows.map((r) => r.mes))].sort();
-      const data = meses.map((mes) => {
-        const perMes = rows.filter((r) => r.mes === mes);
-        const avg = (k: typeof keys[number]) =>
-          perMes.length ? perMes.reduce((s, r) => s + Number(r[k] || 0), 0) / perMes.length : 0;
-        const slaGeral = keys.reduce((s, k) => s + avg(k), 0) / keys.length;
-        const row: Record<string, number | string> = { mes: fmtMes(mes), "SLA Geral": Number(slaGeral.toFixed(1)) };
-        keys.forEach((k) => { row[labels[k]] = Number(avg(k).toFixed(1)); });
-        return row;
-      });
-      return { planta: p, data };
+      const rows = boschFiltrada.filter((r) => r.planta === p.key);
+      const data = keys.map((k) => ({
+        indicador: labels[k],
+        valor: rows.length ? rows.reduce((s, r) => s + Number(r[k] || 0), 0) / rows.length : 0,
+      }));
+      const valores = data.map((d) => d.valor);
+      const geral = valores.length ? valores.reduce((a, b) => a + b, 0) / valores.length : 0;
+      return { planta: p, data, rowsCount: rows.length, geral };
     });
-  }, [bosch.data]);
+  }, [boschFiltrada]);
 
   // KPIs operacionais Bosch por planta (médias do período filtrado globalmente)
   const kpisBoschPorPlanta = useMemo(() => {
@@ -662,47 +656,42 @@ function DashboardPage() {
         </Card>
       </Slide>
 
-      {/* Slide 6 — SLA Midea por Operação — Evolução Mensal */}
+      {/* Slide 6 — SLA Midea por Operação */}
       <Slide>
-        <div className="mb-6">
-          <h2 className="text-3xl md:text-4xl font-bold tracking-tight">SLA — Midea</h2>
-          <p className="text-muted-foreground mt-1">{`Evolução mensal dos indicadores de SLA por operação — Meta ${META_SLA}%`}</p>
+        <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
+          <div>
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">SLA — Midea</h2>
+            <p className="text-muted-foreground mt-1">{`SLA Geral por operação — Meta ${META_SLA}%`}</p>
+          </div>
+          <FiltroMes value={filtroMesMidea} onChange={setFiltroMesMidea} meses={mesesMidea} />
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 min-h-0">
-          {evolucaoSlaMideaPorUnidade.map(({ unidade, data }) => {
-            const lastGeral = data.length ? (data[data.length - 1]["SLA Geral"] as number) : 0;
-            const ok = lastGeral >= META_SLA;
-            const palette = [C1, C2, C3, "var(--color-warning)"];
-            const indicadores = ["Start-Up", "OTCC", "OTD", "SOTD"];
+          {mideaRadarPorUnidade.map(({ unidade, data, rowsCount, geral }) => {
+            const ok = geral >= META_SLA;
             return (
               <Card key={unidade.key} className="min-h-0 flex flex-col">
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
                     <span>{unidade.label}</span>
-                    {data.length > 0 && (
-                      <span className={`text-base font-semibold ${ok ? "text-success" : "text-destructive"}`}>
-                        {lastGeral.toFixed(1)}%
-                      </span>
-                    )}
+                    <span className={`text-base font-semibold ${ok ? "text-success" : "text-destructive"}`}>
+                      {geral.toFixed(1)}%
+                    </span>
                   </CardTitle>
-                  <CardDescription>Evolução mensal por indicador</CardDescription>
+                  <CardDescription>SLA Geral (média dos indicadores)</CardDescription>
                 </CardHeader>
                 <CardContent className="flex-1 min-h-[320px]">
-                  {data.length === 0 ? (
+                  {rowsCount === 0 ? (
                     <Empty msg="Sem dados cadastrados." />
                   ) : (
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={data} margin={{ top: 4, right: 8, left: -10, bottom: 0 }}>
+                      <BarChart data={data} layout="vertical" margin={{ left: 16, right: 24 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                        <XAxis dataKey="mes" tick={{ fontSize: 10 }} />
-                        <YAxis domain={[0, 100]} tick={{ fontSize: 10 }} />
+                        <XAxis type="number" domain={[0, 100]} />
+                        <YAxis type="category" dataKey="indicador" width={80} />
                         <Tooltip formatter={(v: number) => `${Number(v).toFixed(1)}%`} />
-                        <Legend wrapperStyle={{ fontSize: 11 }} />
-                        <ReferenceLine y={META_SLA} stroke={CD} strokeDasharray="4 4"
-                          label={{ value: `Meta ${META_SLA}%`, fill: CD, position: "insideTopRight", fontSize: 10 }} />
-                        {indicadores.map((ind, i) => (
-                          <Bar key={ind} dataKey={ind} fill={palette[i]} radius={[3, 3, 0, 0]} maxBarSize={18} />
-                        ))}
+                        <ReferenceLine x={META_SLA} stroke={CD} strokeDasharray="4 4"
+                          label={{ value: `Meta ${META_SLA}%`, fill: CD, position: "top" }} />
+                        <Bar dataKey="valor" name="Real" fill={C1} radius={[0, 4, 4, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   )}
@@ -713,68 +702,45 @@ function DashboardPage() {
         </div>
       </Slide>
 
-      {/* Slide 7 — SLA BOSCH por Planta — Evolução Mensal */}
+      {/* Slide 7 — SLA BOSCH por Planta */}
       <Slide>
-        <div className="mb-6">
-          <h2 className="text-3xl md:text-4xl font-bold tracking-tight">SLA — BOSCH</h2>
-          <p className="text-muted-foreground mt-1">{`Evolução mensal dos indicadores de SLA por planta — Meta ${META_SLA}%`}</p>
+        <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
+          <div>
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">SLA — BOSCH</h2>
+            <p className="text-muted-foreground mt-1">{`SLA Geral por planta — Meta ${META_SLA}%`}</p>
+          </div>
+          <FiltroMes value={filtroMesBosch} onChange={setFiltroMesBosch} meses={mesesBosch} />
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 min-h-0">
-          {evolucaoSlaBoschPorPlanta.map(({ planta, data }) => {
-            const lastGeral = data.length ? (data[data.length - 1]["SLA Geral"] as number) : 0;
-            const ok = lastGeral >= META_SLA;
-            const palette = [C1, C2, C3, "var(--color-warning)"];
-            const indicadores = ["Dig/Conf", "Reg. DI", "Lib. Transp.", "Pinho"];
+          {boschBarsPorPlanta.map(({ planta, data, rowsCount, geral }) => {
+            const ok = geral >= META_SLA;
             return (
               <Card key={planta.key} className="min-h-0 flex flex-col">
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
                     <span>Planta {planta.label}</span>
-                    {data.length > 0 && (
-                      <span className={`text-base font-semibold ${ok ? "text-success" : "text-destructive"}`}>
-                        {lastGeral.toFixed(1)}%
-                      </span>
-                    )}
+                    <span className={`text-base font-semibold ${ok ? "text-success" : "text-destructive"}`}>
+                      {geral.toFixed(1)}%
+                    </span>
                   </CardTitle>
-                  <CardDescription>Evolução mensal por indicador</CardDescription>
+                  <CardDescription>SLA Geral (média dos indicadores)</CardDescription>
                 </CardHeader>
-                <CardContent className="flex-1 min-h-[320px] flex flex-col">
-                  {data.length === 0 ? (
+                <CardContent className="flex-1 min-h-[320px]">
+                  {rowsCount === 0 ? (
                     <Empty msg="Sem dados cadastrados." />
                   ) : (
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={data} margin={{ top: 4, right: 8, left: -10, bottom: 0 }}>
+                      <BarChart data={data} layout="vertical" margin={{ left: 16, right: 24 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                        <XAxis dataKey="mes" tick={{ fontSize: 10 }} />
-                        <YAxis domain={[0, 100]} tick={{ fontSize: 10 }} />
+                        <XAxis type="number" domain={[0, 100]} />
+                        <YAxis type="category" dataKey="indicador" width={160} />
                         <Tooltip formatter={(v: number) => `${Number(v).toFixed(1)}%`} />
-                        <Legend wrapperStyle={{ fontSize: 11 }} />
-                        <ReferenceLine y={META_SLA} stroke={CD} strokeDasharray="4 4"
-                          label={{ value: `Meta ${META_SLA}%`, fill: CD, position: "insideTopRight", fontSize: 10 }} />
-                        {indicadores.map((ind, i) => (
-                          <Bar key={ind} dataKey={ind} fill={palette[i]} radius={[3, 3, 0, 0]} maxBarSize={18} />
-                        ))}
+                        <ReferenceLine x={META_SLA} stroke={CD} strokeDasharray="4 4"
+                          label={{ value: `Meta ${META_SLA}%`, fill: CD, position: "top" }} />
+                        <Bar dataKey="valor" name="Real" fill={C1} radius={[0, 4, 4, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   )}
-                  {(() => {
-                    const kpis = kpisBoschPorPlanta.get(planta.key) ?? [];
-                    const hasAny = kpis.some((k) => k.value > 0);
-                    if (!hasAny) return null;
-                    return (
-                      <div className="mt-3 pt-3 border-t border-border grid grid-cols-4 gap-2">
-                        {kpis.map((k) => (
-                          <div key={k.label} className="text-center">
-                            <div className="text-[10px] text-muted-foreground uppercase tracking-wide truncate">{k.label}</div>
-                            <div className="text-sm font-semibold tabular-nums">
-                              {k.value % 1 === 0 ? k.value.toLocaleString("pt-BR") : k.value.toFixed(1)}
-                              {k.unit && <span className="text-[10px] text-muted-foreground ml-0.5">{k.unit}</span>}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    );
-                  })()}
                 </CardContent>
               </Card>
             );
@@ -1128,38 +1094,50 @@ function GrupoBlock({
           />
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <CardContent className="pt-0">
+        <div className={`grid gap-5 ${
+          chartData.length === 1 ? "grid-cols-1" :
+          chartData.length === 2 ? "grid-cols-1 md:grid-cols-2" :
+          "grid-cols-1 md:grid-cols-3"
+        }`}>
           {chartData.map((u) => {
             const meta = metaProdUnidade(u.key);
             return (
-              <div key={u.key} className="rounded-lg border bg-card p-3 flex flex-col gap-1">
-                <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  {u.label}
+              <div key={u.key} className="rounded-lg border bg-card p-4 flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                    {u.label}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    Meta: <span className="font-bold text-destructive">{meta}</span>
+                  </span>
                 </div>
                 {u.data.length === 0 ? (
-                  <div className="h-[140px] grid place-items-center text-muted-foreground text-xs">
+                  <div className="h-[280px] grid place-items-center text-muted-foreground text-sm">
                     Sem dados cadastrados
                   </div>
                 ) : (
-                  <ResponsiveContainer width="100%" height={150}>
-                    <BarChart data={u.data} margin={{ top: 4, right: 4, left: -24, bottom: 0 }}>
+                  <ResponsiveContainer width="100%" height={280}>
+                    <BarChart data={u.data} margin={{ top: 8, right: 12, left: -12, bottom: 4 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                      <XAxis dataKey="mes" tick={{ fontSize: 9 }} />
-                      <YAxis tick={{ fontSize: 9 }} />
+                      <XAxis dataKey="mes" tick={{ fontSize: 12 }} />
+                      <YAxis tick={{ fontSize: 12 }} />
                       <Tooltip
                         formatter={(v: number) => [v.toFixed(1), "Produtividade"]}
-                        labelStyle={{ fontSize: 11 }}
-                        contentStyle={{ fontSize: 11 }}
+                        labelStyle={{ fontSize: 12 }}
+                        contentStyle={{ fontSize: 12 }}
                       />
-                      <ReferenceLine y={meta} stroke={CD} strokeDasharray="4 3" strokeWidth={1.5} />
-                      <Bar dataKey="produtividade" fill={C1} radius={[3, 3, 0, 0]} maxBarSize={28} />
+                      <ReferenceLine
+                        y={meta}
+                        stroke={CD}
+                        strokeDasharray="5 3"
+                        strokeWidth={2}
+                        label={{ value: `Meta ${meta}`, fill: CD, position: "insideTopRight", fontSize: 11 }}
+                      />
+                      <Bar dataKey="produtividade" fill={C1} radius={[4, 4, 0, 0]} maxBarSize={44} />
                     </BarChart>
                   </ResponsiveContainer>
                 )}
-                <div className="text-[10px] text-muted-foreground text-center">
-                  Meta: <span className="font-semibold text-destructive">{meta}</span>
-                </div>
               </div>
             );
           })}
