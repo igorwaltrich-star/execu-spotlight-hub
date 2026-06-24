@@ -1,9 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/cadastro-operacional-view";
-import { PerformanceOperacional } from "@/components/gestao/performance-operacional";
 import { CadastroColaboradores } from "@/components/gestao/cadastro-colaboradores";
-import { EscalaHomeOffice } from "@/components/gestao/escala-home-office";
 import { ControleFerias } from "@/components/gestao/controle-ferias";
 import { MatrizLideranca } from "@/components/gestao/matriz-lideranca";
 import { NavySeal } from "@/components/gestao/navy-seal";
@@ -23,12 +21,10 @@ function GerenciamentoOperacionalPage() {
         description="Performance, equipe e ferramentas de gestão"
       />
 
-      <Tabs defaultValue="performance" className="w-full">
+      <Tabs defaultValue="indicadores" className="w-full">
         <TabsList className="h-auto flex-wrap justify-start">
-          <TabsTrigger value="performance">Performance (IA)</TabsTrigger>
           <TabsTrigger value="indicadores">Indicadores de Performance</TabsTrigger>
           <TabsTrigger value="colaboradores">Colaboradores</TabsTrigger>
-          <TabsTrigger value="home-office">Home Office</TabsTrigger>
           <TabsTrigger value="ferias">Férias</TabsTrigger>
           <TabsTrigger value="matriz">Matriz Liderança</TabsTrigger>
           <TabsTrigger value="navyseal">NavySeal</TabsTrigger>
@@ -36,17 +32,11 @@ function GerenciamentoOperacionalPage() {
           <TabsTrigger value="ferramentas">Ferramentas de Gestão</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="performance" className="mt-4">
-          <PerformanceOperacional />
-        </TabsContent>
         <TabsContent value="indicadores" className="mt-4">
           <IndicadoresPerformance />
         </TabsContent>
         <TabsContent value="colaboradores" className="mt-4">
           <CadastroColaboradores />
-        </TabsContent>
-        <TabsContent value="home-office" className="mt-4">
-          <EscalaHomeOffice />
         </TabsContent>
         <TabsContent value="ferias" className="mt-4">
           <ControleFerias />
