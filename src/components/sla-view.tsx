@@ -47,16 +47,16 @@ export function SlaView({
   unidadeOptions,
   unidadeColumn = "unidade",
   unidadeLabel = "Operação",
+  hideHeader = false,
 }: {
   table: "sla_midea" | "sla_bosch";
   title: string;
   description: string;
   fields: SlaField[];
   unidadeOptions?: UnidadeOption[];
-  /** DB column for the segment selector (default "unidade"; Bosch uses "planta") */
   unidadeColumn?: string;
-  /** UI label for the segment selector (default "Operação") */
   unidadeLabel?: string;
+  hideHeader?: boolean;
 }) {
   const { user } = useAuth();
   const qc = useQueryClient();
@@ -128,7 +128,7 @@ export function SlaView({
 
   return (
     <>
-      <PageHeader title={title} description={description} />
+      {!hideHeader && <PageHeader title={title} description={description} />}
       <div className="p-8 space-y-6">
         <Card>
           <CardHeader>

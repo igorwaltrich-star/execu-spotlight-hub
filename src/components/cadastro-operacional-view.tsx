@@ -46,7 +46,7 @@ export function PageHeader({ title, description }: { title: string; description?
 
 type Row = { id: string; mes: string; volume: number; pessoas: number; unidade: UnidadeKey };
 
-export function CadastroOperacionalView() {
+export function CadastroOperacionalView({ hideHeader = false }: { hideHeader?: boolean }) {
   const { user } = useAuth();
   const qc = useQueryClient();
   const queryKey = ["operacional_mensal"];
@@ -107,10 +107,12 @@ export function CadastroOperacionalView() {
 
   return (
     <>
-      <PageHeader
-        title="Cadastro Operacional"
-        description={`Volume e número de pessoas por carteira/mês. Produtividade = volume / pessoas. Metas: Bosch 86 · Midea SC/RS 74 · Midea AM 69 · demais ${META_PRODUTIVIDADE}.`}
-      />
+      {!hideHeader && (
+        <PageHeader
+          title="Cadastro Operacional"
+          description={`Volume e número de pessoas por carteira/mês. Produtividade = volume / pessoas. Metas: Bosch 86 · Midea SC/RS 74 · Midea AM 69 · demais ${META_PRODUTIVIDADE}.`}
+        />
+      )}
       <div className="p-8 space-y-6">
         <Card>
           <CardHeader>
