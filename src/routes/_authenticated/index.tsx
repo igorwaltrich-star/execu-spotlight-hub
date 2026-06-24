@@ -79,6 +79,13 @@ type SlaBosch = {
   start_up: number;
   otcc: number;
   pinho: number;
+  proc_aereos: number | null;
+  proc_maritimos: number | null;
+  proc_canal_verde: number | null;
+  proc_canal_vermelho: number | null;
+  tm_dig_conf_h: number | null;
+  tm_registro_dias: number | null;
+  tm_liberacao_dias: number | null;
 };
 type PlanoAcaoRow = {
   id: string;
