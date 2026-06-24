@@ -5,22 +5,21 @@ import {
   LayoutDashboard,
   Database,
   Gauge,
-  Lightbulb,
   LogOut,
   Activity,
   Briefcase,
+  BarChart3,
 } from "lucide-react";
 import type { ReactNode } from "react";
 
 type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean };
 const NAV: NavItem[] = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  { to: "/cadastro", label: "Cadastro Operacional", icon: Database },
-  { to: "/plano-acao", label: "Plano de Ação", icon: Lightbulb },
+  { to: "/",                       label: "Dashboard Operacional",    icon: LayoutDashboard, exact: true },
+  { to: "/dashboard-gestao",       label: "Dashboard Gestão",         icon: BarChart3 },
+  { to: "/cadastro",               label: "Cadastro Operacional",     icon: Database },
   { to: "/gerenciamento-operacional", label: "Gerenciamento Operacional", icon: Briefcase },
-  { to: "/sla-midea", label: "SLA Midea", icon: Gauge },
-  { to: "/sla-bosch", label: "SLA BOSCH", icon: Gauge },
-  { to: "/melhorias", label: "Melhorias", icon: Lightbulb },
+  { to: "/sla-midea",              label: "SLA Midea",                icon: Gauge },
+  { to: "/sla-bosch",              label: "SLA BOSCH",                icon: Gauge },
 ];
 
 export function AppShell({ children }: { children: ReactNode }) {

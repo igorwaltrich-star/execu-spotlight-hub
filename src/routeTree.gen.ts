@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedDashboardGestaoRouteImport } from './routes/_authenticated/dashboard-gestao'
 import { Route as AuthenticatedSlaMideaRouteImport } from './routes/_authenticated/sla-midea'
 import { Route as AuthenticatedSlaBoschRouteImport } from './routes/_authenticated/sla-bosch'
 import { Route as AuthenticatedPlanoAcaoRouteImport } from './routes/_authenticated/plano-acao'
@@ -33,6 +34,11 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
 const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedDashboardGestaoRoute = AuthenticatedDashboardGestaoRouteImport.update({
+  id: '/dashboard-gestao',
+  path: '/dashboard-gestao',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedSlaMideaRoute = AuthenticatedSlaMideaRouteImport.update({
@@ -84,6 +90,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/cadastro': typeof AuthenticatedCadastroRoute
   '/cadastro-oportunidades': typeof AuthenticatedCadastroOportunidadesRoute
+  '/dashboard-gestao': typeof AuthenticatedDashboardGestaoRoute
   '/diagnostico': typeof AuthenticatedDiagnosticoRoute
   '/gerenciamento-operacional': typeof AuthenticatedGerenciamentoOperacionalRoute
   '/melhorias': typeof AuthenticatedMelhoriasRoute
@@ -95,6 +102,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/cadastro': typeof AuthenticatedCadastroRoute
   '/cadastro-oportunidades': typeof AuthenticatedCadastroOportunidadesRoute
+  '/dashboard-gestao': typeof AuthenticatedDashboardGestaoRoute
   '/diagnostico': typeof AuthenticatedDiagnosticoRoute
   '/gerenciamento-operacional': typeof AuthenticatedGerenciamentoOperacionalRoute
   '/melhorias': typeof AuthenticatedMelhoriasRoute
@@ -109,6 +117,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/_authenticated/cadastro': typeof AuthenticatedCadastroRoute
   '/_authenticated/cadastro-oportunidades': typeof AuthenticatedCadastroOportunidadesRoute
+  '/_authenticated/dashboard-gestao': typeof AuthenticatedDashboardGestaoRoute
   '/_authenticated/diagnostico': typeof AuthenticatedDiagnosticoRoute
   '/_authenticated/gerenciamento-operacional': typeof AuthenticatedGerenciamentoOperacionalRoute
   '/_authenticated/melhorias': typeof AuthenticatedMelhoriasRoute
@@ -124,6 +133,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/cadastro'
     | '/cadastro-oportunidades'
+    | '/dashboard-gestao'
     | '/diagnostico'
     | '/gerenciamento-operacional'
     | '/melhorias'
@@ -135,6 +145,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/cadastro'
     | '/cadastro-oportunidades'
+    | '/dashboard-gestao'
     | '/diagnostico'
     | '/gerenciamento-operacional'
     | '/melhorias'
@@ -148,6 +159,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/_authenticated/cadastro'
     | '/_authenticated/cadastro-oportunidades'
+    | '/_authenticated/dashboard-gestao'
     | '/_authenticated/diagnostico'
     | '/_authenticated/gerenciamento-operacional'
     | '/_authenticated/melhorias'
@@ -213,11 +225,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMelhoriasRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/gerenciamento-operacional': {
-      id: '/_authenticated/gerenciamento-operacional'
-      path: '/gerenciamento-operacional'
-      fullPath: '/gerenciamento-operacional'
-      preLoaderRoute: typeof AuthenticatedGerenciamentoOperacionalRouteImport
+    '/_authenticated/dashboard-gestao': {
+      id: '/_authenticated/dashboard-gestao'
+      path: '/dashboard-gestao'
+      fullPath: '/dashboard-gestao'
+      preLoaderRoute: typeof AuthenticatedDashboardGestaoRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/diagnostico': {
@@ -247,6 +259,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteChildren {
   AuthenticatedCadastroRoute: typeof AuthenticatedCadastroRoute
   AuthenticatedCadastroOportunidadesRoute: typeof AuthenticatedCadastroOportunidadesRoute
+  AuthenticatedDashboardGestaoRoute: typeof AuthenticatedDashboardGestaoRoute
   AuthenticatedDiagnosticoRoute: typeof AuthenticatedDiagnosticoRoute
   AuthenticatedGerenciamentoOperacionalRoute: typeof AuthenticatedGerenciamentoOperacionalRoute
   AuthenticatedMelhoriasRoute: typeof AuthenticatedMelhoriasRoute
@@ -258,11 +271,10 @@ interface AuthenticatedRouteChildren {
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedCadastroRoute: AuthenticatedCadastroRoute,
-  AuthenticatedCadastroOportunidadesRoute:
-    AuthenticatedCadastroOportunidadesRoute,
+  AuthenticatedCadastroOportunidadesRoute: AuthenticatedCadastroOportunidadesRoute,
+  AuthenticatedDashboardGestaoRoute: AuthenticatedDashboardGestaoRoute,
   AuthenticatedDiagnosticoRoute: AuthenticatedDiagnosticoRoute,
-  AuthenticatedGerenciamentoOperacionalRoute:
-    AuthenticatedGerenciamentoOperacionalRoute,
+  AuthenticatedGerenciamentoOperacionalRoute: AuthenticatedGerenciamentoOperacionalRoute,
   AuthenticatedMelhoriasRoute: AuthenticatedMelhoriasRoute,
   AuthenticatedPlanoAcaoRoute: AuthenticatedPlanoAcaoRoute,
   AuthenticatedSlaBoschRoute: AuthenticatedSlaBoschRoute,

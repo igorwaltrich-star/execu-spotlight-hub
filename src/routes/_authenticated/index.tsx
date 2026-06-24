@@ -178,6 +178,8 @@ function DashboardPage() {
 
   // Global month filter (applies to every slide)
   const [filtroMesGlobal, setFiltroMesGlobal] = useState<string>("all");
+  // KPI group filter (Slide 1 totalizador)
+  const [filtroGrupoKpi, setFiltroGrupoKpi] = useState<"all" | "midea" | "bosch">("all");
 
   // Per-chart filters (used when global = "all")
   const [filtroGrupoVol, setFiltroGrupoVol] = useState<"all" | "midea" | "bosch">("all");
@@ -274,10 +276,14 @@ function DashboardPage() {
     return { volume, headcount, prod };
   };
 
-  // KPIs do topo (respeitam o filtro global de mês)
+  // KPIs do topo (respeitam o filtro global de mês E o filtro de grupo)
   const opGlobal = useMemo(
     () => opAll.filter((r) => matchesMes(r.mes, filtroMesGlobal)),
     [opAll, filtroMesGlobal],
+  );
+  const opGlobalKpi = useMemo(
+    () => opGlobal.filter((r) => filtroGrupoKpi === "all" || grupoDe(r.unidade) === filtroGrupoKpi),
+    [opGlobal, filtroGrupoKpi],
   );
   const mideaGlobal = useMemo(
     () => (midea.data ?? []).filter((r) => matchesMes(r.mes, filtroMesGlobal)),
@@ -288,13 +294,12 @@ function DashboardPage() {
     [bosch.data, filtroMesGlobal],
   );
 
-  const allMonthly = aggByMonth(opGlobal);
+  const allMonthly = aggByMonth(opGlobalKpi);
   const totalVolume = allMonthly.reduce((s, r) => s + r.volume, 0);
   const totalPessoasMes = allMonthly.reduce((s, r) => s + r.pessoas, 0);
   const avgProd = totalPessoasMes > 0 ? totalVolume / totalPessoasMes : 0;
-  // Headcount total = soma do MAX(pessoas) de cada unidade (sem dupla contagem)
-  const headcountTotal = UNIDADES.reduce((sum, u) => {
-    const rows = opGlobal.filter((r) => r.unidade === u.key);
+  const headcountTotal = UNIDADES.filter((u) => filtroGrupoKpi === "all" || u.grupo === filtroGrupoKpi).reduce((sum, u) => {
+    const rows = opGlobalKpi.filter((r) => r.unidade === u.key);
     return sum + rows.reduce((m, r) => Math.max(m, Number(r.pessoas ?? 0)), 0);
   }, 0);
 
@@ -305,28 +310,21 @@ function DashboardPage() {
     matchesMes(r.mes, effMes(filtroMesBosch)),
   );
 
-  const allSla = [
-    ...mideaGlobal.flatMap((r) => [r.start_up, r.otcc, r.otd, r.sotd]),
-    ...boschGlobal.flatMap((r) => [r.dig_conf, r.start_up, r.otcc, r.pinho]),
-  ].map(Number);
-  const slaMedio = allSla.length ? allSla.reduce((s, n) => s + n, 0) / allSla.length : 0;
+  const slaMideaVals = mideaGlobal.flatMap((r) => [r.start_up, r.otcc, r.otd, r.sotd]).map(Number);
+  const slaMedioMidea = slaMideaVals.length ? slaMideaVals.reduce((s, n) => s + n, 0) / slaMideaVals.length : 0;
+  const slaBoschVals = boschGlobal.flatMap((r) => [r.dig_conf, r.start_up, r.otcc, r.pinho]).map(Number);
+  const slaMedioBosch = slaBoschVals.length ? slaBoschVals.reduce((s, n) => s + n, 0) / slaBoschVals.length : 0;
 
-  const totMidea = totalizador("midea", "all");
-  const totBosch = totalizador("bosch", "all");
+  const allSlaKpi = [
+    ...(filtroGrupoKpi !== "bosch" ? slaMideaVals : []),
+    ...(filtroGrupoKpi !== "midea" ? slaBoschVals : []),
+  ];
+  const slaMedio = allSlaKpi.length ? allSlaKpi.reduce((s, n) => s + n, 0) / allSlaKpi.length : 0;
 
-  const slaMideaVals = mideaGlobal
-    .flatMap((r) => [r.start_up, r.otcc, r.otd, r.sotd])
-    .map(Number);
-  const slaMedioMidea = slaMideaVals.length
-    ? slaMideaVals.reduce((s, n) => s + n, 0) / slaMideaVals.length
-    : 0;
-
-  const slaBoschVals = boschGlobal
-    .flatMap((r) => [r.dig_conf, r.start_up, r.otcc, r.pinho])
-    .map(Number);
-  const slaMedioBosch = slaBoschVals.length
-    ? slaBoschVals.reduce((s, n) => s + n, 0) / slaBoschVals.length
-    : 0;
+  const avgMetaKpi = filtroGrupoKpi === "bosch" ? metaProdUnidade("bosch")
+    : filtroGrupoKpi === "midea"
+      ? UNIDADES.filter((u) => u.grupo === "midea").reduce((s, u) => s + metaProdUnidade(u.key), 0) / UNIDADES.filter((u) => u.grupo === "midea").length
+      : META_PRODUTIVIDADE;
 
 
   // Evolução mensal de produtividade por unidade (série completa para gráfico de barras)
@@ -456,72 +454,33 @@ function DashboardPage() {
             Apresentação à Diretoria
           </Badge>
           <h1 className="text-5xl md:text-6xl font-bold tracking-tight text-primary-foreground">
-            Performance Operacional
+            Dashboard Operacional
           </h1>
           <p className="text-lg md:text-xl text-primary-foreground/80 mt-4 max-w-3xl">
             Resultados, indicadores de SLA, riscos identificados e plano estratégico para 2026.
           </p>
-          <div className="mt-6 flex items-center gap-3">
-            <span className="text-sm text-primary-foreground/80 uppercase tracking-wide">
-              Filtro global de mês
-            </span>
-            <div className="bg-card/95 backdrop-blur rounded-md">
-              <FiltroMes
-                value={filtroMesGlobal}
-                onChange={setFiltroMesGlobal}
-                meses={mesesGlobais}
-              />
+          <div className="mt-6 flex items-center gap-4 flex-wrap">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-primary-foreground/80 uppercase tracking-wide">Mês</span>
+              <div className="bg-card/95 backdrop-blur rounded-md">
+                <FiltroMes value={filtroMesGlobal} onChange={setFiltroMesGlobal} meses={mesesGlobais} />
+              </div>
             </div>
-            {filtroMesGlobal !== "all" && (
-              <Badge variant="secondary">{fmtMes(filtroMesGlobal)}</Badge>
-            )}
+            <div className="bg-card/95 backdrop-blur rounded-md">
+              <FiltroGrupo value={filtroGrupoKpi} onChange={setFiltroGrupoKpi} />
+            </div>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-12 w-full">
-            <Kpi
-              icon={TrendingUp}
-              label="Volume Total"
-              value={totalVolume.toLocaleString("pt-BR")}
-            />
-            <Kpi
-              icon={Users}
-              label="Headcount Total"
-              value={headcountTotal.toLocaleString("pt-BR")}
-              sub="Sem dupla contagem"
-            />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-10 w-full">
+            <Kpi icon={TrendingUp} label="Volume Total" value={totalVolume.toLocaleString("pt-BR")} />
+            <Kpi icon={Users} label="Headcount Total" value={headcountTotal.toLocaleString("pt-BR")} sub="Sem dupla contagem" />
             <Kpi
               icon={Gauge}
               label="Produtividade média"
               value={avgProd.toFixed(1)}
-              sub={`Meta ${META_PRODUTIVIDADE}`}
-              good={avgProd >= META_PRODUTIVIDADE}
+              sub={`Meta ${avgMetaKpi.toFixed(0)}`}
+              good={avgProd >= avgMetaKpi}
             />
-            <Kpi
-              icon={Target}
-              label="SLA médio"
-              value={`${slaMedio.toFixed(1)}%`}
-              sub={`Meta ${META_SLA}%`}
-              good={slaMedio >= META_SLA}
-            />
-          </div>
-
-          {/* KPIs por operação */}
-          <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-            <OpKpiCard
-              titulo="Midea"
-              volume={totMidea.volume}
-              headcount={totMidea.headcount}
-              prod={totMidea.prod}
-              sla={slaMedioMidea}
-              tone="border-primary/40 bg-primary/10"
-            />
-            <OpKpiCard
-              titulo="Bosch"
-              volume={totBosch.volume}
-              headcount={totBosch.headcount}
-              prod={totBosch.prod}
-              sla={slaMedioBosch}
-              tone="border-accent/40 bg-accent/10"
-            />
+            <Kpi icon={Target} label="SLA médio" value={`${slaMedio.toFixed(1)}%`} sub={`Meta ${META_SLA}%`} good={slaMedio >= META_SLA} />
           </div>
         </div>
       </Slide>
@@ -556,107 +515,24 @@ function DashboardPage() {
         </div>
       </Slide>
 
-      {/* Slide 3 — Tendência de Volume */}
+      {/* Slide 3 — Tendência de Volume — Under Construction */}
       <Slide>
-        <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
-          <div>
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Tendência de Volume</h2>
-            <p className="text-muted-foreground mt-1">Volume mensal de processos</p>
-          </div>
-          <div className="flex gap-2 flex-wrap">
-            <FiltroGrupo value={filtroGrupoVol} onChange={setFiltroGrupoVol} />
-            <FiltroMes value={filtroMesVol} onChange={setFiltroMesVol} meses={mesesOp} />
-          </div>
+        <div className="mb-6">
+          <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Tendência de Volume</h2>
+          <p className="text-muted-foreground mt-1">Em breve</p>
         </div>
-        <Card className="flex-1 min-h-0">
-          <CardContent className="pt-6 h-[460px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={volumeData}>
-                <defs>
-                  <linearGradient id="gv" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={C1} stopOpacity={0.5} />
-                    <stop offset="100%" stopColor={C1} stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                <XAxis dataKey="mes" />
-                <YAxis />
-                <Tooltip />
-                <Area
-                  type="monotone"
-                  dataKey="volume"
-                  stroke={C1}
-                  fill="url(#gv)"
-                  strokeWidth={3}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </Slide>
-
-
-
-      {/* Slide 5 — Evolução de Produtividade por Operação */}
-      <Slide>
-        <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
-          <div>
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Evolução da Operação</h2>
-            <p className="text-muted-foreground mt-1">
-              Produtividade mensal por operação (Jan até o mês atual) — meta {META_PRODUTIVIDADE}
+        <Card className="flex-1 min-h-0 flex items-center justify-center">
+          <CardContent className="flex flex-col items-center gap-4 py-20">
+            <span className="text-6xl">🚧</span>
+            <h3 className="text-2xl font-bold">Under Construction</h3>
+            <p className="text-muted-foreground text-center max-w-xs">
+              Esta seção está sendo reformulada. Em breve novas visualizações estarão disponíveis.
             </p>
-          </div>
-          <div className="flex gap-2 flex-wrap">
-            <FiltroUnidade value={filtroUnidadeEvol} onChange={setFiltroUnidadeEvol} />
-            <FiltroMes value={filtroMesEvol} onChange={setFiltroMesEvol} meses={mesesOp} />
-          </div>
-        </div>
-        <Card className="flex-1 min-h-0">
-          <CardContent className="pt-6 h-[460px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={evolucaoProd}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                <XAxis dataKey="mes" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <ReferenceLine
-                  y={META_PRODUTIVIDADE}
-                  stroke={CD}
-                  strokeDasharray="6 4"
-                  label={{ value: `Meta ${META_PRODUTIVIDADE}`, position: "right", fill: CD }}
-                />
-                {UNIDADES.filter(
-                  (u) => filtroUnidadeEvol === "all" || u.key === filtroUnidadeEvol,
-                ).map((u, i) => {
-                  const palette = [
-                    C1,
-                    C2,
-                    C3,
-                    "var(--color-warning)",
-                    "var(--color-muted-foreground)",
-                    CD,
-                  ];
-                  return (
-                    <Line
-                      key={u.key}
-                      type="monotone"
-                      dataKey={u.key}
-                      name={u.label}
-                      stroke={palette[i % palette.length]}
-                      strokeWidth={2}
-                      dot={{ r: 3 }}
-                      connectNulls
-                    />
-                  );
-                })}
-              </LineChart>
-            </ResponsiveContainer>
           </CardContent>
         </Card>
       </Slide>
 
-      {/* Slide 6 — SLA Midea por Operação */}
+      {/* Slide 4 — SLA Midea por Operação */}
       <Slide>
         <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
           <div>
@@ -1084,16 +960,29 @@ function GrupoBlock({
           <CardTitle className="text-2xl">{titulo}</CardTitle>
           <CardDescription>Totalizador consolidado — evolução mensal por operação</CardDescription>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-3 flex-wrap">
           <MiniKpi label="Volume Total" value={total.volume.toLocaleString("pt-BR")} />
           <MiniKpi label="Headcount" value={total.headcount.toLocaleString("pt-BR")} />
-          <MiniKpi
-            label="Produtividade"
-            value={total.prod.toFixed(1)}
-            good={total.prod >= avgMeta}
-          />
+          <MiniKpi label="Produtividade" value={total.prod.toFixed(1)} good={total.prod >= avgMeta} />
         </div>
       </CardHeader>
+      {/* % meta atingida por operação */}
+      <div className="px-6 pb-3 flex gap-2 flex-wrap">
+        {unidades.map((u) => {
+          const meta = metaProdUnidade(u.key);
+          const pct = meta > 0 ? Math.round((u.prod / meta) * 100) : 0;
+          const ok = pct >= 100;
+          return (
+            <div key={u.key} className="flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs bg-card">
+              <span className="text-muted-foreground font-medium">{u.label}</span>
+              <span className={`font-bold ${ok ? "text-success" : pct >= 75 ? "text-warning" : "text-destructive"}`}>
+                {pct}%
+              </span>
+              <span className="text-muted-foreground">da meta</span>
+            </div>
+          );
+        })}
+      </div>
       <CardContent className="pt-0">
         <div className={`grid gap-5 ${
           chartData.length === 1 ? "grid-cols-1" :
