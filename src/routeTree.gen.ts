@@ -12,13 +12,13 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
-import { Route as AuthenticatedDashboardGestaoRouteImport } from './routes/_authenticated/dashboard-gestao'
 import { Route as AuthenticatedSlaMideaRouteImport } from './routes/_authenticated/sla-midea'
 import { Route as AuthenticatedSlaBoschRouteImport } from './routes/_authenticated/sla-bosch'
 import { Route as AuthenticatedPlanoAcaoRouteImport } from './routes/_authenticated/plano-acao'
 import { Route as AuthenticatedMelhoriasRouteImport } from './routes/_authenticated/melhorias'
 import { Route as AuthenticatedGerenciamentoOperacionalRouteImport } from './routes/_authenticated/gerenciamento-operacional'
 import { Route as AuthenticatedDiagnosticoRouteImport } from './routes/_authenticated/diagnostico'
+import { Route as AuthenticatedDashboardGestaoRouteImport } from './routes/_authenticated/dashboard-gestao'
 import { Route as AuthenticatedCadastroOportunidadesRouteImport } from './routes/_authenticated/cadastro-oportunidades'
 import { Route as AuthenticatedCadastroRouteImport } from './routes/_authenticated/cadastro'
 
@@ -34,11 +34,6 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
 const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedDashboardGestaoRoute = AuthenticatedDashboardGestaoRouteImport.update({
-  id: '/dashboard-gestao',
-  path: '/dashboard-gestao',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedSlaMideaRoute = AuthenticatedSlaMideaRouteImport.update({
@@ -71,6 +66,12 @@ const AuthenticatedDiagnosticoRoute =
   AuthenticatedDiagnosticoRouteImport.update({
     id: '/diagnostico',
     path: '/diagnostico',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedDashboardGestaoRoute =
+  AuthenticatedDashboardGestaoRouteImport.update({
+    id: '/dashboard-gestao',
+    path: '/dashboard-gestao',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedCadastroOportunidadesRoute =
@@ -225,13 +226,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMelhoriasRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/dashboard-gestao': {
-      id: '/_authenticated/dashboard-gestao'
-      path: '/dashboard-gestao'
-      fullPath: '/dashboard-gestao'
-      preLoaderRoute: typeof AuthenticatedDashboardGestaoRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
     '/_authenticated/gerenciamento-operacional': {
       id: '/_authenticated/gerenciamento-operacional'
       path: '/gerenciamento-operacional'
@@ -244,6 +238,13 @@ declare module '@tanstack/react-router' {
       path: '/diagnostico'
       fullPath: '/diagnostico'
       preLoaderRoute: typeof AuthenticatedDiagnosticoRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/dashboard-gestao': {
+      id: '/_authenticated/dashboard-gestao'
+      path: '/dashboard-gestao'
+      fullPath: '/dashboard-gestao'
+      preLoaderRoute: typeof AuthenticatedDashboardGestaoRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/cadastro-oportunidades': {
@@ -278,10 +279,12 @@ interface AuthenticatedRouteChildren {
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedCadastroRoute: AuthenticatedCadastroRoute,
-  AuthenticatedCadastroOportunidadesRoute: AuthenticatedCadastroOportunidadesRoute,
+  AuthenticatedCadastroOportunidadesRoute:
+    AuthenticatedCadastroOportunidadesRoute,
   AuthenticatedDashboardGestaoRoute: AuthenticatedDashboardGestaoRoute,
   AuthenticatedDiagnosticoRoute: AuthenticatedDiagnosticoRoute,
-  AuthenticatedGerenciamentoOperacionalRoute: AuthenticatedGerenciamentoOperacionalRoute,
+  AuthenticatedGerenciamentoOperacionalRoute:
+    AuthenticatedGerenciamentoOperacionalRoute,
   AuthenticatedMelhoriasRoute: AuthenticatedMelhoriasRoute,
   AuthenticatedPlanoAcaoRoute: AuthenticatedPlanoAcaoRoute,
   AuthenticatedSlaBoschRoute: AuthenticatedSlaBoschRoute,
@@ -300,3 +303,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
