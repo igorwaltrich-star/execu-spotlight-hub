@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard,
   Database,
-  Gauge,
   LogOut,
   Activity,
   Briefcase,
@@ -18,8 +17,11 @@ const NAV: NavItem[] = [
   { to: "/dashboard-gestao",       label: "Dashboard Gestão",         icon: BarChart3 },
   { to: "/cadastro",               label: "Cadastro Operacional",     icon: Database },
   { to: "/gerenciamento-operacional", label: "Gerenciamento Operacional", icon: Briefcase },
-  { to: "/sla-midea",              label: "SLA Midea",                icon: Gauge },
-  { to: "/sla-bosch",              label: "SLA BOSCH",                icon: Gauge },
+const NAV: NavItem[] = [
+  { to: "/",                          label: "Dashboard Operacional",     icon: LayoutDashboard, exact: true },
+  { to: "/dashboard-gestao",          label: "Dashboard Gestão",          icon: BarChart3 },
+  { to: "/cadastro",                  label: "Cadastro Operacional",      icon: Database },
+  { to: "/gerenciamento-operacional", label: "Gerenciamento Operacional", icon: Briefcase },
 ];
 
 export function AppShell({ children }: { children: ReactNode }) {
