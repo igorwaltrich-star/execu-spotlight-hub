@@ -178,20 +178,24 @@ function DashboardPage() {
 
   // Global month filter (applies to every slide)
   const [filtroMesGlobal, setFiltroMesGlobal] = useState<string>("all");
-  // KPI group filter (Slide 1 totalizador)
   const [filtroGrupoKpi, setFiltroGrupoKpi] = useState<"all" | "midea" | "bosch">("all");
 
-  // Per-chart filters (used when global = "all")
-  const [filtroGrupoVol, setFiltroGrupoVol] = useState<"all" | "midea" | "bosch">("all");
-  const [filtroMesVol, setFiltroMesVol] = useState<string>("all");
-  const [filtroGrupoProd, setFiltroGrupoProd] = useState<"all" | "midea" | "bosch">("all");
-  const [filtroMesProd, setFiltroMesProd] = useState<string>("all");
-  const [filtroUnidade, setFiltroUnidade] = useState<"all" | UnidadeKey>("all");
-  const [filtroMesCart, setFiltroMesCart] = useState<string>("all");
+  // Filtros por slide (Mês + Operação independentes)
+  const [filtroMesCart,  setFiltroMesCart]  = useState<string>("all");
+  const [filtroOpCart,   setFiltroOpCart]   = useState<"all" | UnidadeKey>("all");
   const [filtroMesMidea, setFiltroMesMidea] = useState<string>("all");
+  const [filtroOpMidea,  setFiltroOpMidea]  = useState<"all" | UnidadeKey>("all");
   const [filtroMesBosch, setFiltroMesBosch] = useState<string>("all");
-  const [filtroUnidadeEvol, setFiltroUnidadeEvol] = useState<"all" | UnidadeKey>("all");
-  const [filtroMesEvol, setFiltroMesEvol] = useState<string>("all");
+  const [filtroOpBosch,  setFiltroOpBosch]  = useState<"all" | UnidadeKey>("all");
+
+  // legados / não usados — mantidos para evitar quebra de outros useMemos
+  const [filtroGrupoVol] = useState<"all" | "midea" | "bosch">("all");
+  const [filtroMesVol]   = useState<string>("all");
+  const [filtroGrupoProd] = useState<"all" | "midea" | "bosch">("all");
+  const [filtroMesProd]  = useState<string>("all");
+  const [filtroUnidade]  = useState<"all" | UnidadeKey>("all");
+  const [filtroUnidadeEvol] = useState<"all" | UnidadeKey>("all");
+  const [filtroMesEvol]  = useState<string>("all");
 
   const effMes = (local: string) => (filtroMesGlobal !== "all" ? filtroMesGlobal : local);
   const mesesGlobais = useMemo(
@@ -489,29 +493,33 @@ function DashboardPage() {
       <Slide>
         <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
           <div>
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
-              Indicadores por Carteira
-            </h2>
-            <p className="text-muted-foreground mt-1">
-              Evolução mensal de produtividade por operação
-            </p>
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Indicadores por Carteira</h2>
+            <p className="text-muted-foreground mt-1">Evolução mensal de produtividade por operação</p>
           </div>
+          <FiltroPadrao
+            mes={filtroMesCart} onMes={setFiltroMesCart} meses={mesesOp}
+            op={filtroOpCart}   onOp={setFiltroOpCart}
+          />
         </div>
         <div className="grid grid-cols-1 gap-6 flex-1 min-h-0">
-          <GrupoBlock
-            titulo="Midea"
-            tone="border-primary/40 bg-primary/5"
-            total={totalizador("midea", "all")}
-            unidades={kpiPorUnidade.filter((k) => k.grupo === "midea")}
-            chartData={evolucaoPorUnidade.filter((u) => u.grupo === "midea")}
-          />
-          <GrupoBlock
-            titulo="Bosch"
-            tone="border-accent/40 bg-accent/5"
-            total={totalizador("bosch", "all")}
-            unidades={kpiPorUnidade.filter((k) => k.grupo === "bosch")}
-            chartData={evolucaoPorUnidade.filter((u) => u.grupo === "bosch")}
-          />
+          {(filtroOpCart === "all" || filtroOpCart === "midea_sc" || filtroOpCart === "midea_am" || filtroOpCart === "midea_rs") && (
+            <GrupoBlock
+              titulo="Midea"
+              tone="border-primary/40 bg-primary/5"
+              total={totalizador("midea", filtroOpCart.startsWith("midea") ? filtroOpCart : "all")}
+              unidades={kpiPorUnidade.filter((k) => k.grupo === "midea" && (filtroOpCart === "all" || k.key === filtroOpCart))}
+              chartData={evolucaoPorUnidade.filter((u) => u.grupo === "midea" && (filtroOpCart === "all" || u.key === filtroOpCart))}
+            />
+          )}
+          {(filtroOpCart === "all" || filtroOpCart === "bosch") && (
+            <GrupoBlock
+              titulo="Bosch"
+              tone="border-accent/40 bg-accent/5"
+              total={totalizador("bosch", "all")}
+              unidades={kpiPorUnidade.filter((k) => k.grupo === "bosch")}
+              chartData={evolucaoPorUnidade.filter((u) => u.grupo === "bosch")}
+            />
+          )}
         </div>
       </Slide>
 
@@ -539,43 +547,57 @@ function DashboardPage() {
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight">SLA — Midea</h2>
             <p className="text-muted-foreground mt-1">{`SLA Geral por operação — Meta ${META_SLA}%`}</p>
           </div>
-          <FiltroMes value={filtroMesMidea} onChange={setFiltroMesMidea} meses={mesesMidea} />
+          <FiltroPadrao
+            mes={filtroMesMidea} onMes={setFiltroMesMidea} meses={mesesMidea}
+            op={filtroOpMidea}   onOp={setFiltroOpMidea}
+          />
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 min-h-0">
-          {mideaRadarPorUnidade.map(({ unidade, data, rowsCount, geral }) => {
-            const ok = geral >= META_SLA;
-            return (
-              <Card key={unidade.key} className="min-h-0 flex flex-col">
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <span>{unidade.label}</span>
-                    <span className={`text-base font-semibold ${ok ? "text-success" : "text-destructive"}`}>
-                      {geral.toFixed(1)}%
-                    </span>
-                  </CardTitle>
-                  <CardDescription>SLA Geral (média dos indicadores)</CardDescription>
-                </CardHeader>
-                <CardContent className="flex-1 min-h-[320px]">
-                  {rowsCount === 0 ? (
-                    <Empty msg="Sem dados cadastrados." />
-                  ) : (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={data} layout="vertical" margin={{ left: 16, right: 24 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                        <XAxis type="number" domain={[0, 100]} />
-                        <YAxis type="category" dataKey="indicador" width={80} />
-                        <Tooltip formatter={(v: number) => `${Number(v).toFixed(1)}%`} />
-                        <ReferenceLine x={META_SLA} stroke={CD} strokeDasharray="4 4"
-                          label={{ value: `Meta ${META_SLA}%`, fill: CD, position: "top" }} />
-                        <Bar dataKey="valor" name="Real" fill={C1} radius={[0, 4, 4, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+        {filtroOpMidea === "bosch" ? (
+          <Card className="flex-1 flex items-center justify-center">
+            <CardContent className="text-center py-16 text-muted-foreground">
+              Nenhum dado de SLA Midea para a operação Bosch.<br />
+              Selecione <b>Todas</b> ou uma unidade Midea.
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 min-h-0">
+            {mideaRadarPorUnidade
+              .filter(({ unidade }) => filtroOpMidea === "all" || unidade.key === filtroOpMidea)
+              .map(({ unidade, data, rowsCount, geral }) => {
+                const ok = geral >= META_SLA;
+                return (
+                  <Card key={unidade.key} className="min-h-0 flex flex-col">
+                    <CardHeader>
+                      <CardTitle className="flex items-center justify-between">
+                        <span>{unidade.label}</span>
+                        <span className={`text-base font-semibold ${ok ? "text-success" : "text-destructive"}`}>
+                          {geral.toFixed(1)}%
+                        </span>
+                      </CardTitle>
+                      <CardDescription>SLA Geral (média dos indicadores)</CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex-1 min-h-[320px]">
+                      {rowsCount === 0 ? (
+                        <Empty msg="Sem dados cadastrados." />
+                      ) : (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={data} layout="vertical" margin={{ left: 16, right: 24 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                            <XAxis type="number" domain={[0, 100]} />
+                            <YAxis type="category" dataKey="indicador" width={80} />
+                            <Tooltip formatter={(v: number) => `${Number(v).toFixed(1)}%`} />
+                            <ReferenceLine x={META_SLA} stroke={CD} strokeDasharray="4 4"
+                              label={{ value: `Meta ${META_SLA}%`, fill: CD, position: "top" }} />
+                            <Bar dataKey="valor" name="Real" fill={C1} radius={[0, 4, 4, 0]} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+          </div>
+        )}
       </Slide>
 
       {/* Slide 7 — SLA BOSCH por Planta */}
@@ -585,43 +607,55 @@ function DashboardPage() {
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight">SLA — BOSCH</h2>
             <p className="text-muted-foreground mt-1">{`SLA Geral por planta — Meta ${META_SLA}%`}</p>
           </div>
-          <FiltroMes value={filtroMesBosch} onChange={setFiltroMesBosch} meses={mesesBosch} />
+          <FiltroPadrao
+            mes={filtroMesBosch} onMes={setFiltroMesBosch} meses={mesesBosch}
+            op={filtroOpBosch}   onOp={setFiltroOpBosch}
+          />
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 min-h-0">
-          {boschBarsPorPlanta.map(({ planta, data, rowsCount, geral }) => {
-            const ok = geral >= META_SLA;
-            return (
-              <Card key={planta.key} className="min-h-0 flex flex-col">
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <span>Planta {planta.label}</span>
-                    <span className={`text-base font-semibold ${ok ? "text-success" : "text-destructive"}`}>
-                      {geral.toFixed(1)}%
-                    </span>
-                  </CardTitle>
-                  <CardDescription>SLA Geral (média dos indicadores)</CardDescription>
-                </CardHeader>
-                <CardContent className="flex-1 min-h-[320px]">
-                  {rowsCount === 0 ? (
-                    <Empty msg="Sem dados cadastrados." />
-                  ) : (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={data} layout="vertical" margin={{ left: 16, right: 24 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                        <XAxis type="number" domain={[0, 100]} />
-                        <YAxis type="category" dataKey="indicador" width={160} />
-                        <Tooltip formatter={(v: number) => `${Number(v).toFixed(1)}%`} />
-                        <ReferenceLine x={META_SLA} stroke={CD} strokeDasharray="4 4"
-                          label={{ value: `Meta ${META_SLA}%`, fill: CD, position: "top" }} />
-                        <Bar dataKey="valor" name="Real" fill={C1} radius={[0, 4, 4, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+        {filtroOpBosch !== "all" && filtroOpBosch !== "bosch" ? (
+          <Card className="flex-1 flex items-center justify-center">
+            <CardContent className="text-center py-16 text-muted-foreground">
+              Nenhum dado de SLA Bosch para a operação Midea.<br />
+              Selecione <b>Todas</b> ou <b>Bosch</b>.
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 min-h-0">
+            {boschBarsPorPlanta.map(({ planta, data, rowsCount, geral }) => {
+              const ok = geral >= META_SLA;
+              return (
+                <Card key={planta.key} className="min-h-0 flex flex-col">
+                  <CardHeader>
+                    <CardTitle className="flex items-center justify-between">
+                      <span>Planta {planta.label}</span>
+                      <span className={`text-base font-semibold ${ok ? "text-success" : "text-destructive"}`}>
+                        {geral.toFixed(1)}%
+                      </span>
+                    </CardTitle>
+                    <CardDescription>SLA Geral (média dos indicadores)</CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex-1 min-h-[320px]">
+                    {rowsCount === 0 ? (
+                      <Empty msg="Sem dados cadastrados." />
+                    ) : (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={data} layout="vertical" margin={{ left: 16, right: 24 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                          <XAxis type="number" domain={[0, 100]} />
+                          <YAxis type="category" dataKey="indicador" width={160} />
+                          <Tooltip formatter={(v: number) => `${Number(v).toFixed(1)}%`} />
+                          <ReferenceLine x={META_SLA} stroke={CD} strokeDasharray="4 4"
+                            label={{ value: `Meta ${META_SLA}%`, fill: CD, position: "top" }} />
+                          <Bar dataKey="valor" name="Real" fill={C1} radius={[0, 4, 4, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
       </Slide>
 
 
@@ -911,11 +945,11 @@ function FiltroUnidade({
 }) {
   return (
     <Select value={value} onValueChange={(v) => onChange(v as "all" | UnidadeKey)}>
-      <SelectTrigger className="w-56">
-        <SelectValue placeholder="Filtrar operação" />
+      <SelectTrigger className="w-40">
+        <SelectValue placeholder="Operação" />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="all">Todas as operações</SelectItem>
+        <SelectItem value="all">Todas</SelectItem>
         {UNIDADES.map((u) => (
           <SelectItem key={u.key} value={u.key}>
             {u.label}
@@ -923,6 +957,26 @@ function FiltroUnidade({
         ))}
       </SelectContent>
     </Select>
+  );
+}
+
+function FiltroPadrao({
+  mes, onMes, meses, op, onOp,
+}: {
+  mes: string; onMes: (v: string) => void; meses: string[];
+  op: "all" | UnidadeKey; onOp: (v: "all" | UnidadeKey) => void;
+}) {
+  return (
+    <div className="flex items-center gap-3 flex-wrap">
+      <div className="flex items-center gap-2">
+        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Mês</span>
+        <FiltroMes value={mes} onChange={onMes} meses={meses} />
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Operação</span>
+        <FiltroUnidade value={op} onChange={onOp} />
+      </div>
+    </div>
   );
 }
 
