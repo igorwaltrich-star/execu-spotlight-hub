@@ -179,6 +179,7 @@ function DashboardPage() {
   // Global month filter (applies to every slide)
   const [filtroMesGlobal, setFiltroMesGlobal] = useState<string>("all");
   const [filtroGrupoKpi, setFiltroGrupoKpi] = useState<"all" | "midea" | "bosch">("all");
+  const [showCusto, setShowCusto] = useState(false);
 
   // Filtros por slide (Mês + Operação independentes)
   const [filtroMesCart,  setFiltroMesCart]  = useState<string>("all");
@@ -473,6 +474,16 @@ function DashboardPage() {
             <div className="bg-card/95 backdrop-blur rounded-md">
               <FiltroGrupo value={filtroGrupoKpi} onChange={setFiltroGrupoKpi} />
             </div>
+            <button
+              onClick={() => setShowCusto((v) => !v)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-semibold border transition-colors ${
+                showCusto
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-card/95 text-foreground border-border hover:bg-muted"
+              }`}
+            >
+              💰 {showCusto ? "Ocultar Custo" : "Ver Custo Operacional"}
+            </button>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-10 w-full">
             <Kpi icon={TrendingUp} label="Volume Total" value={totalVolume.toLocaleString("pt-BR")} />
@@ -771,6 +782,146 @@ function DashboardPage() {
           );
         })()}
       </Slide>
+
+      {/* Custo Operacional — Midea (toggle) */}
+      {showCusto && (
+        <Slide>
+          <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
+            <div>
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight">💰 Custo Operacional — Midea</h2>
+              <p className="text-muted-foreground mt-1">Custo total por unidade · Referência: planilha vigente</p>
+            </div>
+            <button onClick={() => setShowCusto(false)}
+              className="px-4 py-2 rounded-md border text-sm font-semibold hover:bg-muted transition-colors">
+              Ocultar
+            </button>
+          </div>
+
+          {/* KPIs rápidos */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            {[
+              { label: "Total Midea",     value: 382945.12, head: 58 },
+              { label: "Midea Manaus",    value: 156354.69, head: 24 },
+              { label: "Midea Canoas",    value: 124128.14, head: 18 },
+              { label: "Midea SC",        value: 102462.29, head: 16 },
+            ].map(({ label, value, head }) => (
+              <Card key={label}>
+                <CardContent className="pt-5">
+                  <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">{label}</div>
+                  <div className="text-2xl font-bold text-primary">
+                    {value.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 })}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-0.5">{head} colaboradores</div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Comparativo 2024 vs Atual */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Custo Total por Unidade</CardTitle>
+                <CardDescription>Comparativo 2024 vs. Atual</CardDescription>
+              </CardHeader>
+              <CardContent className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={[
+                      { planta: "Midea Manaus", atual: 156354.69, ref2024: 88651.59 },
+                      { planta: "Midea Canoas", atual: 124128.14, ref2024: 163821.51 },
+                      { planta: "Midea SC",     atual: 102462.29, ref2024: 161405.47 },
+                    ]}
+                    margin={{ top: 8, right: 16, left: 8, bottom: 4 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                    <XAxis dataKey="planta" tick={{ fontSize: 11 }} />
+                    <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `R$${(v/1000).toFixed(0)}k`} />
+                    <Tooltip formatter={(v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} />
+                    <Legend />
+                    <Bar dataKey="atual"   name="Atual"   fill={C1} radius={[4, 4, 0, 0]} maxBarSize={40} />
+                    <Bar dataKey="ref2024" name="2024"    fill={C2} radius={[4, 4, 0, 0]} maxBarSize={40} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Composição do Custo (Atual)</CardTitle>
+                <CardDescription>Distribuição dos componentes por unidade</CardDescription>
+              </CardHeader>
+              <CardContent className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={[
+                      { planta: "Manaus", rem: 87472, encargos: 16860, provisoes: 29879, beneficios: 22143 },
+                      { planta: "Canoas", rem: 66856, encargos: 14261, provisoes: 24848, beneficios: 18163 },
+                      { planta: "SC",     rem: 62202, encargos: 10182, provisoes: 18093, beneficios: 11985 },
+                    ]}
+                    margin={{ top: 8, right: 16, left: 8, bottom: 4 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                    <XAxis dataKey="planta" tick={{ fontSize: 12 }} />
+                    <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `R$${(v/1000).toFixed(0)}k`} />
+                    <Tooltip formatter={(v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} />
+                    <Legend wrapperStyle={{ fontSize: 11 }} />
+                    <Bar dataKey="rem"        name="Remuneração"  stackId="a" fill={C1}   />
+                    <Bar dataKey="encargos"   name="Encargos"     stackId="a" fill={C2}   />
+                    <Bar dataKey="provisoes"  name="Provisões"    stackId="a" fill={C3}   />
+                    <Bar dataKey="beneficios" name="Benefícios"   stackId="a" fill="var(--color-warning)" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Cards individuais por planta */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {([
+              { label: "Midea Manaus", total: 156354.69, head: 24, rem: 87472.15, inss: 12342.50, fgts: 4517.77, provisoes: 29878.83, beneficios: 22143.45 },
+              { label: "Midea Canoas", total: 124128.14, head: 18, rem: 66855.72, inss:  8912.80, fgts: 5348.46, provisoes: 24848.03, beneficios: 18163.12 },
+              { label: "Midea SC",     total: 102462.29, head: 16, rem: 62201.85, inss:  7772.47, fgts: 2410.07, provisoes: 18093.25, beneficios: 11984.64 },
+            ] as const).map((p) => (
+              <Card key={p.label}>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base">{p.label}</CardTitle>
+                  <CardDescription>{p.head} colaboradores</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-2 text-sm">
+                  {[
+                    { label: "Remuneração bruta", value: p.rem,        pct: (p.rem/p.total*100) },
+                    { label: "INSS + FGTS",        value: p.inss+p.fgts, pct: ((p.inss+p.fgts)/p.total*100) },
+                    { label: "Provisões",           value: p.provisoes,  pct: (p.provisoes/p.total*100) },
+                    { label: "Benefícios",          value: p.beneficios, pct: (p.beneficios/p.total*100) },
+                  ].map(({ label, value, pct }) => (
+                    <div key={label}>
+                      <div className="flex justify-between mb-0.5">
+                        <span className="text-muted-foreground">{label}</span>
+                        <span className="font-medium tabular-nums">
+                          {value.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 })}
+                          <span className="text-muted-foreground text-xs ml-1">({pct.toFixed(0)}%)</span>
+                        </span>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                        <div className="h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  ))}
+                  <div className="pt-1 border-t flex justify-between font-bold">
+                    <span>Total</span>
+                    <span>{p.total.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 })}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          <p className="text-xs text-muted-foreground mt-4 text-center">
+            Bosch: a definir · Dados extraídos da planilha vigente de custo · Valores sujeitos a atualização
+          </p>
+        </Slide>
+      )}
 
     </div>
   );
