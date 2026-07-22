@@ -45,8 +45,8 @@ function CadastroOperacionalPage() {
               { key: "start_up", label: "Start-up" },
               { key: "otcc", label: "OTCC" },
               { key: "otd", label: "OTD" },
-              { key: "sotd", label: "SOTD" },
             ]}
+
           />
         </TabsContent>
 

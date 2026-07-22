@@ -71,7 +71,7 @@ type OpRow = {
   produtividade: number | null;
   unidade: UnidadeKey;
 };
-type SlaMidea = { mes: string; start_up: number; otcc: number; otd: number; sotd: number; unidade: UnidadeKey | null };
+type SlaMidea = { mes: string; start_up: number; otcc: number; otd: number; unidade: UnidadeKey | null };
 type SlaBosch = {
   mes: string;
   planta: string;
@@ -315,7 +315,7 @@ function DashboardPage() {
     matchesMes(r.mes, effMes(filtroMesBosch)),
   );
 
-  const slaMideaVals = mideaGlobal.flatMap((r) => [r.start_up, r.otcc, r.otd, r.sotd]).map(Number);
+  const slaMideaVals = mideaGlobal.flatMap((r) => [r.start_up, r.otcc, r.otd]).map(Number);
   const slaMedioMidea = slaMideaVals.length ? slaMideaVals.reduce((s, n) => s + n, 0) / slaMideaVals.length : 0;
   const slaBoschVals = boschGlobal.flatMap((r) => [r.dig_conf, r.start_up, r.otcc, r.pinho]).map(Number);
   const slaMedioBosch = slaBoschVals.length ? slaBoschVals.reduce((s, n) => s + n, 0) / slaBoschVals.length : 0;
@@ -355,7 +355,7 @@ function DashboardPage() {
   }, [opAll]);
 
   const mideaRadarPorUnidade = useMemo(() => {
-    const keys = ["start_up", "otcc", "otd", "sotd"] as const;
+    const keys = ["start_up", "otcc", "otd"] as const;
     const unidadesMidea = UNIDADES.filter((u) => u.grupo === "midea");
     return unidadesMidea.map((u) => {
       const rows = mideaFiltrada.filter((r) => r.unidade === u.key);

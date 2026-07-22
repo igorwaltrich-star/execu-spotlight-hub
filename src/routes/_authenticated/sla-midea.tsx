@@ -18,8 +18,8 @@ export const Route = createFileRoute("/_authenticated/sla-midea")({
         { key: "start_up", label: "Start-up" },
         { key: "otcc", label: "OTCC" },
         { key: "otd", label: "OTD" },
-        { key: "sotd", label: "SOTD" },
       ]}
+
     />
   ),
 });
