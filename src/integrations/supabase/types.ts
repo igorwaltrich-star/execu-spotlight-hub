@@ -820,6 +820,11 @@ export type Database = {
         | "midea_mg"
         | "bosch"
         | "bosch_hc"
+        | "volkswagen"
+        | "perkins"
+        | "brp"
+        | "hyundai"
+        | "gwm"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -966,6 +971,11 @@ export const Constants = {
         "midea_mg",
         "bosch",
         "bosch_hc",
+        "volkswagen",
+        "perkins",
+        "brp",
+        "hyundai",
+        "gwm",
       ],
     },
   },

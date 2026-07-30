@@ -15,6 +15,7 @@ import {
   UNIDADE_LABEL,
   BOSCH_PLANTAS,
   type UnidadeKey,
+  type UnidadeGrupo,
 } from "@/lib/constants";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -1146,7 +1147,7 @@ function FiltroPadrao({
 type UnidadeKpi = {
   key: UnidadeKey;
   label: string;
-  grupo: "midea" | "bosch";
+  grupo: UnidadeGrupo;
   volume: number;
   headcount: number;
   prod: number;
