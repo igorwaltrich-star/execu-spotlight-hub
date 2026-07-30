@@ -5,6 +5,7 @@ import { CadastroColaboradores } from "@/components/gestao/cadastro-colaboradore
 import { MatrizLideranca } from "@/components/gestao/matriz-lideranca";
 import { NavySeal } from "@/components/gestao/navy-seal";
 import { FerramentasGestao } from "@/components/gestao/ferramentas-gestao";
+import { PlanoAcaoEstrategico } from "@/components/gestao/plano-acao-estrategico";
 
 export const Route = createFileRoute("/_authenticated/gerenciamento-operacional")({
   component: GerenciamentoOperacionalPage,
@@ -24,6 +25,7 @@ function GerenciamentoOperacionalPage() {
           <TabsTrigger value="matriz">Matriz Liderança</TabsTrigger>
           <TabsTrigger value="navyseal">NavySeal</TabsTrigger>
           <TabsTrigger value="ferramentas">Ferramentas de Gestão</TabsTrigger>
+          <TabsTrigger value="plano">Plano de Ação Estratégico</TabsTrigger>
         </TabsList>
 
         <TabsContent value="colaboradores" className="mt-4">
@@ -37,6 +39,9 @@ function GerenciamentoOperacionalPage() {
         </TabsContent>
         <TabsContent value="ferramentas" className="mt-4">
           <FerramentasGestao />
+        </TabsContent>
+        <TabsContent value="plano" className="mt-4">
+          <PlanoAcaoEstrategico />
         </TabsContent>
       </Tabs>
 
