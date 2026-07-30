@@ -1146,7 +1146,7 @@ function FiltroPadrao({
 type UnidadeKpi = {
   key: UnidadeKey;
   label: string;
-  grupo: "midea" | "bosch";
+  grupo: UnidadeGrupo;
   volume: number;
   headcount: number;
   prod: number;
