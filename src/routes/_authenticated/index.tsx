@@ -15,6 +15,7 @@ import {
   UNIDADE_LABEL,
   BOSCH_PLANTAS,
   type UnidadeKey,
+  type UnidadeGrupo,
 } from "@/lib/constants";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
