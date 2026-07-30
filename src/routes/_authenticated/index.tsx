@@ -178,7 +178,7 @@ function DashboardPage() {
 
   // Global month filter (applies to every slide)
   const [filtroMesGlobal, setFiltroMesGlobal] = useState<string>("all");
-  const [filtroGrupoKpi, setFiltroGrupoKpi] = useState<"all" | "midea" | "bosch">("all");
+  const [filtroGrupoKpi, setFiltroGrupoKpi] = useState<"all" | "midea" | "bosch" | "outros">("all");
   const [showCusto, setShowCusto] = useState(false);
 
   // Filtros por slide (Mês + Operação independentes)
@@ -263,7 +263,7 @@ function DashboardPage() {
     [opAll, filtroMesCart, filtroMesGlobal],
   );
 
-  const totalizador = (grupo: "midea" | "bosch", uniFilter: "all" | UnidadeKey = "all") => {
+  const totalizador = (grupo: "midea" | "bosch" | "outros", uniFilter: "all" | UnidadeKey = "all") => {
     const items = kpiPorUnidade.filter(
       (k) => k.grupo === grupo && (uniFilter === "all" || k.key === uniFilter),
     );
@@ -321,15 +321,17 @@ function DashboardPage() {
   const slaMedioBosch = slaBoschVals.length ? slaBoschVals.reduce((s, n) => s + n, 0) / slaBoschVals.length : 0;
 
   const allSlaKpi = [
-    ...(filtroGrupoKpi !== "bosch" ? slaMideaVals : []),
-    ...(filtroGrupoKpi !== "midea" ? slaBoschVals : []),
+    ...(filtroGrupoKpi !== "bosch" && filtroGrupoKpi !== "outros" ? slaMideaVals : []),
+    ...(filtroGrupoKpi !== "midea" && filtroGrupoKpi !== "outros" ? slaBoschVals : []),
   ];
   const slaMedio = allSlaKpi.length ? allSlaKpi.reduce((s, n) => s + n, 0) / allSlaKpi.length : 0;
 
-  const avgMetaKpi = filtroGrupoKpi === "bosch" ? metaProdUnidade("bosch")
-    : filtroGrupoKpi === "midea"
-      ? UNIDADES.filter((u) => u.grupo === "midea").reduce((s, u) => s + metaProdUnidade(u.key), 0) / UNIDADES.filter((u) => u.grupo === "midea").length
-      : META_PRODUTIVIDADE;
+  const filtroGrupoUnids = filtroGrupoKpi === "all"
+    ? UNIDADES
+    : UNIDADES.filter((u) => u.grupo === filtroGrupoKpi);
+  const avgMetaKpi = filtroGrupoUnids.length > 0
+    ? filtroGrupoUnids.reduce((s, u) => s + metaProdUnidade(u.key), 0) / filtroGrupoUnids.length
+    : META_PRODUTIVIDADE;
 
 
   // Evolução mensal de produtividade por unidade (série completa para gráfico de barras)
@@ -529,6 +531,15 @@ function DashboardPage() {
               total={totalizador("bosch", "all")}
               unidades={kpiPorUnidade.filter((k) => k.grupo === "bosch")}
               chartData={evolucaoPorUnidade.filter((u) => u.grupo === "bosch")}
+            />
+          )}
+          {(filtroOpCart === "all" || ["volkswagen","perkins","brp","hyundai","gwm"].includes(filtroOpCart)) && (
+            <GrupoBlock
+              titulo="Outras Operações"
+              tone="border-warning/40 bg-warning/5"
+              total={totalizador("outros", ["volkswagen","perkins","brp","hyundai","gwm"].includes(filtroOpCart) ? filtroOpCart : "all")}
+              unidades={kpiPorUnidade.filter((k) => k.grupo === "outros" && (filtroOpCart === "all" || k.key === filtroOpCart))}
+              chartData={evolucaoPorUnidade.filter((u) => u.grupo === "outros" && (filtroOpCart === "all" || u.key === filtroOpCart))}
             />
           )}
         </div>
@@ -1073,15 +1084,16 @@ function FiltroGrupo({
   value,
   onChange,
 }: {
-  value: "all" | "midea" | "bosch";
-  onChange: (v: "all" | "midea" | "bosch") => void;
+  value: "all" | "midea" | "bosch" | "outros";
+  onChange: (v: "all" | "midea" | "bosch" | "outros") => void;
 }) {
   return (
-    <Tabs value={value} onValueChange={(v) => onChange(v as "all" | "midea" | "bosch")}>
+    <Tabs value={value} onValueChange={(v) => onChange(v as "all" | "midea" | "bosch" | "outros")}>
       <TabsList>
         <TabsTrigger value="all">Toda Operação</TabsTrigger>
         <TabsTrigger value="midea">Midea</TabsTrigger>
         <TabsTrigger value="bosch">Bosch</TabsTrigger>
+        <TabsTrigger value="outros">Outros</TabsTrigger>
       </TabsList>
     </Tabs>
   );
