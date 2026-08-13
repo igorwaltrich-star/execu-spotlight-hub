@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useRealtimeTable } from "@/hooks/use-realtime-table";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   fmtMes,
   MESES_PT,
@@ -53,6 +54,8 @@ import {
   Target,
   Sparkles,
   AlertTriangle,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/")({
@@ -181,6 +184,11 @@ function DashboardPage() {
   const [filtroMesGlobal, setFiltroMesGlobal] = useState<string>("all");
   const [filtroGrupoKpi, setFiltroGrupoKpi] = useState<"all" | "midea" | "bosch" | "outros">("all");
   const [showCusto, setShowCusto] = useState(false);
+
+  // Visibilidade de seções do dashboard
+  const [hideTendencia, setHideTendencia] = useState(false);
+  const [hidePlano, setHidePlano] = useState(false);
+  const [hideSwot, setHideSwot] = useState(false);
 
   // Filtros por slide (Mês + Operação independentes)
   const [filtroMesCart,  setFiltroMesCart]  = useState<string>("all");
@@ -548,19 +556,38 @@ function DashboardPage() {
 
       {/* Slide 3 — Tendência de Volume — Under Construction */}
       <Slide>
-        <div className="mb-6">
-          <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Tendência de Volume</h2>
-          <p className="text-muted-foreground mt-1">Em breve</p>
+        <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
+          <div>
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Tendência de Volume</h2>
+            <p className="text-muted-foreground mt-1">Em breve</p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setHideTendencia((v) => !v)}
+            aria-label={hideTendencia ? "Mostrar tendência de volume" : "Ocultar tendência de volume"}
+          >
+            {hideTendencia ? <Eye className="h-4 w-4 mr-2" /> : <EyeOff className="h-4 w-4 mr-2" />}
+            {hideTendencia ? "Mostrar" : "Ocultar"}
+          </Button>
         </div>
-        <Card className="flex-1 min-h-0 flex items-center justify-center">
-          <CardContent className="flex flex-col items-center gap-4 py-20">
-            <span className="text-6xl">🚧</span>
-            <h3 className="text-2xl font-bold">Under Construction</h3>
-            <p className="text-muted-foreground text-center max-w-xs">
-              Esta seção está sendo reformulada. Em breve novas visualizações estarão disponíveis.
-            </p>
-          </CardContent>
-        </Card>
+        {hideTendencia ? (
+          <Card className="flex-1 min-h-0 flex items-center justify-center border-dashed">
+            <CardContent className="text-center text-muted-foreground py-12">
+              Tendência de Volume oculta.
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="flex-1 min-h-0 flex items-center justify-center">
+            <CardContent className="flex flex-col items-center gap-4 py-20">
+              <span className="text-6xl">🚧</span>
+              <h3 className="text-2xl font-bold">Under Construction</h3>
+              <p className="text-muted-foreground text-center max-w-xs">
+                Esta seção está sendo reformulada. Em breve novas visualizações estarão disponíveis.
+              </p>
+            </CardContent>
+          </Card>
+        )}
       </Slide>
 
       {/* Slide 4 — SLA Midea por Operação */}
@@ -690,109 +717,145 @@ function DashboardPage() {
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Plano de Ação Estratégico</h2>
             <p className="text-muted-foreground mt-1">Atingimento de Metas e Resolução de Riscos e Gargalos</p>
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setHidePlano((v) => !v)}
+            aria-label={hidePlano ? "Mostrar plano de ação estratégico" : "Ocultar plano de ação estratégico"}
+          >
+            {hidePlano ? <Eye className="h-4 w-4 mr-2" /> : <EyeOff className="h-4 w-4 mr-2" />}
+            {hidePlano ? "Mostrar" : "Ocultar"}
+          </Button>
         </div>
-        <Card className="flex-1 min-h-0 overflow-auto">
-          <CardContent className="p-0">
-            <div className="w-full">
-              <table className="w-full caption-bottom text-sm">
-                <thead className="[&_tr]:border-b border-border bg-muted/50">
-                  <tr className="border-b border-border transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Iniciativa</th>
-                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Objetivo</th>
-                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Meta</th>
-                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Responsável</th>
-                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Prazo</th>
-                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="[&_tr:last-child]:border-0">
-                  {!planoAcao.data?.length ? (
-                    <tr>
-                      <td colSpan={6} className="p-4 text-center text-muted-foreground">
-                        Sem iniciativas cadastradas.
-                      </td>
+        {hidePlano ? (
+          <Card className="flex-1 min-h-0 flex items-center justify-center border-dashed">
+            <CardContent className="text-center text-muted-foreground py-12">
+              Plano de Ação Estratégico oculto.
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="flex-1 min-h-0 overflow-auto">
+            <CardContent className="p-0">
+              <div className="w-full">
+                <table className="w-full caption-bottom text-sm">
+                  <thead className="[&_tr]:border-b border-border bg-muted/50">
+                    <tr className="border-b border-border transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                      <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Iniciativa</th>
+                      <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Objetivo</th>
+                      <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Meta</th>
+                      <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Responsável</th>
+                      <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Prazo</th>
+                      <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Status</th>
                     </tr>
-                  ) : (
-                    planoAcao.data.map((r) => {
-                      const statusColors: Record<string, string> = {
-                        andamento: "bg-accent text-accent-foreground",
-                        concluido: "bg-success text-success-foreground",
-                        atrasado: "bg-destructive text-destructive-foreground",
-                      };
-                      const statusLabels: Record<string, string> = {
-                        andamento: "Em andamento",
-                        concluido: "Concluído",
-                        atrasado: "Atrasado",
-                      };
-                      return (
-                        <tr key={r.id} className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-                          <td className="p-4 align-middle font-medium">{r.iniciativa}</td>
-                          <td className="p-4 align-middle">{r.objetivo || "—"}</td>
-                          <td className="p-4 align-middle">{r.meta || "—"}</td>
-                          <td className="p-4 align-middle">{r.responsavel || "—"}</td>
-                          <td className="p-4 align-middle">
-                            {r.prazo ? new Date(r.prazo).toLocaleDateString("pt-BR", { timeZone: 'UTC' }) : "—"}
-                          </td>
-                          <td className="p-4 align-middle">
-                            <Badge className={statusColors[r.status]}>{statusLabels[r.status]}</Badge>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
+                  </thead>
+                  <tbody className="[&_tr:last-child]:border-0">
+                    {!planoAcao.data?.length ? (
+                      <tr>
+                        <td colSpan={6} className="p-4 text-center text-muted-foreground">
+                          Sem iniciativas cadastradas.
+                        </td>
+                      </tr>
+                    ) : (
+                      planoAcao.data.map((r) => {
+                        const statusColors: Record<string, string> = {
+                          andamento: "bg-accent text-accent-foreground",
+                          concluido: "bg-success text-success-foreground",
+                          atrasado: "bg-destructive text-destructive-foreground",
+                        };
+                        const statusLabels: Record<string, string> = {
+                          andamento: "Em andamento",
+                          concluido: "Concluído",
+                          atrasado: "Atrasado",
+                        };
+                        return (
+                          <tr key={r.id} className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                            <td className="p-4 align-middle font-medium">{r.iniciativa}</td>
+                            <td className="p-4 align-middle">{r.objetivo || "—"}</td>
+                            <td className="p-4 align-middle">{r.meta || "—"}</td>
+                            <td className="p-4 align-middle">{r.responsavel || "—"}</td>
+                            <td className="p-4 align-middle">
+                              {r.prazo ? new Date(r.prazo).toLocaleDateString("pt-BR", { timeZone: 'UTC' }) : "—"}
+                            </td>
+                            <td className="p-4 align-middle">
+                              <Badge className={statusColors[r.status]}>{statusLabels[r.status]}</Badge>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </Slide>
 
       {/* Slide 9 — Análise SWOT */}
       <Slide>
-        <div className="mb-6">
-          <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Análise SWOT</h2>
-          <p className="text-muted-foreground mt-1">
-            {swot.data?.[0]?.titulo ?? "Cadastre uma análise em Gerenciamento Operacional › Ferramentas › SWOT"}
-          </p>
+        <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
+          <div>
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Análise SWOT</h2>
+            <p className="text-muted-foreground mt-1">
+              {swot.data?.[0]?.titulo ?? "Cadastre uma análise em Gerenciamento Operacional › Ferramentas › SWOT"}
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setHideSwot((v) => !v)}
+            aria-label={hideSwot ? "Mostrar análise SWOT" : "Ocultar análise SWOT"}
+          >
+            {hideSwot ? <Eye className="h-4 w-4 mr-2" /> : <EyeOff className="h-4 w-4 mr-2" />}
+            {hideSwot ? "Mostrar" : "Ocultar"}
+          </Button>
         </div>
-        {(() => {
-          const s = swot.data?.[0];
-          const quadrantes = [
-            { key: "forcas", label: "Forças", icon: TrendingUp, cls: "bg-success/10 border-success/30 text-success" },
-            { key: "fraquezas", label: "Fraquezas", icon: TrendingDown, cls: "bg-destructive/10 border-destructive/30 text-destructive" },
-            { key: "oportunidades", label: "Oportunidades", icon: Sparkles, cls: "bg-primary/10 border-primary/30 text-primary" },
-            { key: "ameacas", label: "Ameaças", icon: AlertTriangle, cls: "bg-warning/10 border-warning/30 text-warning" },
-          ] as const;
-          return (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 min-h-0">
-              {quadrantes.map((q) => {
-                const Icon = q.icon;
-                const items = (s?.[q.key] as string[] | undefined) ?? [];
-                return (
-                  <Card key={q.key} className={`border-2 ${q.cls.split(" ").slice(0, 2).join(" ")}`}>
-                    <CardHeader>
-                      <CardTitle className={`flex items-center gap-2 ${q.cls.split(" ").slice(2).join(" ")}`}>
-                        <Icon className="h-5 w-5" />
-                        {q.label}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      {items.length === 0 ? (
-                        <p className="text-sm text-muted-foreground italic">Sem itens cadastrados.</p>
-                      ) : (
-                        <ul className="list-disc pl-5 text-sm space-y-1">
-                          {items.map((it, i) => (
-                            <li key={i}>{it}</li>
-                          ))}
-                        </ul>
-                      )}
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          );
-        })()}
+        {hideSwot ? (
+          <Card className="flex-1 min-h-0 flex items-center justify-center border-dashed">
+            <CardContent className="text-center text-muted-foreground py-12">
+              Análise SWOT oculta.
+            </CardContent>
+          </Card>
+        ) : (
+          (() => {
+            const s = swot.data?.[0];
+            const quadrantes = [
+              { key: "forcas", label: "Forças", icon: TrendingUp, cls: "bg-success/10 border-success/30 text-success" },
+              { key: "fraquezas", label: "Fraquezas", icon: TrendingDown, cls: "bg-destructive/10 border-destructive/30 text-destructive" },
+              { key: "oportunidades", label: "Oportunidades", icon: Sparkles, cls: "bg-primary/10 border-primary/30 text-primary" },
+              { key: "ameacas", label: "Ameaças", icon: AlertTriangle, cls: "bg-warning/10 border-warning/30 text-warning" },
+            ] as const;
+            return (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 min-h-0">
+                {quadrantes.map((q) => {
+                  const Icon = q.icon;
+                  const items = (s?.[q.key] as string[] | undefined) ?? [];
+                  return (
+                    <Card key={q.key} className={`border-2 ${q.cls.split(" ").slice(0, 2).join(" ")}`}>
+                      <CardHeader>
+                        <CardTitle className={`flex items-center gap-2 ${q.cls.split(" ").slice(2).join(" ")}`}>
+                          <Icon className="h-5 w-5" />
+                          {q.label}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        {items.length === 0 ? (
+                          <p className="text-sm text-muted-foreground italic">Sem itens cadastrados.</p>
+                        ) : (
+                          <ul className="list-disc pl-5 text-sm space-y-1">
+                            {items.map((it, i) => (
+                              <li key={i}>{it}</li>
+                            ))}
+                          </ul>
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            );
+          })()
+        )}
       </Slide>
 
       {/* Custo Operacional — Midea (toggle) */}
