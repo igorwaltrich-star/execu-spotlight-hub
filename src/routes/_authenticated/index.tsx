@@ -185,6 +185,11 @@ function DashboardPage() {
   const [filtroGrupoKpi, setFiltroGrupoKpi] = useState<"all" | "midea" | "bosch" | "outros">("all");
   const [showCusto, setShowCusto] = useState(false);
 
+  // Visibilidade de seções do dashboard
+  const [hideTendencia, setHideTendencia] = useState(false);
+  const [hidePlano, setHidePlano] = useState(false);
+  const [hideSwot, setHideSwot] = useState(false);
+
   // Filtros por slide (Mês + Operação independentes)
   const [filtroMesCart,  setFiltroMesCart]  = useState<string>("all");
   const [filtroOpCart,   setFiltroOpCart]   = useState<"all" | UnidadeKey>("all");
