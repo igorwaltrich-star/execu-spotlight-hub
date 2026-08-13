@@ -24,7 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Trash2 } from "lucide-react";
+import { Trash2, Download, Upload } from "lucide-react";
 import { toast } from "sonner";
 import {
   fmtMes,
