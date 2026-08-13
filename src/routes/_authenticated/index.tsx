@@ -54,6 +54,8 @@ import {
   Target,
   Sparkles,
   AlertTriangle,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/")({
