@@ -107,6 +107,90 @@ export function CadastroOperacionalView({ hideHeader = false }: { hideHeader?: b
     onSuccess: () => qc.invalidateQueries({ queryKey }),
   });
 
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const baixarModelo = () => {
+    const ws = XLSX.utils.json_to_sheet(
+      UNIDADES.slice(0, 3).map((u) => ({
+        unidade: u.label,
+        mes: "2026-01",
+        volume: 1000,
+        pessoas: 12,
+      })),
+    );
+    ws["!cols"] = [{ wch: 22 }, { wch: 12 }, { wch: 12 }, { wch: 12 }];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Operacional");
+    XLSX.writeFile(wb, "modelo-operacional.xlsx");
+  };
+
+  const parseMes = (v: unknown): string | null => {
+    if (v == null || v === "") return null;
+    if (typeof v === "number") {
+      const d = XLSX.SSF.parse_date_code(v);
+      if (!d) return null;
+      return `${d.y}-${String(d.m).padStart(2, "0")}-01`;
+    }
+    const s = String(v).trim();
+    let m = s.match(/^(\d{4})-(\d{2})/);
+    if (m) return `${m[1]}-${m[2]}-01`;
+    m = s.match(/^(\d{1,2})\/(\d{4})$/);
+    if (m) return `${m[2]}-${m[1].padStart(2, "0")}-01`;
+    m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (m) return `${m[3]}-${m[2].padStart(2, "0")}-01`;
+    return null;
+  };
+
+  const importar = useMutation({
+    mutationFn: async (file: File) => {
+      if (!user) throw new Error("Não autenticado");
+      const wb = XLSX.read(await file.arrayBuffer(), { type: "array" });
+      const json = XLSX.utils.sheet_to_json<Record<string, unknown>>(
+        wb.Sheets[wb.SheetNames[0]],
+        { defval: "" },
+      );
+      const norm = (s: string) =>
+        s.toString().trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      const byKey = new Map<string, UnidadeKey>();
+      UNIDADES.forEach((u) => {
+        byKey.set(norm(u.key), u.key);
+        byKey.set(norm(u.label), u.key);
+      });
+
+      const records = json
+        .map((raw) => {
+          const r: Record<string, unknown> = {};
+          Object.entries(raw).forEach(([k, v]) => (r[norm(k)] = v));
+          const unidade = byKey.get(norm(String(r.unidade ?? r.carteira ?? "")));
+          const mes = parseMes(r.mes ?? r.mês ?? r.data);
+          if (!unidade || !mes) return null;
+          return {
+            user_id: user.id,
+            unidade,
+            mes,
+            volume: Number(r.volume) || 0,
+            pessoas: Number(r.pessoas ?? r.headcount) || 0,
+          };
+        })
+        .filter((r): r is NonNullable<typeof r> => r !== null);
+
+      if (records.length === 0)
+        throw new Error("Nenhuma linha válida (colunas 'unidade' e 'mes' obrigatórias)");
+      const { error } = await supabase
+        .from("operacional_mensal")
+        .upsert(records, { onConflict: "user_id,mes,unidade" });
+      if (error) throw error;
+      return records.length;
+    },
+    onSuccess: (n) => {
+      toast.success(`${n} registro(s) importado(s)`);
+      qc.invalidateQueries({ queryKey });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+
+
   return (
     <>
       {!hideHeader && (
