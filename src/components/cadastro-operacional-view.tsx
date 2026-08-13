@@ -201,12 +201,41 @@ export function CadastroOperacionalView({ hideHeader = false }: { hideHeader?: b
       )}
       <div className="p-8 space-y-6">
         <Card>
-          <CardHeader>
-            <CardTitle>Novo registro mensal</CardTitle>
-            <CardDescription>
-              Atualiza automaticamente se já existir registro para a mesma unidade/mês.
-            </CardDescription>
+          <CardHeader className="flex flex-row items-start justify-between gap-2 flex-wrap">
+            <div>
+              <CardTitle>Novo registro mensal</CardTitle>
+              <CardDescription>
+                Atualiza automaticamente se já existir registro para a mesma unidade/mês.
+              </CardDescription>
+            </div>
+            <div className="flex gap-2 flex-wrap">
+              <Button size="sm" variant="outline" onClick={baixarModelo}>
+                <Download className="h-4 w-4 mr-1" />
+                Baixar modelo
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => fileRef.current?.click()}
+                disabled={importar.isPending}
+              >
+                <Upload className="h-4 w-4 mr-1" />
+                {importar.isPending ? "Importando..." : "Importar"}
+              </Button>
+              <input
+                ref={fileRef}
+                type="file"
+                accept=".xlsx,.xls,.csv"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) importar.mutate(f);
+                  e.target.value = "";
+                }}
+              />
+            </div>
           </CardHeader>
+
           <CardContent>
             <form
               className="grid grid-cols-1 md:grid-cols-5 gap-4"
