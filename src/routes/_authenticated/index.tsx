@@ -809,32 +809,26 @@ function DashboardPage() {
       )}
 
       {/* Slide 9 — Análise SWOT */}
-      <Slide>
-        <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
-          <div>
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Análise SWOT</h2>
-            <p className="text-muted-foreground mt-1">
-              {swot.data?.[0]?.titulo ?? "Cadastre uma análise em Gerenciamento Operacional › Ferramentas › SWOT"}
-            </p>
+      {!hideSwot && (
+        <Slide>
+          <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
+            <div>
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Análise SWOT</h2>
+              <p className="text-muted-foreground mt-1">
+                {swot.data?.[0]?.titulo ?? "Cadastre uma análise em Gerenciamento Operacional › Ferramentas › SWOT"}
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setHideSwot(true)}
+              aria-label="Ocultar análise SWOT"
+            >
+              <EyeOff className="h-4 w-4 mr-2" />
+              Ocultar
+            </Button>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setHideSwot((v) => !v)}
-            aria-label={hideSwot ? "Mostrar análise SWOT" : "Ocultar análise SWOT"}
-          >
-            {hideSwot ? <Eye className="h-4 w-4 mr-2" /> : <EyeOff className="h-4 w-4 mr-2" />}
-            {hideSwot ? "Mostrar" : "Ocultar"}
-          </Button>
-        </div>
-        {hideSwot ? (
-          <Card className="flex-1 min-h-0 flex items-center justify-center border-dashed">
-            <CardContent className="text-center text-muted-foreground py-12">
-              Análise SWOT oculta.
-            </CardContent>
-          </Card>
-        ) : (
-          (() => {
+          {(() => {
             const s = swot.data?.[0];
             const quadrantes = [
               { key: "forcas", label: "Forças", icon: TrendingUp, cls: "bg-success/10 border-success/30 text-success" },
@@ -871,9 +865,9 @@ function DashboardPage() {
                 })}
               </div>
             );
-          })()
-        )}
-      </Slide>
+          })()}
+        </Slide>
+      )}
 
       {/* Custo Operacional — Midea (toggle) */}
       {showCusto && (
