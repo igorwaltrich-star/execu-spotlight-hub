@@ -584,29 +584,23 @@ function DashboardPage() {
       </Slide>
 
       {/* Slide 3 — Tendência de Volume — Under Construction */}
-      <Slide>
-        <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
-          <div>
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Tendência de Volume</h2>
-            <p className="text-muted-foreground mt-1">Em breve</p>
+      {!hideTendencia && (
+        <Slide>
+          <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
+            <div>
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Tendência de Volume</h2>
+              <p className="text-muted-foreground mt-1">Em breve</p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setHideTendencia(true)}
+              aria-label="Ocultar tendência de volume"
+            >
+              <EyeOff className="h-4 w-4 mr-2" />
+              Ocultar
+            </Button>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setHideTendencia((v) => !v)}
-            aria-label={hideTendencia ? "Mostrar tendência de volume" : "Ocultar tendência de volume"}
-          >
-            {hideTendencia ? <Eye className="h-4 w-4 mr-2" /> : <EyeOff className="h-4 w-4 mr-2" />}
-            {hideTendencia ? "Mostrar" : "Ocultar"}
-          </Button>
-        </div>
-        {hideTendencia ? (
-          <Card className="flex-1 min-h-0 flex items-center justify-center border-dashed">
-            <CardContent className="text-center text-muted-foreground py-12">
-              Tendência de Volume oculta.
-            </CardContent>
-          </Card>
-        ) : (
           <Card className="flex-1 min-h-0 flex items-center justify-center">
             <CardContent className="flex flex-col items-center gap-4 py-20">
               <span className="text-6xl">🚧</span>
@@ -616,8 +610,8 @@ function DashboardPage() {
               </p>
             </CardContent>
           </Card>
-        )}
-      </Slide>
+        </Slide>
+      )}
 
       {/* Slide 4 — SLA Midea por Operação */}
       <Slide>
