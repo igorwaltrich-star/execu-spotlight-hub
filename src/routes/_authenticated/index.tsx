@@ -496,6 +496,35 @@ function DashboardPage() {
               💰 {showCusto ? "Ocultar Custo" : "Ver Custo Operacional"}
             </button>
           </div>
+          {(hideTendencia || hidePlano || hideSwot) && (
+            <div className="mt-3 flex items-center gap-2 flex-wrap">
+              <span className="text-sm text-primary-foreground/80 uppercase tracking-wide">Seções ocultas</span>
+              {hideTendencia && (
+                <button
+                  onClick={() => setHideTendencia(false)}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-semibold border bg-card/95 text-foreground border-border hover:bg-muted transition-colors"
+                >
+                  <Eye className="h-4 w-4" /> Tendência de Volume
+                </button>
+              )}
+              {hidePlano && (
+                <button
+                  onClick={() => setHidePlano(false)}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-semibold border bg-card/95 text-foreground border-border hover:bg-muted transition-colors"
+                >
+                  <Eye className="h-4 w-4" /> Plano de Ação Estratégico
+                </button>
+              )}
+              {hideSwot && (
+                <button
+                  onClick={() => setHideSwot(false)}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-semibold border bg-card/95 text-foreground border-border hover:bg-muted transition-colors"
+                >
+                  <Eye className="h-4 w-4" /> Análise SWOT
+                </button>
+              )}
+            </div>
+          )}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-10 w-full">
             <Kpi icon={TrendingUp} label="Volume Total" value={totalVolume.toLocaleString("pt-BR")} />
             <Kpi icon={Users} label="Headcount Total" value={headcountTotal.toLocaleString("pt-BR")} sub="Sem dupla contagem" />
@@ -555,29 +584,23 @@ function DashboardPage() {
       </Slide>
 
       {/* Slide 3 — Tendência de Volume — Under Construction */}
-      <Slide>
-        <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
-          <div>
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Tendência de Volume</h2>
-            <p className="text-muted-foreground mt-1">Em breve</p>
+      {!hideTendencia && (
+        <Slide>
+          <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
+            <div>
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Tendência de Volume</h2>
+              <p className="text-muted-foreground mt-1">Em breve</p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setHideTendencia(true)}
+              aria-label="Ocultar tendência de volume"
+            >
+              <EyeOff className="h-4 w-4 mr-2" />
+              Ocultar
+            </Button>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setHideTendencia((v) => !v)}
-            aria-label={hideTendencia ? "Mostrar tendência de volume" : "Ocultar tendência de volume"}
-          >
-            {hideTendencia ? <Eye className="h-4 w-4 mr-2" /> : <EyeOff className="h-4 w-4 mr-2" />}
-            {hideTendencia ? "Mostrar" : "Ocultar"}
-          </Button>
-        </div>
-        {hideTendencia ? (
-          <Card className="flex-1 min-h-0 flex items-center justify-center border-dashed">
-            <CardContent className="text-center text-muted-foreground py-12">
-              Tendência de Volume oculta.
-            </CardContent>
-          </Card>
-        ) : (
           <Card className="flex-1 min-h-0 flex items-center justify-center">
             <CardContent className="flex flex-col items-center gap-4 py-20">
               <span className="text-6xl">🚧</span>
@@ -587,8 +610,8 @@ function DashboardPage() {
               </p>
             </CardContent>
           </Card>
-        )}
-      </Slide>
+        </Slide>
+      )}
 
       {/* Slide 4 — SLA Midea por Operação */}
       <Slide>
@@ -711,29 +734,23 @@ function DashboardPage() {
 
 
       {/* Slide 8 — Plano de Ação Estratégico */}
-      <Slide>
-        <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
-          <div>
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Plano de Ação Estratégico</h2>
-            <p className="text-muted-foreground mt-1">Atingimento de Metas e Resolução de Riscos e Gargalos</p>
+      {!hidePlano && (
+        <Slide>
+          <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
+            <div>
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Plano de Ação Estratégico</h2>
+              <p className="text-muted-foreground mt-1">Atingimento de Metas e Resolução de Riscos e Gargalos</p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setHidePlano(true)}
+              aria-label="Ocultar plano de ação estratégico"
+            >
+              <EyeOff className="h-4 w-4 mr-2" />
+              Ocultar
+            </Button>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setHidePlano((v) => !v)}
-            aria-label={hidePlano ? "Mostrar plano de ação estratégico" : "Ocultar plano de ação estratégico"}
-          >
-            {hidePlano ? <Eye className="h-4 w-4 mr-2" /> : <EyeOff className="h-4 w-4 mr-2" />}
-            {hidePlano ? "Mostrar" : "Ocultar"}
-          </Button>
-        </div>
-        {hidePlano ? (
-          <Card className="flex-1 min-h-0 flex items-center justify-center border-dashed">
-            <CardContent className="text-center text-muted-foreground py-12">
-              Plano de Ação Estratégico oculto.
-            </CardContent>
-          </Card>
-        ) : (
           <Card className="flex-1 min-h-0 overflow-auto">
             <CardContent className="p-0">
               <div className="w-full">
@@ -788,36 +805,30 @@ function DashboardPage() {
               </div>
             </CardContent>
           </Card>
-        )}
-      </Slide>
+        </Slide>
+      )}
 
       {/* Slide 9 — Análise SWOT */}
-      <Slide>
-        <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
-          <div>
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Análise SWOT</h2>
-            <p className="text-muted-foreground mt-1">
-              {swot.data?.[0]?.titulo ?? "Cadastre uma análise em Gerenciamento Operacional › Ferramentas › SWOT"}
-            </p>
+      {!hideSwot && (
+        <Slide>
+          <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
+            <div>
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Análise SWOT</h2>
+              <p className="text-muted-foreground mt-1">
+                {swot.data?.[0]?.titulo ?? "Cadastre uma análise em Gerenciamento Operacional › Ferramentas › SWOT"}
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setHideSwot(true)}
+              aria-label="Ocultar análise SWOT"
+            >
+              <EyeOff className="h-4 w-4 mr-2" />
+              Ocultar
+            </Button>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setHideSwot((v) => !v)}
-            aria-label={hideSwot ? "Mostrar análise SWOT" : "Ocultar análise SWOT"}
-          >
-            {hideSwot ? <Eye className="h-4 w-4 mr-2" /> : <EyeOff className="h-4 w-4 mr-2" />}
-            {hideSwot ? "Mostrar" : "Ocultar"}
-          </Button>
-        </div>
-        {hideSwot ? (
-          <Card className="flex-1 min-h-0 flex items-center justify-center border-dashed">
-            <CardContent className="text-center text-muted-foreground py-12">
-              Análise SWOT oculta.
-            </CardContent>
-          </Card>
-        ) : (
-          (() => {
+          {(() => {
             const s = swot.data?.[0];
             const quadrantes = [
               { key: "forcas", label: "Forças", icon: TrendingUp, cls: "bg-success/10 border-success/30 text-success" },
@@ -854,9 +865,9 @@ function DashboardPage() {
                 })}
               </div>
             );
-          })()
-        )}
-      </Slide>
+          })()}
+        </Slide>
+      )}
 
       {/* Custo Operacional — Midea (toggle) */}
       {showCusto && (
