@@ -496,6 +496,35 @@ function DashboardPage() {
               💰 {showCusto ? "Ocultar Custo" : "Ver Custo Operacional"}
             </button>
           </div>
+          {(hideTendencia || hidePlano || hideSwot) && (
+            <div className="mt-3 flex items-center gap-2 flex-wrap">
+              <span className="text-sm text-primary-foreground/80 uppercase tracking-wide">Seções ocultas</span>
+              {hideTendencia && (
+                <button
+                  onClick={() => setHideTendencia(false)}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-semibold border bg-card/95 text-foreground border-border hover:bg-muted transition-colors"
+                >
+                  <Eye className="h-4 w-4" /> Tendência de Volume
+                </button>
+              )}
+              {hidePlano && (
+                <button
+                  onClick={() => setHidePlano(false)}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-semibold border bg-card/95 text-foreground border-border hover:bg-muted transition-colors"
+                >
+                  <Eye className="h-4 w-4" /> Plano de Ação Estratégico
+                </button>
+              )}
+              {hideSwot && (
+                <button
+                  onClick={() => setHideSwot(false)}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-semibold border bg-card/95 text-foreground border-border hover:bg-muted transition-colors"
+                >
+                  <Eye className="h-4 w-4" /> Análise SWOT
+                </button>
+              )}
+            </div>
+          )}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-10 w-full">
             <Kpi icon={TrendingUp} label="Volume Total" value={totalVolume.toLocaleString("pt-BR")} />
             <Kpi icon={Users} label="Headcount Total" value={headcountTotal.toLocaleString("pt-BR")} sub="Sem dupla contagem" />
