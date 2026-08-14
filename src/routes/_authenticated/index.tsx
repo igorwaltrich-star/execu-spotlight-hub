@@ -734,29 +734,23 @@ function DashboardPage() {
 
 
       {/* Slide 8 — Plano de Ação Estratégico */}
-      <Slide>
-        <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
-          <div>
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Plano de Ação Estratégico</h2>
-            <p className="text-muted-foreground mt-1">Atingimento de Metas e Resolução de Riscos e Gargalos</p>
+      {!hidePlano && (
+        <Slide>
+          <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
+            <div>
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Plano de Ação Estratégico</h2>
+              <p className="text-muted-foreground mt-1">Atingimento de Metas e Resolução de Riscos e Gargalos</p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setHidePlano(true)}
+              aria-label="Ocultar plano de ação estratégico"
+            >
+              <EyeOff className="h-4 w-4 mr-2" />
+              Ocultar
+            </Button>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setHidePlano((v) => !v)}
-            aria-label={hidePlano ? "Mostrar plano de ação estratégico" : "Ocultar plano de ação estratégico"}
-          >
-            {hidePlano ? <Eye className="h-4 w-4 mr-2" /> : <EyeOff className="h-4 w-4 mr-2" />}
-            {hidePlano ? "Mostrar" : "Ocultar"}
-          </Button>
-        </div>
-        {hidePlano ? (
-          <Card className="flex-1 min-h-0 flex items-center justify-center border-dashed">
-            <CardContent className="text-center text-muted-foreground py-12">
-              Plano de Ação Estratégico oculto.
-            </CardContent>
-          </Card>
-        ) : (
           <Card className="flex-1 min-h-0 overflow-auto">
             <CardContent className="p-0">
               <div className="w-full">
@@ -811,8 +805,8 @@ function DashboardPage() {
               </div>
             </CardContent>
           </Card>
-        )}
-      </Slide>
+        </Slide>
+      )}
 
       {/* Slide 9 — Análise SWOT */}
       <Slide>
