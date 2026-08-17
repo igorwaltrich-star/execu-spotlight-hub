@@ -845,6 +845,7 @@ function DashboardPage() {
           </div>
         )}
       </Slide>
+      )}
 
       {/* Slide 7 — SLA BOSCH por Planta */}
       {!hideSlaBosch && (
