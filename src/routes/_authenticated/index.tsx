@@ -903,6 +903,7 @@ function DashboardPage() {
           </div>
         )}
       </Slide>
+      )}
 
 
 
