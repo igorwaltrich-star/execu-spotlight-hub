@@ -596,7 +596,7 @@ function DashboardPage() {
               💰 {showCusto ? "Ocultar Custo" : "Ver Custo Operacional"}
             </button>
           </div>
-          {(hideTendencia || hidePlano || hideSwot) && (
+          {(hideTendencia || hidePlano || hideSwot || hideSlaMidea || hideSlaBosch) && (
             <div className="mt-3 flex items-center gap-2 flex-wrap">
               <span className="text-sm text-primary-foreground/80 uppercase tracking-wide">Seções ocultas</span>
               {hideTendencia && (
