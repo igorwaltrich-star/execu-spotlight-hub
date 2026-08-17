@@ -189,6 +189,8 @@ function DashboardPage() {
   const [hideTendencia, setHideTendencia] = useState(false);
   const [hidePlano, setHidePlano] = useState(false);
   const [hideSwot, setHideSwot] = useState(false);
+  const [hideSlaMidea, setHideSlaMidea] = useState(false);
+  const [hideSlaBosch, setHideSlaBosch] = useState(false);
 
   // Filtros por slide (Mês + Operação independentes)
   const [filtroMesCart,  setFiltroMesCart]  = useState<string>("all");
