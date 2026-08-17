@@ -787,16 +787,23 @@ function DashboardPage() {
       )}
 
       {/* Slide 4 — SLA Midea por Operação */}
+      {!hideSlaMidea && (
       <Slide>
         <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
           <div>
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight">SLA — Midea</h2>
             <p className="text-muted-foreground mt-1">{`SLA Geral por operação — Meta ${META_SLA}%`}</p>
           </div>
-          <FiltroPadrao
-            mes={filtroMesMidea} onMes={setFiltroMesMidea} meses={mesesMidea}
-            op={filtroOpMidea}   onOp={setFiltroOpMidea}
-          />
+          <div className="flex items-center gap-2 flex-wrap">
+            <FiltroPadrao
+              mes={filtroMesMidea} onMes={setFiltroMesMidea} meses={mesesMidea}
+              op={filtroOpMidea}   onOp={setFiltroOpMidea}
+            />
+            <Button variant="outline" size="sm" onClick={() => setHideSlaMidea(true)} aria-label="Ocultar SLA Midea">
+              <EyeOff className="h-4 w-4 mr-2" />
+              Ocultar
+            </Button>
+          </div>
         </div>
         {filtroOpMidea === "bosch" ? (
           <Card className="flex-1 flex items-center justify-center">
