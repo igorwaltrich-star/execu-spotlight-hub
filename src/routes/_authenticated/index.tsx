@@ -623,6 +623,22 @@ function DashboardPage() {
                   <Eye className="h-4 w-4" /> Análise SWOT
                 </button>
               )}
+              {hideSlaMidea && (
+                <button
+                  onClick={() => setHideSlaMidea(false)}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-semibold border bg-card/95 text-foreground border-border hover:bg-muted transition-colors"
+                >
+                  <Eye className="h-4 w-4" /> SLA Midea
+                </button>
+              )}
+              {hideSlaBosch && (
+                <button
+                  onClick={() => setHideSlaBosch(false)}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-semibold border bg-card/95 text-foreground border-border hover:bg-muted transition-colors"
+                >
+                  <Eye className="h-4 w-4" /> SLA Bosch
+                </button>
+              )}
             </div>
           )}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-10 w-full">
