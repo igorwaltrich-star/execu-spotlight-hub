@@ -1299,9 +1299,18 @@ function GrupoBlock({
                   </div>
                 ) : (
                   <ResponsiveContainer width="100%" height={280}>
-                    <BarChart data={u.data} margin={{ top: 8, right: 12, left: -12, bottom: 4 }}>
+                    <BarChart data={u.data} margin={{ top: 8, right: 12, left: -12, bottom: 28 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                      <XAxis dataKey="mes" tick={{ fontSize: 12 }} />
+                      <XAxis
+                        dataKey="mes"
+                        tick={{ fontSize: 11 }}
+                        interval={0}
+                        angle={-45}
+                        textAnchor="end"
+                        height={50}
+                        tickMargin={6}
+                        minTickGap={0}
+                      />
                       <YAxis tick={{ fontSize: 12 }} />
                       <Tooltip
                         formatter={(v: number) => [v.toFixed(1), "Produtividade"]}
