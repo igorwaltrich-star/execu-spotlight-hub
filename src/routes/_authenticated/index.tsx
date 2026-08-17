@@ -847,16 +847,23 @@ function DashboardPage() {
       </Slide>
 
       {/* Slide 7 — SLA BOSCH por Planta */}
+      {!hideSlaBosch && (
       <Slide>
         <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
           <div>
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight">SLA — BOSCH</h2>
             <p className="text-muted-foreground mt-1">{`SLA Geral por planta — Meta ${META_SLA}%`}</p>
           </div>
-          <FiltroPadrao
-            mes={filtroMesBosch} onMes={setFiltroMesBosch} meses={mesesBosch}
-            op={filtroOpBosch}   onOp={setFiltroOpBosch}
-          />
+          <div className="flex items-center gap-2 flex-wrap">
+            <FiltroPadrao
+              mes={filtroMesBosch} onMes={setFiltroMesBosch} meses={mesesBosch}
+              op={filtroOpBosch}   onOp={setFiltroOpBosch}
+            />
+            <Button variant="outline" size="sm" onClick={() => setHideSlaBosch(true)} aria-label="Ocultar SLA Bosch">
+              <EyeOff className="h-4 w-4 mr-2" />
+              Ocultar
+            </Button>
+          </div>
         </div>
         {filtroOpBosch !== "all" && filtroOpBosch !== "bosch" ? (
           <Card className="flex-1 flex items-center justify-center">
