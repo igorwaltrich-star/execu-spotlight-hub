@@ -255,6 +255,49 @@ function DashboardPage() {
     return aggByMonth(rows);
   }, [opAll, filtroGrupoProd, filtroMesProd, filtroMesGlobal]);
 
+  // Tendência de volume: histórico + projeção dos próximos 3 meses (regressão linear)
+  const tendencia = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const r of opAll) map.set(r.mes, (map.get(r.mes) ?? 0) + Number(r.volume ?? 0));
+    const hist = [...map.entries()]
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([mes, volume]) => ({ mes, volume }));
+
+    const data = hist.map((h) => ({
+      mes: fmtMes(h.mes),
+      real: h.volume,
+      previsto: null as number | null,
+    }));
+
+    if (hist.length < 2) return { data, media: 0, tendenciaPct: 0, hasForecast: false };
+
+    // regressão sobre os últimos 12 meses (mínimo 2 pontos)
+    const base = hist.slice(-12);
+    const n = base.length;
+    const sx = base.reduce((s, _, i) => s + i, 0);
+    const sy = base.reduce((s, r) => s + r.volume, 0);
+    const sxy = base.reduce((s, r, i) => s + i * r.volume, 0);
+    const sxx = base.reduce((s, _, i) => s + i * i, 0);
+    const denom = n * sxx - sx * sx;
+    const slope = denom === 0 ? 0 : (n * sxy - sx * sy) / denom;
+    const intercept = (sy - slope * sx) / n;
+
+    // conecta a linha prevista ao último ponto real
+    data[data.length - 1].previsto = hist[hist.length - 1].volume;
+
+    const last = new Date(`${hist[hist.length - 1].mes.slice(0, 7)}-01T00:00:00Z`);
+    for (let k = 1; k <= 3; k++) {
+      const d = new Date(Date.UTC(last.getUTCFullYear(), last.getUTCMonth() + k, 1));
+      const val = Math.max(0, Math.round(intercept + slope * (n - 1 + k)));
+      data.push({ mes: fmtMes(d), real: null as unknown as number, previsto: val });
+    }
+
+    const media = sy / n;
+    const tendenciaPct = media > 0 ? (slope / media) * 100 : 0;
+    return { data, media, tendenciaPct, hasForecast: true };
+  }, [opAll]);
+
+
   // KPI por unidade respeitando filtro do slide carteiras
   const kpiPorUnidade = useMemo(
     () =>
@@ -583,13 +626,16 @@ function DashboardPage() {
         </div>
       </Slide>
 
-      {/* Slide 3 — Tendência de Volume — Under Construction */}
+      {/* Slide 3 — Tendência de Volume + Projeção 3 meses */}
       {!hideTendencia && (
         <Slide>
           <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
             <div>
               <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Tendência de Volume</h2>
-              <p className="text-muted-foreground mt-1">Em breve</p>
+              <p className="text-muted-foreground mt-1">
+                Histórico consolidado e projeção dos próximos 3 meses (regressão linear sobre os
+                últimos 12 meses cadastrados)
+              </p>
             </div>
             <Button
               variant="outline"
@@ -601,16 +647,70 @@ function DashboardPage() {
               Ocultar
             </Button>
           </div>
-          <Card className="flex-1 min-h-0 flex items-center justify-center">
-            <CardContent className="flex flex-col items-center gap-4 py-20">
-              <span className="text-6xl">🚧</span>
-              <h3 className="text-2xl font-bold">Under Construction</h3>
-              <p className="text-muted-foreground text-center max-w-xs">
-                Esta seção está sendo reformulada. Em breve novas visualizações estarão disponíveis.
-              </p>
+          <Card className="flex-1 min-h-0 flex flex-col">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between gap-4 flex-wrap">
+                <span>Volume mensal — real x previsto</span>
+                {tendencia.hasForecast && (
+                  <span
+                    className={`text-base font-semibold ${tendencia.tendenciaPct >= 0 ? "text-success" : "text-destructive"}`}
+                  >
+                    {tendencia.tendenciaPct >= 0 ? "+" : ""}
+                    {tendencia.tendenciaPct.toFixed(1)}% ao mês
+                  </span>
+                )}
+              </CardTitle>
+              <CardDescription>
+                Atualiza automaticamente conforme novos volumes são cadastrados.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex-1 min-h-[320px]">
+              {tendencia.data.length === 0 ? (
+                <Empty msg="Sem volumes cadastrados." />
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={tendencia.data} margin={{ left: 8, right: 24, bottom: 24 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                    <XAxis dataKey="mes" interval={0} angle={-40} textAnchor="end" height={60} />
+                    <YAxis />
+                    <Tooltip
+                      formatter={(v: number, name: string) => [Number(v).toLocaleString("pt-BR"), name]}
+                    />
+                    <Legend />
+                    {tendencia.media > 0 && (
+                      <ReferenceLine
+                        y={Math.round(tendencia.media)}
+                        stroke={C2}
+                        strokeDasharray="4 4"
+                        label={{ value: "Média", fill: C2, position: "right" }}
+                      />
+                    )}
+                    <Line
+                      type="monotone"
+                      dataKey="real"
+                      name="Realizado"
+                      stroke={C1}
+                      strokeWidth={3}
+                      dot={{ r: 3 }}
+                      connectNulls={false}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="previsto"
+                      name="Projeção"
+                      stroke={C3}
+                      strokeWidth={3}
+                      strokeDasharray="6 4"
+                      dot={{ r: 3 }}
+                      connectNulls
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
             </CardContent>
           </Card>
         </Slide>
+
       )}
 
       {/* Slide 4 — SLA Midea por Operação */}
