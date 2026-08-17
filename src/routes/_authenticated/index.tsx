@@ -255,6 +255,49 @@ function DashboardPage() {
     return aggByMonth(rows);
   }, [opAll, filtroGrupoProd, filtroMesProd, filtroMesGlobal]);
 
+  // Tendência de volume: histórico + projeção dos próximos 3 meses (regressão linear)
+  const tendencia = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const r of opAll) map.set(r.mes, (map.get(r.mes) ?? 0) + Number(r.volume ?? 0));
+    const hist = [...map.entries()]
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([mes, volume]) => ({ mes, volume }));
+
+    const data = hist.map((h) => ({
+      mes: fmtMes(h.mes),
+      real: h.volume,
+      previsto: null as number | null,
+    }));
+
+    if (hist.length < 2) return { data, media: 0, tendenciaPct: 0, hasForecast: false };
+
+    // regressão sobre os últimos 12 meses (mínimo 2 pontos)
+    const base = hist.slice(-12);
+    const n = base.length;
+    const sx = base.reduce((s, _, i) => s + i, 0);
+    const sy = base.reduce((s, r) => s + r.volume, 0);
+    const sxy = base.reduce((s, r, i) => s + i * r.volume, 0);
+    const sxx = base.reduce((s, _, i) => s + i * i, 0);
+    const denom = n * sxx - sx * sx;
+    const slope = denom === 0 ? 0 : (n * sxy - sx * sy) / denom;
+    const intercept = (sy - slope * sx) / n;
+
+    // conecta a linha prevista ao último ponto real
+    data[data.length - 1].previsto = hist[hist.length - 1].volume;
+
+    const last = new Date(`${hist[hist.length - 1].mes.slice(0, 7)}-01T00:00:00Z`);
+    for (let k = 1; k <= 3; k++) {
+      const d = new Date(Date.UTC(last.getUTCFullYear(), last.getUTCMonth() + k, 1));
+      const val = Math.max(0, Math.round(intercept + slope * (n - 1 + k)));
+      data.push({ mes: fmtMes(d), real: null as unknown as number, previsto: val });
+    }
+
+    const media = sy / n;
+    const tendenciaPct = media > 0 ? (slope / media) * 100 : 0;
+    return { data, media, tendenciaPct, hasForecast: true };
+  }, [opAll]);
+
+
   // KPI por unidade respeitando filtro do slide carteiras
   const kpiPorUnidade = useMemo(
     () =>
