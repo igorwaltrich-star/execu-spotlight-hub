@@ -783,7 +783,86 @@ function DashboardPage() {
             </CardContent>
           </Card>
         </Slide>
+      )}
 
+      {/* Slide 3b — Tendência de Volume por Operação */}
+      {!hideTendencia && tendenciaPorUnidade.length > 0 && (
+        <Slide>
+          <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
+            <div>
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
+                Tendência de Volume por Operação
+              </h2>
+              <p className="text-muted-foreground mt-1">
+                Histórico cadastrado por operação e projeção automática dos próximos 3 meses
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setHideTendencia(true)}
+              aria-label="Ocultar tendência de volume"
+            >
+              <EyeOff className="h-4 w-4 mr-2" />
+              Ocultar
+            </Button>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 min-h-0">
+            {tendenciaPorUnidade.map((t) => (
+              <Card key={t.unidade.key} className="min-h-0 flex flex-col">
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between gap-2">
+                    <span>{t.unidade.label}</span>
+                    {t.hasForecast && (
+                      <span
+                        className={`text-sm font-semibold ${t.tendenciaPct >= 0 ? "text-success" : "text-destructive"}`}
+                      >
+                        {t.tendenciaPct >= 0 ? "+" : ""}
+                        {t.tendenciaPct.toFixed(1)}%/mês
+                      </span>
+                    )}
+                  </CardTitle>
+                  <CardDescription>Realizado x projeção (3 meses)</CardDescription>
+                </CardHeader>
+                <CardContent className="flex-1 min-h-[280px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={t.data} margin={{ left: 8, right: 16, bottom: 24 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                      <XAxis dataKey="mes" interval={0} angle={-40} textAnchor="end" height={56} />
+                      <YAxis />
+                      <Tooltip
+                        formatter={(v: number, name: string) => [
+                          Number(v).toLocaleString("pt-BR"),
+                          name,
+                        ]}
+                      />
+                      <Legend />
+                      <Line
+                        type="monotone"
+                        dataKey="real"
+                        name="Realizado"
+                        stroke={C1}
+                        strokeWidth={2.5}
+                        dot={{ r: 3 }}
+                        connectNulls={false}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="previsto"
+                        name="Projeção"
+                        stroke={C3}
+                        strokeWidth={2.5}
+                        strokeDasharray="6 4"
+                        dot={{ r: 3 }}
+                        connectNulls
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </Slide>
       )}
 
       {/* Slide 4 — SLA Midea por Operação */}
