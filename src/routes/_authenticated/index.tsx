@@ -103,8 +103,6 @@ type PlanoAcaoRow = {
 
 function DashboardPage() {
   useRealtimeTable("operacional_mensal", ["operacional_mensal"]);
-  useRealtimeTable("sla_midea", ["sla_midea"]);
-  useRealtimeTable("sla_bosch", ["sla_bosch"]);
   useRealtimeTable("plano_acao", ["plano_acao_dash"]);
   useRealtimeTable("swot", ["swot_dash"]);
 
@@ -114,24 +112,6 @@ function DashboardPage() {
       const { data, error } = await supabase.from("operacional_mensal").select("*").order("mes");
       if (error) throw error;
       return data as OpRow[];
-    },
-  });
-
-  const midea = useQuery({
-    queryKey: ["sla_midea"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("sla_midea").select("*").order("mes");
-      if (error) throw error;
-      return data as SlaMidea[];
-    },
-  });
-
-  const bosch = useQuery({
-    queryKey: ["sla_bosch"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("sla_bosch").select("*").order("mes");
-      if (error) throw error;
-      return data as SlaBosch[];
     },
   });
 
@@ -171,14 +151,7 @@ function DashboardPage() {
     () => [...new Set(opAll.map((r) => r.mes))].sort((a, b) => b.localeCompare(a)),
     [opAll],
   );
-  const mesesMidea = useMemo(
-    () => [...new Set((midea.data ?? []).map((r) => r.mes))].sort((a, b) => b.localeCompare(a)),
-    [midea.data],
-  );
-  const mesesBosch = useMemo(
-    () => [...new Set((bosch.data ?? []).map((r) => r.mes))].sort((a, b) => b.localeCompare(a)),
-    [bosch.data],
-  );
+  const effMes = (local: string) => (filtroMesGlobal !== "all" ? filtroMesGlobal : local);
 
   // Global month filter (applies to every slide)
   const [filtroMesGlobal, setFiltroMesGlobal] = useState<string>("all");
@@ -189,33 +162,15 @@ function DashboardPage() {
   const [hideTendencia, setHideTendencia] = useState(false);
   const [hidePlano, setHidePlano] = useState(false);
   const [hideSwot, setHideSwot] = useState(false);
-  const [hideSlaMidea, setHideSlaMidea] = useState(false);
-  const [hideSlaBosch, setHideSlaBosch] = useState(false);
 
   // Filtros por slide (Mês + Operação independentes)
   const [filtroMesCart,  setFiltroMesCart]  = useState<string>("all");
   const [filtroOpCart,   setFiltroOpCart]   = useState<"all" | UnidadeKey>("all");
-  const [filtroMesMidea, setFiltroMesMidea] = useState<string>("all");
-  const [filtroOpMidea,  setFiltroOpMidea]  = useState<"all" | UnidadeKey>("all");
-  const [filtroMesBosch, setFiltroMesBosch] = useState<string>("all");
-  const [filtroOpBosch,  setFiltroOpBosch]  = useState<"all" | UnidadeKey>("all");
-
-  // legados / não usados — mantidos para evitar quebra de outros useMemos
-  const [filtroGrupoVol] = useState<"all" | "midea" | "bosch">("all");
-  const [filtroMesVol]   = useState<string>("all");
-  const [filtroGrupoProd] = useState<"all" | "midea" | "bosch">("all");
-  const [filtroMesProd]  = useState<string>("all");
-  const [filtroUnidade]  = useState<"all" | UnidadeKey>("all");
-  const [filtroUnidadeEvol] = useState<"all" | UnidadeKey>("all");
-  const [filtroMesEvol]  = useState<string>("all");
 
   const effMes = (local: string) => (filtroMesGlobal !== "all" ? filtroMesGlobal : local);
   const mesesGlobais = useMemo(
-    () =>
-      [...new Set([...mesesOp, ...mesesMidea, ...mesesBosch])].sort((a, b) =>
-        b.localeCompare(a),
-      ),
-    [mesesOp, mesesMidea, mesesBosch],
+    () => [...new Set(mesesOp)].sort((a, b) => b.localeCompare(a)),
+    [mesesOp],
   );
 
   const matchesMes = (m: string, f: string) => f === "all" || m === f;
@@ -399,15 +354,6 @@ function DashboardPage() {
     () => opGlobal.filter((r) => filtroGrupoKpi === "all" || grupoDe(r.unidade) === filtroGrupoKpi),
     [opGlobal, filtroGrupoKpi],
   );
-  const mideaGlobal = useMemo(
-    () => (midea.data ?? []).filter((r) => matchesMes(r.mes, filtroMesGlobal)),
-    [midea.data, filtroMesGlobal],
-  );
-  const boschGlobal = useMemo(
-    () => (bosch.data ?? []).filter((r) => matchesMes(r.mes, filtroMesGlobal)),
-    [bosch.data, filtroMesGlobal],
-  );
-
   const allMonthly = aggByMonth(opGlobalKpi);
   const totalVolume = allMonthly.reduce((s, r) => s + r.volume, 0);
   const totalPessoasMes = allMonthly.reduce((s, r) => s + r.pessoas, 0);
@@ -417,31 +363,12 @@ function DashboardPage() {
     return sum + rows.reduce((m, r) => Math.max(m, Number(r.pessoas ?? 0)), 0);
   }, 0);
 
-  const mideaFiltrada = (midea.data ?? []).filter((r) =>
-    matchesMes(r.mes, effMes(filtroMesMidea)),
-  );
-  const boschFiltrada = (bosch.data ?? []).filter((r) =>
-    matchesMes(r.mes, effMes(filtroMesBosch)),
-  );
-
-  const slaMideaVals = mideaGlobal.flatMap((r) => [r.start_up, r.otcc, r.otd]).map(Number);
-  const slaMedioMidea = slaMideaVals.length ? slaMideaVals.reduce((s, n) => s + n, 0) / slaMideaVals.length : 0;
-  const slaBoschVals = boschGlobal.flatMap((r) => [r.dig_conf, r.start_up, r.otcc, r.pinho]).map(Number);
-  const slaMedioBosch = slaBoschVals.length ? slaBoschVals.reduce((s, n) => s + n, 0) / slaBoschVals.length : 0;
-
-  const allSlaKpi = [
-    ...(filtroGrupoKpi !== "bosch" && filtroGrupoKpi !== "outros" ? slaMideaVals : []),
-    ...(filtroGrupoKpi !== "midea" && filtroGrupoKpi !== "outros" ? slaBoschVals : []),
-  ];
-  const slaMedio = allSlaKpi.length ? allSlaKpi.reduce((s, n) => s + n, 0) / allSlaKpi.length : 0;
-
   const filtroGrupoUnids = filtroGrupoKpi === "all"
     ? UNIDADES
     : UNIDADES.filter((u) => u.grupo === filtroGrupoKpi);
   const avgMetaKpi = filtroGrupoUnids.length > 0
     ? filtroGrupoUnids.reduce((s, u) => s + metaProdUnidade(u.key), 0) / filtroGrupoUnids.length
     : META_PRODUTIVIDADE;
-
 
   // Evolução mensal de produtividade por unidade (série completa para gráfico de barras)
   const evolucaoPorUnidade = useMemo(() => {
@@ -464,66 +391,6 @@ function DashboardPage() {
       return { ...u, data };
     });
   }, [opAll]);
-
-  const mideaRadarPorUnidade = useMemo(() => {
-    const keys = ["start_up", "otcc", "otd"] as const;
-    const unidadesMidea = UNIDADES.filter((u) => u.grupo === "midea");
-    return unidadesMidea.map((u) => {
-      const rows = mideaFiltrada.filter((r) => r.unidade === u.key);
-      const data = keys.map((k) => ({
-        indicador: k.toUpperCase().replace("_", "-"),
-        valor: rows.length ? rows.reduce((s, r) => s + Number(r[k] || 0), 0) / rows.length : 0,
-        meta: META_SLA,
-      }));
-      const valores = data.map((d) => d.valor);
-      const geral = valores.length ? valores.reduce((a, b) => a + b, 0) / valores.length : 0;
-      return { unidade: u, data, rowsCount: rows.length, geral };
-    });
-  }, [mideaFiltrada]);
-
-  const boschBarsPorPlanta = useMemo(() => {
-    const keys = ["dig_conf", "start_up", "otcc", "pinho"] as const;
-    const labels: Record<string, string> = {
-      dig_conf: "Digitação/Conferência",
-      start_up: "Registro DI/DUIMP",
-      otcc: "Liberação Transporte",
-      pinho: "Pinho",
-    };
-    return BOSCH_PLANTAS.map((p) => {
-      const rows = boschFiltrada.filter((r) => r.planta === p.key);
-      const data = keys.map((k) => ({
-        indicador: labels[k],
-        valor: rows.length ? rows.reduce((s, r) => s + Number(r[k] || 0), 0) / rows.length : 0,
-      }));
-      const valores = data.map((d) => d.valor);
-      const geral = valores.length ? valores.reduce((a, b) => a + b, 0) / valores.length : 0;
-      return { planta: p, data, rowsCount: rows.length, geral };
-    });
-  }, [boschFiltrada]);
-
-  // KPIs operacionais Bosch por planta (médias do período filtrado globalmente)
-  const kpisBoschPorPlanta = useMemo(() => {
-    const kpiDefs = [
-      { key: "proc_aereos", label: "Aéreos", unit: "" },
-      { key: "proc_maritimos", label: "Marítimos", unit: "" },
-      { key: "proc_canal_verde", label: "C. Verde", unit: "" },
-      { key: "proc_canal_vermelho", label: "C. Vermelho", unit: "" },
-      { key: "tm_dig_conf_h", label: "TM Dig/Conf", unit: "h" },
-      { key: "tm_registro_dias", label: "TM Registro", unit: "d" },
-      { key: "tm_liberacao_dias", label: "TM Liberação", unit: "d" },
-    ] as const;
-    const map = new Map<string, Array<{ label: string; value: number; unit: string }>>();
-    for (const p of BOSCH_PLANTAS) {
-      const rows = boschGlobal.filter((r) => r.planta === p.key);
-      const kpis = kpiDefs.map(({ key, label, unit }) => {
-        const vals = rows.map((r) => Number(r[key as keyof SlaBosch] ?? 0)).filter((n) => !Number.isNaN(n));
-        const avg = vals.length ? vals.reduce((s, n) => s + n, 0) / vals.length : 0;
-        return { label, value: avg, unit };
-      });
-      map.set(p.key, kpis);
-    }
-    return map;
-  }, [boschGlobal]);
 
   // Evolução de produtividade por operação (Jan até mês atual)
   const evolucaoProd = useMemo(() => {
@@ -596,7 +463,7 @@ function DashboardPage() {
               💰 {showCusto ? "Ocultar Custo" : "Ver Custo Operacional"}
             </button>
           </div>
-          {(hideTendencia || hidePlano || hideSwot || hideSlaMidea || hideSlaBosch) && (
+          {(hideTendencia || hidePlano || hideSwot) && (
             <div className="mt-3 flex items-center gap-2 flex-wrap">
               <span className="text-sm text-primary-foreground/80 uppercase tracking-wide">Seções ocultas</span>
               {hideTendencia && (
@@ -623,25 +490,9 @@ function DashboardPage() {
                   <Eye className="h-4 w-4" /> Análise SWOT
                 </button>
               )}
-              {hideSlaMidea && (
-                <button
-                  onClick={() => setHideSlaMidea(false)}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-semibold border bg-card/95 text-foreground border-border hover:bg-muted transition-colors"
-                >
-                  <Eye className="h-4 w-4" /> SLA Midea
-                </button>
-              )}
-              {hideSlaBosch && (
-                <button
-                  onClick={() => setHideSlaBosch(false)}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-semibold border bg-card/95 text-foreground border-border hover:bg-muted transition-colors"
-                >
-                  <Eye className="h-4 w-4" /> SLA Bosch
-                </button>
-              )}
             </div>
           )}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-10 w-full">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-10 w-full">
             <Kpi icon={TrendingUp} label="Volume Total" value={totalVolume.toLocaleString("pt-BR")} />
             <Kpi icon={Users} label="Headcount Total" value={headcountTotal.toLocaleString("pt-BR")} sub="Sem dupla contagem" />
             <Kpi
@@ -651,7 +502,7 @@ function DashboardPage() {
               sub={`Meta ${avgMetaKpi.toFixed(0)}`}
               good={avgProd >= avgMetaKpi}
             />
-            <Kpi icon={Target} label="SLA médio" value={`${slaMedio.toFixed(1)}%`} sub={`Meta ${META_SLA}%`} good={slaMedio >= META_SLA} />
+          </div>
           </div>
         </div>
       </Slide>
@@ -865,143 +716,7 @@ function DashboardPage() {
         </Slide>
       )}
 
-      {/* Slide 4 — SLA Midea por Operação */}
-      {!hideSlaMidea && (
-      <Slide>
-        <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
-          <div>
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">SLA — Midea</h2>
-            <p className="text-muted-foreground mt-1">{`SLA Geral por operação — Meta ${META_SLA}%`}</p>
-          </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <FiltroPadrao
-              mes={filtroMesMidea} onMes={setFiltroMesMidea} meses={mesesMidea}
-              op={filtroOpMidea}   onOp={setFiltroOpMidea}
-            />
-            <Button variant="outline" size="sm" onClick={() => setHideSlaMidea(true)} aria-label="Ocultar SLA Midea">
-              <EyeOff className="h-4 w-4 mr-2" />
-              Ocultar
-            </Button>
-          </div>
-        </div>
-        {filtroOpMidea === "bosch" ? (
-          <Card className="flex-1 flex items-center justify-center">
-            <CardContent className="text-center py-16 text-muted-foreground">
-              Nenhum dado de SLA Midea para a operação Bosch.<br />
-              Selecione <b>Todas</b> ou uma unidade Midea.
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 min-h-0">
-            {mideaRadarPorUnidade
-              .filter(({ unidade }) => filtroOpMidea === "all" || unidade.key === filtroOpMidea)
-              .map(({ unidade, data, rowsCount, geral }) => {
-                const ok = geral >= META_SLA;
-                return (
-                  <Card key={unidade.key} className="min-h-0 flex flex-col">
-                    <CardHeader>
-                      <CardTitle className="flex items-center justify-between">
-                        <span>{unidade.label}</span>
-                        <span className={`text-base font-semibold ${ok ? "text-success" : "text-destructive"}`}>
-                          {geral.toFixed(1)}%
-                        </span>
-                      </CardTitle>
-                      <CardDescription>SLA Geral (média dos indicadores)</CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex-1 min-h-[320px]">
-                      {rowsCount === 0 ? (
-                        <Empty msg="Sem dados cadastrados." />
-                      ) : (
-                        <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={data} layout="vertical" margin={{ left: 16, right: 24 }}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                            <XAxis type="number" domain={[0, 100]} />
-                            <YAxis type="category" dataKey="indicador" width={80} />
-                            <Tooltip formatter={(v: number) => `${Number(v).toFixed(1)}%`} />
-                            <ReferenceLine x={META_SLA} stroke={CD} strokeDasharray="4 4"
-                              label={{ value: `Meta ${META_SLA}%`, fill: CD, position: "top" }} />
-                            <Bar dataKey="valor" name="Real" fill={C1} radius={[0, 4, 4, 0]} />
-                          </BarChart>
-                        </ResponsiveContainer>
-                      )}
-                    </CardContent>
-                  </Card>
-                );
-              })}
-          </div>
-        )}
-      </Slide>
-      )}
-
-      {/* Slide 7 — SLA BOSCH por Planta */}
-      {!hideSlaBosch && (
-      <Slide>
-        <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
-          <div>
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">SLA — BOSCH</h2>
-            <p className="text-muted-foreground mt-1">{`SLA Geral por planta — Meta ${META_SLA}%`}</p>
-          </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <FiltroPadrao
-              mes={filtroMesBosch} onMes={setFiltroMesBosch} meses={mesesBosch}
-              op={filtroOpBosch}   onOp={setFiltroOpBosch}
-            />
-            <Button variant="outline" size="sm" onClick={() => setHideSlaBosch(true)} aria-label="Ocultar SLA Bosch">
-              <EyeOff className="h-4 w-4 mr-2" />
-              Ocultar
-            </Button>
-          </div>
-        </div>
-        {filtroOpBosch !== "all" && filtroOpBosch !== "bosch" ? (
-          <Card className="flex-1 flex items-center justify-center">
-            <CardContent className="text-center py-16 text-muted-foreground">
-              Nenhum dado de SLA Bosch para a operação Midea.<br />
-              Selecione <b>Todas</b> ou <b>Bosch</b>.
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 min-h-0">
-            {boschBarsPorPlanta.map(({ planta, data, rowsCount, geral }) => {
-              const ok = geral >= META_SLA;
-              return (
-                <Card key={planta.key} className="min-h-0 flex flex-col">
-                  <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
-                      <span>Planta {planta.label}</span>
-                      <span className={`text-base font-semibold ${ok ? "text-success" : "text-destructive"}`}>
-                        {geral.toFixed(1)}%
-                      </span>
-                    </CardTitle>
-                    <CardDescription>SLA Geral (média dos indicadores)</CardDescription>
-                  </CardHeader>
-                  <CardContent className="flex-1 min-h-[320px]">
-                    {rowsCount === 0 ? (
-                      <Empty msg="Sem dados cadastrados." />
-                    ) : (
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={data} layout="vertical" margin={{ left: 16, right: 24 }}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                          <XAxis type="number" domain={[0, 100]} />
-                          <YAxis type="category" dataKey="indicador" width={160} />
-                          <Tooltip formatter={(v: number) => `${Number(v).toFixed(1)}%`} />
-                          <ReferenceLine x={META_SLA} stroke={CD} strokeDasharray="4 4"
-                            label={{ value: `Meta ${META_SLA}%`, fill: CD, position: "top" }} />
-                          <Bar dataKey="valor" name="Real" fill={C1} radius={[0, 4, 4, 0]} />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    )}
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        )}
-      </Slide>
-      )}
-
-
-
-      {/* Slide 8 — Plano de Ação Estratégico */}
+      {/* Slide 4 — Plano de Ação Estratégico */}
       {!hidePlano && (
         <Slide>
           <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
