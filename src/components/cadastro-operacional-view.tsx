@@ -70,6 +70,7 @@ export function CadastroOperacionalView({ hideHeader = false }: { hideHeader?: b
   const [mes, setMes] = useState("");
   const [volume, setVolume] = useState<number | "">("");
   const [pessoas, setPessoas] = useState<number | "">("");
+  const [editandoId, setEditandoId] = useState<string | null>(null);
 
   const upsert = useMutation({
     mutationFn: async () => {
