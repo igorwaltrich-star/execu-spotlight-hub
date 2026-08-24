@@ -165,6 +165,12 @@ function DashboardPage() {
   // Filtros por slide (Mês + Operação independentes)
   const [filtroMesCart,  setFiltroMesCart]  = useState<string>("all");
   const [filtroOpCart,   setFiltroOpCart]   = useState<"all" | UnidadeKey>("all");
+  const [filtroMesVol,   setFiltroMesVol]   = useState<string>("all");
+  const [filtroGrupoVol, setFiltroGrupoVol] = useState<"all" | "midea" | "bosch" | "outros">("all");
+  const [filtroMesProd,  setFiltroMesProd]  = useState<string>("all");
+  const [filtroGrupoProd, setFiltroGrupoProd] = useState<"all" | "midea" | "bosch" | "outros">("all");
+  const [filtroMesEvol,  setFiltroMesEvol]  = useState<string>("all");
+  const [filtroUnidadeEvol, setFiltroUnidadeEvol] = useState<"all" | UnidadeKey>("all");
 
   const effMes = (local: string) => (filtroMesGlobal !== "all" ? filtroMesGlobal : local);
   const mesesGlobais = useMemo(
