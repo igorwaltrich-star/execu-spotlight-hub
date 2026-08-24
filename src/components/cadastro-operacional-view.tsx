@@ -24,7 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Trash2, Download, Upload } from "lucide-react";
+import { Trash2, Download, Upload, Pencil, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   fmtMes,
@@ -70,30 +70,54 @@ export function CadastroOperacionalView({ hideHeader = false }: { hideHeader?: b
   const [mes, setMes] = useState("");
   const [volume, setVolume] = useState<number | "">("");
   const [pessoas, setPessoas] = useState<number | "">("");
+  const [editandoId, setEditandoId] = useState<string | null>(null);
+
+  const limparFormulario = () => {
+    setMes("");
+    setVolume("");
+    setPessoas("");
+    setUnidade("");
+    setEditandoId(null);
+  };
+
+  const carregarEdicao = (r: Row) => {
+    setUnidade(r.unidade);
+    setMes(r.mes.slice(0, 7));
+    setVolume(r.volume);
+    setPessoas(r.pessoas);
+    setEditandoId(r.id);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   const upsert = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error("Não autenticado");
       if (!unidade || !mes || volume === "" || pessoas === "")
         throw new Error("Preencha todos os campos");
-      const { error } = await supabase.from("operacional_mensal").upsert(
-        {
-          user_id: user.id,
-          unidade,
-          mes: `${mes}-01`,
-          volume: Number(volume),
-          pessoas: Number(pessoas),
-        },
-        { onConflict: "user_id,mes,unidade" },
-      );
-      if (error) throw error;
+      if (editandoId) {
+        const { error } = await supabase
+          .from("operacional_mensal")
+          .update({ volume: Number(volume), pessoas: Number(pessoas) })
+          .eq("id", editandoId)
+          .eq("user_id", user.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("operacional_mensal").upsert(
+          {
+            user_id: user.id,
+            unidade,
+            mes: `${mes}-01`,
+            volume: Number(volume),
+            pessoas: Number(pessoas),
+          },
+          { onConflict: "user_id,mes,unidade" },
+        );
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
-      toast.success("Registro salvo");
-      setMes("");
-      setVolume("");
-      setPessoas("");
-      setUnidade("");
+      toast.success(editandoId ? "Registro atualizado" : "Registro salvo");
+      limparFormulario();
       qc.invalidateQueries({ queryKey });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -203,9 +227,11 @@ export function CadastroOperacionalView({ hideHeader = false }: { hideHeader?: b
         <Card>
           <CardHeader className="flex flex-row items-start justify-between gap-2 flex-wrap">
             <div>
-              <CardTitle>Novo registro mensal</CardTitle>
+              <CardTitle>{editandoId ? "Editar registro" : "Novo registro mensal"}</CardTitle>
               <CardDescription>
-                Atualiza automaticamente se já existir registro para a mesma unidade/mês.
+                {editandoId
+                  ? "Altere volume e pessoas do lançamento selecionado."
+                  : "Atualiza automaticamente se já existir registro para a mesma unidade/mês."}
               </CardDescription>
             </div>
             <div className="flex gap-2 flex-wrap">
@@ -246,7 +272,11 @@ export function CadastroOperacionalView({ hideHeader = false }: { hideHeader?: b
             >
               <div className="space-y-2">
                 <Label>Unidade</Label>
-                <Select value={unidade} onValueChange={(v) => setUnidade(v as UnidadeKey)}>
+                <Select
+                  value={unidade}
+                  onValueChange={(v) => setUnidade(v as UnidadeKey)}
+                  disabled={!!editandoId}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione…" />
                   </SelectTrigger>
@@ -261,7 +291,13 @@ export function CadastroOperacionalView({ hideHeader = false }: { hideHeader?: b
               </div>
               <div className="space-y-2">
                 <Label>Mês</Label>
-                <Input type="month" value={mes} onChange={(e) => setMes(e.target.value)} required />
+                <Input
+                  type="month"
+                  value={mes}
+                  onChange={(e) => setMes(e.target.value)}
+                  disabled={!!editandoId}
+                  required
+                />
               </div>
               <div className="space-y-2">
                 <Label>Volume</Label>
@@ -283,10 +319,15 @@ export function CadastroOperacionalView({ hideHeader = false }: { hideHeader?: b
                   required
                 />
               </div>
-              <div className="flex items-end">
-                <Button type="submit" className="w-full" disabled={upsert.isPending}>
-                  Salvar
+              <div className="flex items-end gap-2">
+                <Button type="submit" className="flex-1" disabled={upsert.isPending}>
+                  {editandoId ? "Atualizar" : "Salvar"}
                 </Button>
+                {editandoId && (
+                  <Button type="button" variant="outline" onClick={limparFormulario}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
             </form>
           </CardContent>
@@ -333,9 +374,19 @@ export function CadastroOperacionalView({ hideHeader = false }: { hideHeader?: b
                         {r.pessoas > 0 ? p.toFixed(1) : "—"}
                       </TableCell>
                       <TableCell>
-                        <Button size="icon" variant="ghost" onClick={() => del.mutate(r.id)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => carregarEdicao(r)}
+                            aria-label="Editar"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button size="icon" variant="ghost" onClick={() => del.mutate(r.id)} aria-label="Excluir">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   );
