@@ -502,7 +502,6 @@ function DashboardPage() {
               good={avgProd >= avgMetaKpi}
             />
           </div>
-          </div>
         </div>
       </Slide>
 
