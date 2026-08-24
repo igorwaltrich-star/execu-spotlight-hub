@@ -10,12 +10,15 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Pencil } from "lucide-react";
+import { GripVertical, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { useColaboradores } from "./use-colaboradores";
 
 type Tag = "a_player" | "b_player" | "c_player";
 type Row = { id: string; colaborador_id: string; tag: Tag; observacoes: string };
+
+const DEFAULT_TAG: Tag = "b_player";
 
 const TAG_META: Record<Tag, { label: string; className: string }> = {
   a_player: { label: "A-Player", className: "bg-success text-success-foreground" },
@@ -23,7 +26,7 @@ const TAG_META: Record<Tag, { label: string; className: string }> = {
   c_player: { label: "C-Player", className: "bg-destructive text-destructive-foreground" },
 };
 
-const emptyForm = { colaborador_id: "", tag: "b_player" as Tag, observacoes: "" };
+const TAGS = Object.keys(TAG_META) as Tag[];
 
 export function NavySeal() {
   const { user } = useAuth();
@@ -43,45 +46,46 @@ export function NavySeal() {
     },
   });
 
-  const [open, setOpen] = useState(false);
-  const [editId, setEditId] = useState<string | null>(null);
-  const [form, setForm] = useState(emptyForm);
+  const byColab = new Map(rows.map((r) => [r.colaborador_id, r]));
+  const cards = colabs.map((c) => {
+    const r = byColab.get(c.id);
+    return {
+      colaborador_id: c.id,
+      nome: c.nome,
+      cargo: c.cargo,
+      tag: r?.tag ?? DEFAULT_TAG,
+      observacoes: r?.observacoes ?? "",
+      rowId: r?.id ?? null,
+    };
+  });
 
-  const handleClose = (v: boolean) => {
-    if (!v) { setEditId(null); setForm(emptyForm); }
-    setOpen(v);
-  };
+  const [dragging, setDragging] = useState<string | null>(null);
+  const [dragOver, setDragOver] = useState<Tag | null>(null);
+  const [editColab, setEditColab] = useState<string | null>(null);
+  const [form, setForm] = useState({ tag: DEFAULT_TAG, observacoes: "" });
 
-  const startEdit = (r: Row) => {
-    setForm({ colaborador_id: r.colaborador_id, tag: r.tag, observacoes: r.observacoes ?? "" });
-    setEditId(r.id);
-    setOpen(true);
-  };
-
-  const add = useMutation({
-    mutationFn: async () => {
-      if (!user || !form.colaborador_id) throw new Error("Selecione um colaborador");
-      const { error } = await supabase.from("navy_seal").insert({ user_id: user.id, ...form });
-      if (error) throw error;
+  const classify = useMutation({
+    mutationFn: async (p: { colaborador_id: string; tag: Tag; observacoes?: string }) => {
+      if (!user) throw new Error("Sessão expirada");
+      const existing = byColab.get(p.colaborador_id);
+      if (existing) {
+        const patch: Partial<Row> = { tag: p.tag };
+        if (p.observacoes !== undefined) patch.observacoes = p.observacoes;
+        const { error } = await supabase.from("navy_seal").update(patch).eq("id", existing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("navy_seal").insert({
+          user_id: user.id,
+          colaborador_id: p.colaborador_id,
+          tag: p.tag,
+          observacoes: p.observacoes ?? "",
+        });
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
       toast.success("Classificação salva");
       qc.invalidateQueries({ queryKey: ["navy_seal"] });
-      setOpen(false); setForm(emptyForm);
-    },
-    onError: (e) => toast.error(e instanceof Error ? e.message : "Erro"),
-  });
-
-  const update = useMutation({
-    mutationFn: async () => {
-      if (!editId || !form.colaborador_id) throw new Error("Selecione um colaborador");
-      const { error } = await supabase.from("navy_seal").update(form).eq("id", editId);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("Classificação atualizada");
-      qc.invalidateQueries({ queryKey: ["navy_seal"] });
-      setOpen(false); setEditId(null); setForm(emptyForm);
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Erro"),
   });
@@ -91,75 +95,129 @@ export function NavySeal() {
       const { error } = await supabase.from("navy_seal").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["navy_seal"] }),
+    onSuccess: () => {
+      toast.success("Classificação removida");
+      qc.invalidateQueries({ queryKey: ["navy_seal"] });
+    },
   });
 
-  const nome = (id: string) => colabs.find((c) => c.id === id)?.nome ?? "—";
-  const grouped = (tag: Tag) => rows.filter((r) => r.tag === tag);
+  const drop = (tag: Tag) => {
+    setDragOver(null);
+    const id = dragging;
+    setDragging(null);
+    if (!id) return;
+    const current = byColab.get(id);
+    if ((current?.tag ?? DEFAULT_TAG) === tag && current) return;
+    classify.mutate({ colaborador_id: id, tag });
+  };
+
+  const editing = cards.find((c) => c.colaborador_id === editColab);
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader>
         <CardTitle>NavySeal — Classificação de Talentos</CardTitle>
-        <Button size="sm" onClick={() => { setForm(emptyForm); setEditId(null); setOpen(true); }}>
-          <Plus className="h-4 w-4 mr-1" />Classificar
-        </Button>
+        <p className="text-sm text-muted-foreground">
+          Arraste cada colaborador para o quadro desejado. Não classificados iniciam em “{TAG_META[DEFAULT_TAG].label}”.
+        </p>
       </CardHeader>
 
-      <Dialog open={open} onOpenChange={handleClose}>
+      <Dialog open={!!editColab} onOpenChange={(v) => !v && setEditColab(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editId ? "Editar classificação" : "Classificar talento"}</DialogTitle>
+            <DialogTitle>{editing?.nome}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
-            <div>
-              <Label>Colaborador</Label>
-              <Select value={form.colaborador_id} onValueChange={(v) => setForm({ ...form, colaborador_id: v })}>
-                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                <SelectContent>{colabs.map((c) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
             <div>
               <Label>Classificação</Label>
               <Select value={form.tag} onValueChange={(v) => setForm({ ...form, tag: v as Tag })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{(Object.keys(TAG_META) as Tag[]).map((t) => <SelectItem key={t} value={t}>{TAG_META[t].label}</SelectItem>)}</SelectContent>
+                <SelectContent>{TAGS.map((t) => <SelectItem key={t} value={t}>{TAG_META[t].label}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div>
               <Label>Observações</Label>
               <Textarea value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} />
             </div>
-            <Button onClick={() => editId ? update.mutate() : add.mutate()} disabled={add.isPending || update.isPending} className="w-full">Salvar</Button>
+            <Button
+              className="w-full"
+              disabled={classify.isPending}
+              onClick={() => {
+                if (!editColab) return;
+                classify.mutate(
+                  { colaborador_id: editColab, tag: form.tag, observacoes: form.observacoes },
+                  { onSuccess: () => setEditColab(null) },
+                );
+              }}
+            >
+              Salvar
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
 
       <CardContent>
+        {colabs.length === 0 && (
+          <p className="text-muted-foreground text-sm text-center py-6">Cadastre colaboradores para classificá-los</p>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {(Object.keys(TAG_META) as Tag[]).map((t) => (
-            <div key={t} className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Badge className={TAG_META[t].className}>{TAG_META[t].label}</Badge>
-                <span className="text-xs text-muted-foreground">({grouped(t).length})</span>
-              </div>
-              <div className="space-y-2">
-                {grouped(t).length === 0 && <p className="text-sm text-muted-foreground">—</p>}
-                {grouped(t).map((r) => (
-                  <div key={r.id} className="p-3 rounded-md border bg-card">
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium text-sm">{nome(r.colaborador_id)}</span>
-                      <div className="flex gap-1">
-                        <Button size="icon" variant="ghost" onClick={() => startEdit(r)}><Pencil className="h-4 w-4" /></Button>
-                        <Button size="icon" variant="ghost" onClick={() => del.mutate(r.id)}><Trash2 className="h-4 w-4" /></Button>
+          {TAGS.map((t) => {
+            const list = cards.filter((c) => c.tag === t);
+            return (
+              <div
+                key={t}
+                onDragOver={(e) => { e.preventDefault(); setDragOver(t); }}
+                onDragLeave={() => setDragOver((p) => (p === t ? null : p))}
+                onDrop={(e) => { e.preventDefault(); drop(t); }}
+                className={cn(
+                  "rounded-lg border bg-muted/30 p-3 space-y-2 min-h-40 transition-colors",
+                  dragOver === t && "border-primary bg-primary/10",
+                )}
+              >
+                <div className="flex items-center gap-2">
+                  <Badge className={TAG_META[t].className}>{TAG_META[t].label}</Badge>
+                  <span className="text-xs text-muted-foreground">({list.length})</span>
+                </div>
+                <div className="space-y-2">
+                  {list.length === 0 && <p className="text-xs text-muted-foreground">Solte aqui</p>}
+                  {list.map((c) => (
+                    <div
+                      key={c.colaborador_id}
+                      draggable
+                      onDragStart={() => setDragging(c.colaborador_id)}
+                      onDragEnd={() => { setDragging(null); setDragOver(null); }}
+                      onClick={() => { setForm({ tag: c.tag, observacoes: c.observacoes }); setEditColab(c.colaborador_id); }}
+                      className={cn(
+                        "p-3 rounded-md border bg-card cursor-grab active:cursor-grabbing",
+                        dragging === c.colaborador_id && "opacity-50",
+                      )}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-start gap-2 min-w-0">
+                          <GripVertical className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
+                          <div className="min-w-0">
+                            <p className="font-medium text-sm truncate">{c.nome}</p>
+                            {c.cargo && <p className="text-xs text-muted-foreground truncate">{c.cargo}</p>}
+                          </div>
+                        </div>
+                        {c.rowId && (
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            title="Remover classificação"
+                            onClick={(e) => { e.stopPropagation(); del.mutate(c.rowId!); }}
+                          >
+                            <RotateCcw className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
+                      {c.observacoes && <p className="text-xs text-muted-foreground mt-1">{c.observacoes}</p>}
                     </div>
-                    {r.observacoes && <p className="text-xs text-muted-foreground mt-1">{r.observacoes}</p>}
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </CardContent>
     </Card>
