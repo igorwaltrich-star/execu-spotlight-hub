@@ -374,9 +374,19 @@ export function CadastroOperacionalView({ hideHeader = false }: { hideHeader?: b
                         {r.pessoas > 0 ? p.toFixed(1) : "—"}
                       </TableCell>
                       <TableCell>
-                        <Button size="icon" variant="ghost" onClick={() => del.mutate(r.id)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => carregarEdicao(r)}
+                            aria-label="Editar"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button size="icon" variant="ghost" onClick={() => del.mutate(r.id)} aria-label="Excluir">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   );
