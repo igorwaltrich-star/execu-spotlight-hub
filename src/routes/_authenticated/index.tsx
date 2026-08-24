@@ -151,7 +151,6 @@ function DashboardPage() {
     () => [...new Set(opAll.map((r) => r.mes))].sort((a, b) => b.localeCompare(a)),
     [opAll],
   );
-  const effMes = (local: string) => (filtroMesGlobal !== "all" ? filtroMesGlobal : local);
 
   // Global month filter (applies to every slide)
   const [filtroMesGlobal, setFiltroMesGlobal] = useState<string>("all");
@@ -166,6 +165,12 @@ function DashboardPage() {
   // Filtros por slide (Mês + Operação independentes)
   const [filtroMesCart,  setFiltroMesCart]  = useState<string>("all");
   const [filtroOpCart,   setFiltroOpCart]   = useState<"all" | UnidadeKey>("all");
+  const [filtroMesVol,   setFiltroMesVol]   = useState<string>("all");
+  const [filtroGrupoVol, setFiltroGrupoVol] = useState<"all" | "midea" | "bosch" | "outros">("all");
+  const [filtroMesProd,  setFiltroMesProd]  = useState<string>("all");
+  const [filtroGrupoProd, setFiltroGrupoProd] = useState<"all" | "midea" | "bosch" | "outros">("all");
+  const [filtroMesEvol,  setFiltroMesEvol]  = useState<string>("all");
+  const [filtroUnidadeEvol, setFiltroUnidadeEvol] = useState<"all" | UnidadeKey>("all");
 
   const effMes = (local: string) => (filtroMesGlobal !== "all" ? filtroMesGlobal : local);
   const mesesGlobais = useMemo(
@@ -502,7 +507,6 @@ function DashboardPage() {
               sub={`Meta ${avgMetaKpi.toFixed(0)}`}
               good={avgProd >= avgMetaKpi}
             />
-          </div>
           </div>
         </div>
       </Slide>
