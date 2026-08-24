@@ -151,7 +151,6 @@ function DashboardPage() {
     () => [...new Set(opAll.map((r) => r.mes))].sort((a, b) => b.localeCompare(a)),
     [opAll],
   );
-  const effMes = (local: string) => (filtroMesGlobal !== "all" ? filtroMesGlobal : local);
 
   // Global month filter (applies to every slide)
   const [filtroMesGlobal, setFiltroMesGlobal] = useState<string>("all");
