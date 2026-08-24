@@ -72,29 +72,52 @@ export function CadastroOperacionalView({ hideHeader = false }: { hideHeader?: b
   const [pessoas, setPessoas] = useState<number | "">("");
   const [editandoId, setEditandoId] = useState<string | null>(null);
 
+  const limparFormulario = () => {
+    setMes("");
+    setVolume("");
+    setPessoas("");
+    setUnidade("");
+    setEditandoId(null);
+  };
+
+  const carregarEdicao = (r: Row) => {
+    setUnidade(r.unidade);
+    setMes(r.mes.slice(0, 7));
+    setVolume(r.volume);
+    setPessoas(r.pessoas);
+    setEditandoId(r.id);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const upsert = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error("Não autenticado");
       if (!unidade || !mes || volume === "" || pessoas === "")
         throw new Error("Preencha todos os campos");
-      const { error } = await supabase.from("operacional_mensal").upsert(
-        {
-          user_id: user.id,
-          unidade,
-          mes: `${mes}-01`,
-          volume: Number(volume),
-          pessoas: Number(pessoas),
-        },
-        { onConflict: "user_id,mes,unidade" },
-      );
-      if (error) throw error;
+      if (editandoId) {
+        const { error } = await supabase
+          .from("operacional_mensal")
+          .update({ volume: Number(volume), pessoas: Number(pessoas) })
+          .eq("id", editandoId)
+          .eq("user_id", user.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("operacional_mensal").upsert(
+          {
+            user_id: user.id,
+            unidade,
+            mes: `${mes}-01`,
+            volume: Number(volume),
+            pessoas: Number(pessoas),
+          },
+          { onConflict: "user_id,mes,unidade" },
+        );
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
-      toast.success("Registro salvo");
-      setMes("");
-      setVolume("");
-      setPessoas("");
-      setUnidade("");
+      toast.success(editandoId ? "Registro atualizado" : "Registro salvo");
+      limparFormulario();
       qc.invalidateQueries({ queryKey });
     },
     onError: (e: Error) => toast.error(e.message),
