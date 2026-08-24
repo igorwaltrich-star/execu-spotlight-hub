@@ -227,9 +227,11 @@ export function CadastroOperacionalView({ hideHeader = false }: { hideHeader?: b
         <Card>
           <CardHeader className="flex flex-row items-start justify-between gap-2 flex-wrap">
             <div>
-              <CardTitle>Novo registro mensal</CardTitle>
+              <CardTitle>{editandoId ? "Editar registro" : "Novo registro mensal"}</CardTitle>
               <CardDescription>
-                Atualiza automaticamente se já existir registro para a mesma unidade/mês.
+                {editandoId
+                  ? "Altere volume e pessoas do lançamento selecionado."
+                  : "Atualiza automaticamente se já existir registro para a mesma unidade/mês."}
               </CardDescription>
             </div>
             <div className="flex gap-2 flex-wrap">
@@ -270,7 +272,11 @@ export function CadastroOperacionalView({ hideHeader = false }: { hideHeader?: b
             >
               <div className="space-y-2">
                 <Label>Unidade</Label>
-                <Select value={unidade} onValueChange={(v) => setUnidade(v as UnidadeKey)}>
+                <Select
+                  value={unidade}
+                  onValueChange={(v) => setUnidade(v as UnidadeKey)}
+                  disabled={!!editandoId}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione…" />
                   </SelectTrigger>
@@ -285,7 +291,13 @@ export function CadastroOperacionalView({ hideHeader = false }: { hideHeader?: b
               </div>
               <div className="space-y-2">
                 <Label>Mês</Label>
-                <Input type="month" value={mes} onChange={(e) => setMes(e.target.value)} required />
+                <Input
+                  type="month"
+                  value={mes}
+                  onChange={(e) => setMes(e.target.value)}
+                  disabled={!!editandoId}
+                  required
+                />
               </div>
               <div className="space-y-2">
                 <Label>Volume</Label>
@@ -307,10 +319,15 @@ export function CadastroOperacionalView({ hideHeader = false }: { hideHeader?: b
                   required
                 />
               </div>
-              <div className="flex items-end">
-                <Button type="submit" className="w-full" disabled={upsert.isPending}>
-                  Salvar
+              <div className="flex items-end gap-2">
+                <Button type="submit" className="flex-1" disabled={upsert.isPending}>
+                  {editandoId ? "Atualizar" : "Salvar"}
                 </Button>
+                {editandoId && (
+                  <Button type="button" variant="outline" onClick={limparFormulario}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
             </form>
           </CardContent>
