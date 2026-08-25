@@ -375,6 +375,49 @@ function DashboardPage() {
     ? filtroGrupoUnids.reduce((s, u) => s + metaProdUnidade(u.key), 0) / filtroGrupoUnids.length
     : META_PRODUTIVIDADE;
 
+  // Resumo por grupo (Midea, Bosch, Outros) respeitando o filtro global de mês e de grupo
+  const resumoGrupos = useMemo(() => {
+    const grupos: { key: UnidadeGrupo; titulo: string }[] = [
+      { key: "midea", titulo: "Midea" },
+      { key: "bosch", titulo: "Bosch" },
+      { key: "outros", titulo: "Outras Operações" },
+    ];
+    return grupos
+      .filter((g) => filtroGrupoKpi === "all" || filtroGrupoKpi === g.key)
+      .map((g) => {
+        const unidades = UNIDADES.filter((u) => u.grupo === g.key).map((u) => {
+          const rows = opGlobal.filter((r) => r.unidade === u.key);
+          const volume = rows.reduce((s, r) => s + r.volume, 0);
+          const headcount = rows.reduce((m, r) => Math.max(m, Number(r.pessoas ?? 0)), 0);
+          const totalPessoas = rows.reduce((s, r) => s + Number(r.pessoas ?? 0), 0);
+          return {
+            key: u.key,
+            label: u.label,
+            volume,
+            headcount,
+            prod: totalPessoas > 0 ? volume / totalPessoas : 0,
+            meta: metaProdUnidade(u.key),
+          };
+        });
+        const rowsGrupo = opGlobal.filter((r) => grupoDe(r.unidade) === g.key);
+        const volume = rowsGrupo.reduce((s, r) => s + r.volume, 0);
+        const totalPessoas = rowsGrupo.reduce((s, r) => s + Number(r.pessoas ?? 0), 0);
+        const headcount = unidades.reduce((s, u) => s + u.headcount, 0);
+        const meta = unidades.length
+          ? unidades.reduce((s, u) => s + u.meta, 0) / unidades.length
+          : META_PRODUTIVIDADE;
+        return {
+          ...g,
+          volume,
+          headcount,
+          prod: totalPessoas > 0 ? volume / totalPessoas : 0,
+          meta,
+          unidades: unidades.filter((u) => u.volume > 0 || u.headcount > 0),
+        };
+      });
+  }, [opGlobal, filtroGrupoKpi]);
+
+
   // Evolução mensal de produtividade por unidade (série completa para gráfico de barras)
   const evolucaoPorUnidade = useMemo(() => {
     return UNIDADES.map((u) => {
