@@ -56,7 +56,9 @@ const AuthenticatedMetasRoute              = mkAuth('/metas',                  '
 const AuthenticatedRevisaoSemanalRoute     = mkAuth('/revisao-semanal',        '/revisao-semanal',        AuthenticatedRevisaoSemanalRouteImport)
 const AuthenticatedCheckinGerencialRoute   = mkAuth('/checkin-gerencial',      '/checkin-gerencial',      AuthenticatedCheckinGerencialRouteImport)
 const AuthenticatedEquipesRoute            = mkAuth('/equipes',                '/equipes',                AuthenticatedEquipesRouteImport)
-const AuthenticatedFuncionariosRoute       = mkAuth('/funcionarios',           '/funcionarios',           AuthenticatedFuncionariosRouteImport)
+import { Route as AuthenticatedBancoHorasRouteImport } from './routes/_authenticated/banco-horas'
+
+const AuthenticatedBancoHorasRoute       = mkAuth('/banco-horas',              '/banco-horas',            AuthenticatedBancoHorasRouteImport)
 
 interface AuthenticatedRouteChildren {
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
@@ -80,6 +82,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedCheckinGerencialRoute: typeof AuthenticatedCheckinGerencialRoute
   AuthenticatedEquipesRoute: typeof AuthenticatedEquipesRoute
   AuthenticatedFuncionariosRoute: typeof AuthenticatedFuncionariosRoute
+  AuthenticatedBancoHorasRoute: typeof AuthenticatedBancoHorasRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -104,6 +107,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedCheckinGerencialRoute,
   AuthenticatedEquipesRoute,
   AuthenticatedFuncionariosRoute,
+  AuthenticatedBancoHorasRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(AuthenticatedRouteChildren)
