@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard, Database, Briefcase, BarChart3,
-  AlertTriangle, DollarSign, ClipboardCheck,
+  AlertTriangle, DollarSign, ClipboardCheck, Clock,
   CalendarWeek, CheckSquare, Target, RefreshCw,
   MessageSquare, Users, UserCheck, LogOut, Anchor,
   ChevronDown, ChevronRight,
@@ -18,6 +18,7 @@ const NAV_OP: NavItem[] = [
   { to: "/produtividade",             label: "Produtividade",            icon: BarChart3 },
   { to: "/nao-conformidades",         label: "Não Conformidades",        icon: AlertTriangle },
   { to: "/custo-operacional",         label: "Custo Operacional",        icon: DollarSign },
+  { to: "/banco-horas",               label: "Banco de Horas",           icon: Clock },
   { to: "/checkin-operacional",       label: "Check IN Operacional",     icon: ClipboardCheck },
   { to: "/gerenciamento-operacional", label: "Gerenciamento",            icon: Briefcase },
 ];
