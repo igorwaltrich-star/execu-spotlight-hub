@@ -551,6 +551,41 @@ function DashboardPage() {
               good={avgProd >= avgMetaKpi}
             />
           </div>
+
+          {/* Resumo por operação — Midea, Bosch e Outras */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6 w-full">
+            {resumoGrupos.map((g) => (
+              <Card key={g.key} className="bg-card/95 backdrop-blur">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base">{g.titulo}</CardTitle>
+                  <CardDescription>
+                    Volume {g.volume.toLocaleString("pt-BR")} · HC {g.headcount.toLocaleString("pt-BR")} ·{" "}
+                    <span className={g.prod >= g.meta ? "text-success" : "text-destructive"}>
+                      Prod. {g.prod.toFixed(1)}
+                    </span>{" "}
+                    (meta {g.meta.toFixed(0)})
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-1.5">
+                  {g.unidades.length === 0 && (
+                    <p className="text-xs text-muted-foreground">Sem dados no período</p>
+                  )}
+                  {g.unidades.map((u) => (
+                    <div key={u.key} className="flex items-center justify-between text-sm">
+                      <span className="truncate">{u.label}</span>
+                      <span className="text-muted-foreground shrink-0">
+                        {u.volume.toLocaleString("pt-BR")} · {u.headcount} HC ·{" "}
+                        <span className={u.prod >= u.meta ? "text-success" : "text-destructive"}>
+                          {u.prod.toFixed(1)}
+                        </span>
+                      </span>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
         </div>
       </Slide>
 
