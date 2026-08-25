@@ -10,16 +10,17 @@ import {
 } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { NotificacoesBell } from "@/components/notificacoes-bell";
+import { usePerfil, type Papel } from "@/hooks/use-perfil";
 
-type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean };
+type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean; papeis?: Papel[] };
 
 const NAV_OP: NavItem[] = [
   { to: "/",                          label: "Dashboard Operacional",    icon: LayoutDashboard, exact: true },
   { to: "/cadastro",                  label: "Cadastro Operacional",     icon: Database },
   { to: "/produtividade",             label: "Produtividade",            icon: BarChart3 },
   { to: "/nao-conformidades",         label: "Não Conformidades",        icon: AlertTriangle },
-  { to: "/custo-operacional",         label: "Custo Operacional",        icon: DollarSign },
-  { to: "/banco-horas",               label: "Banco de Horas",           icon: Clock },
+  { to: "/custo-operacional",         label: "Custo Operacional",        icon: DollarSign, papeis: ["gestor","coordenador"] },
+  { to: "/banco-horas",               label: "Banco de Horas",           icon: Clock, papeis: ["gestor","coordenador","supervisor"] },
   { to: "/checkin-operacional",       label: "Check IN Operacional",     icon: ClipboardCheck },
   { to: "/gerenciamento-operacional", label: "Gerenciamento",            icon: Briefcase },
 ];
@@ -31,17 +32,20 @@ const NAV_DHO: NavItem[] = [
   { to: "/metas",               label: "Metas",               icon: Target },
   { to: "/revisao-semanal",     label: "Revisão Semanal",     icon: RefreshCw },
   { to: "/checkin-gerencial",   label: "Check IN Gerencial",  icon: MessageSquare },
-  { to: "/equipes",             label: "Equipes",             icon: Users },
-  { to: "/funcionarios",        label: "Funcionários",        icon: UserCheck },
+  { to: "/equipes",             label: "Equipes",             icon: Users, papeis: ["gestor","coordenador"] },
+  { to: "/funcionarios",        label: "Funcionários",        icon: UserCheck, papeis: ["gestor","coordenador"] },
   { to: "/projetos",            label: "Projetos",            icon: FolderKanban },
   { to: "/pdi",                 label: "PDI",                 icon: GraduationCap },
-  { to: "/relatorios",          label: "Relatórios",          icon: FileText },
+  { to: "/relatorios",          label: "Relatórios",          icon: FileText, papeis: ["gestor","coordenador"] },
 ];
 
 function NavGroup({ label, items, defaultOpen = true }: { label: string; items: NavItem[]; defaultOpen?: boolean }) {
   const loc = useLocation();
+  const { eUmDe } = usePerfil();
   const [open, setOpen] = useState(defaultOpen);
-  const hasActive = items.some(i => i.exact ? loc.pathname === i.to : loc.pathname.startsWith(i.to));
+  const visiveis = items.filter(i => !i.papeis || eUmDe(i.papeis));
+  if (visiveis.length === 0) return null;
+  const hasActive = visiveis.some(i => i.exact ? loc.pathname === i.to : loc.pathname.startsWith(i.to));
 
   return (
     <div className="mb-1">
@@ -52,7 +56,7 @@ function NavGroup({ label, items, defaultOpen = true }: { label: string; items: 
         <span>{label}</span>
         {open ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
       </button>
-      {open && items.map(item => {
+      {open && visiveis.map(item => {
         const active = item.exact ? loc.pathname === item.to : loc.pathname.startsWith(item.to);
         const Icon = item.icon;
         return (

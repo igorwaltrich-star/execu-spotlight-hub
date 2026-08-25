@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useColaboradores } from "@/components/gestao/use-colaboradores";
@@ -12,7 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Pencil, Trash2, UserCheck } from "lucide-react";
+import { Plus, Pencil, Trash2, UserCheck, ShieldCheck } from "lucide-react";
+import { usePerfil, type Papel } from "@/hooks/use-perfil";
 import { toast } from "sonner";
 
 type Colab = { id: string; nome: string; cargo?: string; area?: string };
@@ -23,14 +24,36 @@ const ROLE_CLS: Record<string, string> = { gestor: "bg-primary/10 text-primary b
 
 const emptyForm = { nome: "", cargo: "", area: "", operacao: "", tipo_contrato: "CLT", data_entrada: new Date().toISOString().slice(0, 10) };
 
+type PerfilRow = { id: string; nome: string; cargo: string | null; role: Papel; ativo: boolean };
+
 export function FuncionariosView() {
   const { user } = useAuth();
+  const { eGestor } = usePerfil();
   const qc = useQueryClient();
   const { data: colabs = [] } = useColaboradores();
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [filtro, setFiltro] = useState("");
   const [form, setForm] = useState(emptyForm);
+
+  const { data: perfis = [] } = useQuery({
+    queryKey: ["perfis_sistema"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("profiles").select("id,nome,cargo,role,ativo").order("nome");
+      if (error) throw error;
+      return (data ?? []) as PerfilRow[];
+    },
+    enabled: eGestor,
+  });
+
+  const alterarPapel = useMutation({
+    mutationFn: async ({ id, role }: { id: string; role: Papel }) => {
+      const { error } = await supabase.from("profiles").update({ role }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Perfil atualizado"); qc.invalidateQueries({ queryKey: ["perfis_sistema"] }); },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Erro ao alterar perfil"),
+  });
 
   const filtered = colabs.filter(c => !filtro || c.nome.toLowerCase().includes(filtro.toLowerCase()) || (c.cargo ?? "").toLowerCase().includes(filtro.toLowerCase()));
 
@@ -98,6 +121,57 @@ export function FuncionariosView() {
           </Table>
         </CardContent>
       </Card>
+
+      {eGestor && (
+        <Card>
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-2 mb-3">
+              <ShieldCheck className="h-4 w-4 text-primary" />
+              <div>
+                <div className="text-sm font-medium">Perfis de acesso</div>
+                <p className="text-xs text-muted-foreground">Define o que cada usuário enxerga no sistema</p>
+              </div>
+            </div>
+            {perfis.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4">Nenhum usuário com login cadastrado ainda.</p>
+            ) : (
+              <Table>
+                <TableHeader><TableRow>
+                  <TableHead>Usuário</TableHead>
+                  <TableHead>Cargo</TableHead>
+                  <TableHead className="w-44">Perfil de acesso</TableHead>
+                </TableRow></TableHeader>
+                <TableBody>
+                  {perfis.map(p => (
+                    <TableRow key={p.id}>
+                      <TableCell className="font-medium">
+                        {p.nome}
+                        {p.id === user?.id && <Badge variant="outline" className="ml-2 text-[10px]">você</Badge>}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">{p.cargo ?? "—"}</TableCell>
+                      <TableCell>
+                        <Select value={p.role} onValueChange={v => alterarPapel.mutate({ id: p.id, role: v as Papel })}>
+                          <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="gestor">Gestor</SelectItem>
+                            <SelectItem value="coordenador">Coordenador</SelectItem>
+                            <SelectItem value="supervisor">Supervisor</SelectItem>
+                            <SelectItem value="analista">Analista</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+            <p className="text-xs text-muted-foreground mt-3">
+              Gestor e Coordenador acessam custo, salários e relatórios. Supervisor vê banco de horas.
+              Analista acessa apenas as próprias atividades e metas.
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       <Dialog open={open} onOpenChange={v => { if (!v) setEditId(null); setOpen(v); }}>
         <DialogContent className="max-w-md">
