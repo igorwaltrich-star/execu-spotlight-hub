@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Database, Briefcase, BarChart3,
   AlertTriangle, DollarSign, ClipboardCheck, Clock,
   CalendarWeek, CheckSquare, Target, RefreshCw,
-  MessageSquare, Users, UserCheck, LogOut, Anchor,
+  MessageSquare, Users, UserCheck, LogOut, Anchor, FolderKanban, GraduationCap,
   ChevronDown, ChevronRight,
 } from "lucide-react";
 import { type ReactNode, useState } from "react";
@@ -32,6 +32,8 @@ const NAV_DHO: NavItem[] = [
   { to: "/checkin-gerencial",   label: "Check IN Gerencial",  icon: MessageSquare },
   { to: "/equipes",             label: "Equipes",             icon: Users },
   { to: "/funcionarios",        label: "Funcionários",        icon: UserCheck },
+  { to: "/projetos",            label: "Projetos",            icon: FolderKanban },
+  { to: "/pdi",                 label: "PDI",                 icon: GraduationCap },
 ];
 
 function NavGroup({ label, items, defaultOpen = true }: { label: string; items: NavItem[]; defaultOpen?: boolean }) {

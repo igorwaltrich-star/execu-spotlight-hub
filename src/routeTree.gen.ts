@@ -57,8 +57,12 @@ const AuthenticatedRevisaoSemanalRoute     = mkAuth('/revisao-semanal',        '
 const AuthenticatedCheckinGerencialRoute   = mkAuth('/checkin-gerencial',      '/checkin-gerencial',      AuthenticatedCheckinGerencialRouteImport)
 const AuthenticatedEquipesRoute            = mkAuth('/equipes',                '/equipes',                AuthenticatedEquipesRouteImport)
 import { Route as AuthenticatedBancoHorasRouteImport } from './routes/_authenticated/banco-horas'
+import { Route as AuthenticatedProjetosRouteImport } from './routes/_authenticated/projetos'
+import { Route as AuthenticatedPdiRouteImport } from './routes/_authenticated/pdi'
 
 const AuthenticatedBancoHorasRoute       = mkAuth('/banco-horas',              '/banco-horas',            AuthenticatedBancoHorasRouteImport)
+const AuthenticatedProjetosRoute         = mkAuth('/projetos',                 '/projetos',               AuthenticatedProjetosRouteImport)
+const AuthenticatedPdiRoute              = mkAuth('/pdi',                      '/pdi',                    AuthenticatedPdiRouteImport)
 
 interface AuthenticatedRouteChildren {
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
@@ -83,6 +87,8 @@ interface AuthenticatedRouteChildren {
   AuthenticatedEquipesRoute: typeof AuthenticatedEquipesRoute
   AuthenticatedFuncionariosRoute: typeof AuthenticatedFuncionariosRoute
   AuthenticatedBancoHorasRoute: typeof AuthenticatedBancoHorasRoute
+  AuthenticatedProjetosRoute: typeof AuthenticatedProjetosRoute
+  AuthenticatedPdiRoute: typeof AuthenticatedPdiRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -108,6 +114,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedEquipesRoute,
   AuthenticatedFuncionariosRoute,
   AuthenticatedBancoHorasRoute,
+  AuthenticatedProjetosRoute,
+  AuthenticatedPdiRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(AuthenticatedRouteChildren)
@@ -135,6 +143,9 @@ export interface FileRoutesByFullPath {
   '/checkin-gerencial': typeof AuthenticatedCheckinGerencialRoute
   '/equipes': typeof AuthenticatedEquipesRoute
   '/funcionarios': typeof AuthenticatedFuncionariosRoute
+  '/banco-horas': typeof AuthenticatedBancoHorasRoute
+  '/projetos': typeof AuthenticatedProjetosRoute
+  '/pdi': typeof AuthenticatedPdiRoute
 }
 
 export interface FileRoutesByTo extends FileRoutesByFullPath {}
@@ -164,6 +175,9 @@ export interface FileRoutesById {
   '/_authenticated/checkin-gerencial': typeof AuthenticatedCheckinGerencialRoute
   '/_authenticated/equipes': typeof AuthenticatedEquipesRoute
   '/_authenticated/funcionarios': typeof AuthenticatedFuncionariosRoute
+  '/_authenticated/banco-horas': typeof AuthenticatedBancoHorasRoute
+  '/_authenticated/projetos': typeof AuthenticatedProjetosRoute
+  '/_authenticated/pdi': typeof AuthenticatedPdiRoute
 }
 
 export interface FileRouteTypes {
