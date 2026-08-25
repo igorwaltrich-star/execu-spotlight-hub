@@ -375,6 +375,49 @@ function DashboardPage() {
     ? filtroGrupoUnids.reduce((s, u) => s + metaProdUnidade(u.key), 0) / filtroGrupoUnids.length
     : META_PRODUTIVIDADE;
 
+  // Resumo por grupo (Midea, Bosch, Outros) respeitando o filtro global de mês e de grupo
+  const resumoGrupos = useMemo(() => {
+    const grupos: { key: UnidadeGrupo; titulo: string }[] = [
+      { key: "midea", titulo: "Midea" },
+      { key: "bosch", titulo: "Bosch" },
+      { key: "outros", titulo: "Outras Operações" },
+    ];
+    return grupos
+      .filter((g) => filtroGrupoKpi === "all" || filtroGrupoKpi === g.key)
+      .map((g) => {
+        const unidades = UNIDADES.filter((u) => u.grupo === g.key).map((u) => {
+          const rows = opGlobal.filter((r) => r.unidade === u.key);
+          const volume = rows.reduce((s, r) => s + r.volume, 0);
+          const headcount = rows.reduce((m, r) => Math.max(m, Number(r.pessoas ?? 0)), 0);
+          const totalPessoas = rows.reduce((s, r) => s + Number(r.pessoas ?? 0), 0);
+          return {
+            key: u.key,
+            label: u.label,
+            volume,
+            headcount,
+            prod: totalPessoas > 0 ? volume / totalPessoas : 0,
+            meta: metaProdUnidade(u.key),
+          };
+        });
+        const rowsGrupo = opGlobal.filter((r) => grupoDe(r.unidade) === g.key);
+        const volume = rowsGrupo.reduce((s, r) => s + r.volume, 0);
+        const totalPessoas = rowsGrupo.reduce((s, r) => s + Number(r.pessoas ?? 0), 0);
+        const headcount = unidades.reduce((s, u) => s + u.headcount, 0);
+        const meta = unidades.length
+          ? unidades.reduce((s, u) => s + u.meta, 0) / unidades.length
+          : META_PRODUTIVIDADE;
+        return {
+          ...g,
+          volume,
+          headcount,
+          prod: totalPessoas > 0 ? volume / totalPessoas : 0,
+          meta,
+          unidades: unidades.filter((u) => u.volume > 0 || u.headcount > 0),
+        };
+      });
+  }, [opGlobal, filtroGrupoKpi]);
+
+
   // Evolução mensal de produtividade por unidade (série completa para gráfico de barras)
   const evolucaoPorUnidade = useMemo(() => {
     return UNIDADES.map((u) => {
@@ -508,6 +551,41 @@ function DashboardPage() {
               good={avgProd >= avgMetaKpi}
             />
           </div>
+
+          {/* Resumo por operação — Midea, Bosch e Outras */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6 w-full">
+            {resumoGrupos.map((g) => (
+              <Card key={g.key} className="bg-card/95 backdrop-blur">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base">{g.titulo}</CardTitle>
+                  <CardDescription>
+                    Volume {g.volume.toLocaleString("pt-BR")} · HC {g.headcount.toLocaleString("pt-BR")} ·{" "}
+                    <span className={g.prod >= g.meta ? "text-success" : "text-destructive"}>
+                      Prod. {g.prod.toFixed(1)}
+                    </span>{" "}
+                    (meta {g.meta.toFixed(0)})
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-1.5">
+                  {g.unidades.length === 0 && (
+                    <p className="text-xs text-muted-foreground">Sem dados no período</p>
+                  )}
+                  {g.unidades.map((u) => (
+                    <div key={u.key} className="flex items-center justify-between text-sm">
+                      <span className="truncate">{u.label}</span>
+                      <span className="text-muted-foreground shrink-0">
+                        {u.volume.toLocaleString("pt-BR")} · {u.headcount} HC ·{" "}
+                        <span className={u.prod >= u.meta ? "text-success" : "text-destructive"}>
+                          {u.prod.toFixed(1)}
+                        </span>
+                      </span>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
         </div>
       </Slide>
 
