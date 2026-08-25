@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { PanoramaReal } from "@/components/operacional/panorama-real";
 import { useRealtimeTable } from "@/hooks/use-realtime-table";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -587,6 +588,11 @@ function DashboardPage() {
           </div>
 
         </div>
+      </Slide>
+
+      {/* Panorama real — dados por pessoa, NC e custo */}
+      <Slide>
+        <PanoramaReal />
       </Slide>
 
       {/* Slide 2 — Indicadores por Carteira */}
