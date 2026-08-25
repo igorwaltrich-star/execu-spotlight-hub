@@ -1,16 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { EmDesenvolvimento } from "@/components/em-desenvolvimento";
+import { NaoConformidadesView } from "@/components/operacional/nao-conformidades-view";
 
 export const Route = createFileRoute("/_authenticated/nao-conformidades")({
-  component: NaoConformidadesPage,
+  component: NaoConformidadesView,
 });
-
-function NaoConformidadesPage() {
-  return (
-    <EmDesenvolvimento
-      titulo="Não Conformidades"
-      descricao="Registro de ocorrências com custo, referências Pinho/Cliente/OC e controle financeiro."
-      fase="Fase 1D"
-    />
-  );
-}

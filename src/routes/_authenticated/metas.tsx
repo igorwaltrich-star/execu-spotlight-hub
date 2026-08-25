@@ -1,16 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { EmDesenvolvimento } from "@/components/em-desenvolvimento";
+import { MetasView } from "@/components/dho/metas-view";
 
 export const Route = createFileRoute("/_authenticated/metas")({
-  component: MetasPage,
+  component: MetasView,
 });
-
-function MetasPage() {
-  return (
-    <EmDesenvolvimento
-      titulo="Metas"
-      descricao="Metas com atingimento automático e histórico semanal."
-      fase="Fase 2B"
-    />
-  );
-}

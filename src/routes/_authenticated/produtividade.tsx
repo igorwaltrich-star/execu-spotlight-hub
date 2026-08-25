@@ -1,16 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { EmDesenvolvimento } from "@/components/em-desenvolvimento";
+import { ProdutividadeView } from "@/components/operacional/produtividade-view";
 
 export const Route = createFileRoute("/_authenticated/produtividade")({
-  component: ProdutividadePage,
+  component: ProdutividadeView,
 });
-
-function ProdutividadePage() {
-  return (
-    <EmDesenvolvimento
-      titulo="Produtividade por Pessoa"
-      descricao="Registro individual de produtividade com FTE proporcional e rotation."
-      fase="Fase 1C"
-    />
-  );
-}

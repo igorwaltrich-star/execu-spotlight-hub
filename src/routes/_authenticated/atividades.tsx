@@ -1,16 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { EmDesenvolvimento } from "@/components/em-desenvolvimento";
+import { AtividadesView } from "@/components/dho/atividades-view";
 
 export const Route = createFileRoute("/_authenticated/atividades")({
-  component: AtividadesPage,
+  component: AtividadesView,
 });
-
-function AtividadesPage() {
-  return (
-    <EmDesenvolvimento
-      titulo="Atividades"
-      descricao="Gestão de atividades recorrentes e com prazo definido."
-      fase="Fase 2B"
-    />
-  );
-}
