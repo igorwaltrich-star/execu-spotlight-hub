@@ -5,10 +5,11 @@ import {
   LayoutDashboard, Database, Briefcase, BarChart3,
   AlertTriangle, DollarSign, ClipboardCheck, Clock,
   CalendarWeek, CheckSquare, Target, RefreshCw,
-  MessageSquare, Users, UserCheck, LogOut, Anchor, FolderKanban, GraduationCap,
+  MessageSquare, Users, UserCheck, LogOut, Anchor, FolderKanban, GraduationCap, FileText,
   ChevronDown, ChevronRight,
 } from "lucide-react";
 import { type ReactNode, useState } from "react";
+import { NotificacoesBell } from "@/components/notificacoes-bell";
 
 type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean };
 
@@ -34,6 +35,7 @@ const NAV_DHO: NavItem[] = [
   { to: "/funcionarios",        label: "Funcionários",        icon: UserCheck },
   { to: "/projetos",            label: "Projetos",            icon: FolderKanban },
   { to: "/pdi",                 label: "PDI",                 icon: GraduationCap },
+  { to: "/relatorios",          label: "Relatórios",          icon: FileText },
 ];
 
 function NavGroup({ label, items, defaultOpen = true }: { label: string; items: NavItem[]; defaultOpen?: boolean }) {
@@ -104,7 +106,8 @@ export function AppShell({ children }: { children: ReactNode }) {
             <div className="h-7 w-7 rounded-full bg-sidebar-primary grid place-items-center text-[10px] font-semibold text-sidebar-primary-foreground shrink-0">
               {initials}
             </div>
-            <span className="text-[11px] text-sidebar-foreground/60 truncate">{user?.email}</span>
+            <span className="text-[11px] text-sidebar-foreground/60 truncate flex-1">{user?.email}</span>
+            <NotificacoesBell />
           </div>
           <Button
             variant="ghost"

@@ -59,10 +59,12 @@ const AuthenticatedEquipesRoute            = mkAuth('/equipes',                '
 import { Route as AuthenticatedBancoHorasRouteImport } from './routes/_authenticated/banco-horas'
 import { Route as AuthenticatedProjetosRouteImport } from './routes/_authenticated/projetos'
 import { Route as AuthenticatedPdiRouteImport } from './routes/_authenticated/pdi'
+import { Route as AuthenticatedRelatoriosRouteImport } from './routes/_authenticated/relatorios'
 
 const AuthenticatedBancoHorasRoute       = mkAuth('/banco-horas',              '/banco-horas',            AuthenticatedBancoHorasRouteImport)
 const AuthenticatedProjetosRoute         = mkAuth('/projetos',                 '/projetos',               AuthenticatedProjetosRouteImport)
 const AuthenticatedPdiRoute              = mkAuth('/pdi',                      '/pdi',                    AuthenticatedPdiRouteImport)
+const AuthenticatedRelatoriosRoute       = mkAuth('/relatorios',               '/relatorios',             AuthenticatedRelatoriosRouteImport)
 
 interface AuthenticatedRouteChildren {
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
@@ -89,6 +91,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedBancoHorasRoute: typeof AuthenticatedBancoHorasRoute
   AuthenticatedProjetosRoute: typeof AuthenticatedProjetosRoute
   AuthenticatedPdiRoute: typeof AuthenticatedPdiRoute
+  AuthenticatedRelatoriosRoute: typeof AuthenticatedRelatoriosRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -116,6 +119,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedBancoHorasRoute,
   AuthenticatedProjetosRoute,
   AuthenticatedPdiRoute,
+  AuthenticatedRelatoriosRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(AuthenticatedRouteChildren)
@@ -146,6 +150,7 @@ export interface FileRoutesByFullPath {
   '/banco-horas': typeof AuthenticatedBancoHorasRoute
   '/projetos': typeof AuthenticatedProjetosRoute
   '/pdi': typeof AuthenticatedPdiRoute
+  '/relatorios': typeof AuthenticatedRelatoriosRoute
 }
 
 export interface FileRoutesByTo extends FileRoutesByFullPath {}
@@ -178,6 +183,7 @@ export interface FileRoutesById {
   '/_authenticated/banco-horas': typeof AuthenticatedBancoHorasRoute
   '/_authenticated/projetos': typeof AuthenticatedProjetosRoute
   '/_authenticated/pdi': typeof AuthenticatedPdiRoute
+  '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
 }
 
 export interface FileRouteTypes {
