@@ -104,6 +104,7 @@ type PlanoAcaoRow = {
 
 function DashboardPage() {
   useRealtimeTable("operacional_mensal", ["operacional_mensal"]);
+  useRealtimeTable("registros_produtividade", ["registros_produtividade_dash"]);
   useRealtimeTable("plano_acao", ["plano_acao_dash"]);
   useRealtimeTable("swot", ["swot_dash"]);
 
@@ -113,6 +114,18 @@ function DashboardPage() {
       const { data, error } = await supabase.from("operacional_mensal").select("*").order("mes");
       if (error) throw error;
       return data as OpRow[];
+    },
+  });
+
+  const prodPessoa = useQuery({
+    queryKey: ["registros_produtividade_dash"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("registros_produtividade")
+        .select("operacao,mes,volume_processos")
+        .order("mes");
+      if (error) throw error;
+      return (data ?? []) as Array<{ operacao: UnidadeKey; mes: string; volume_processos: number }>;
     },
   });
 
@@ -146,6 +159,39 @@ function DashboardPage() {
   });
 
   const opAll = op.data ?? [];
+
+  /**
+   * Volume unificado por mês/unidade.
+   * Combina o histórico de `operacional_mensal` com os lançamentos por pessoa
+   * de `registros_produtividade`. Quando o mesmo mês/unidade existe nas duas
+   * fontes, o registro por pessoa prevalece — é o dado mais granular e atual.
+   */
+  const volumeUnificado = useMemo(() => {
+    const chave = (u: string, m: string) => `${u}|${m.slice(0, 7)}`;
+    const mapa = new Map<string, { unidade: UnidadeKey; mes: string; volume: number }>();
+
+    for (const r of opAll) {
+      mapa.set(chave(r.unidade, r.mes), {
+        unidade: r.unidade,
+        mes: r.mes,
+        volume: Number(r.volume ?? 0),
+      });
+    }
+
+    const porPessoa = new Map<string, { unidade: UnidadeKey; mes: string; volume: number }>();
+    for (const r of prodPessoa.data ?? []) {
+      const k = chave(r.operacao, r.mes);
+      const atual = porPessoa.get(k);
+      porPessoa.set(k, {
+        unidade: r.operacao,
+        mes: r.mes,
+        volume: (atual?.volume ?? 0) + Number(r.volume_processos ?? 0),
+      });
+    }
+    for (const [k, v] of porPessoa) mapa.set(k, v);
+
+    return [...mapa.values()].sort((a, b) => a.mes.localeCompare(b.mes));
+  }, [opAll, prodPessoa.data]);
   const grupoDe = (u: UnidadeKey) => UNIDADES.find((x) => x.key === u)?.grupo;
 
   const mesesOp = useMemo(
@@ -221,7 +267,10 @@ function DashboardPage() {
   // Tendência de volume: histórico + projeção dos próximos 3 meses (regressão linear)
   const tendencia = useMemo(() => {
     const map = new Map<string, number>();
-    for (const r of opAll) map.set(r.mes, (map.get(r.mes) ?? 0) + Number(r.volume ?? 0));
+    for (const r of volumeUnificado) {
+      const k = r.mes.slice(0, 7) + "-01";
+      map.set(k, (map.get(k) ?? 0) + r.volume);
+    }
     const hist = [...map.entries()]
       .sort((a, b) => a[0].localeCompare(b[0]))
       .map(([mes, volume]) => ({ mes, volume }));
@@ -258,15 +307,16 @@ function DashboardPage() {
     const media = sy / n;
     const tendenciaPct = media > 0 ? (slope / media) * 100 : 0;
     return { data, media, tendenciaPct, hasForecast: true };
-  }, [opAll]);
+  }, [volumeUnificado]);
 
   // Tendência por operação: histórico cadastrado + projeção automática de 3 meses
   const tendenciaPorUnidade = useMemo(() => {
     return UNIDADES.map((unidade) => {
       const map = new Map<string, number>();
-      for (const r of opAll) {
+      for (const r of volumeUnificado) {
         if (r.unidade !== unidade.key) continue;
-        map.set(r.mes, (map.get(r.mes) ?? 0) + Number(r.volume ?? 0));
+        const k = r.mes.slice(0, 7) + "-01";
+        map.set(k, (map.get(k) ?? 0) + r.volume);
       }
       const hist = [...map.entries()]
         .sort((a, b) => a[0].localeCompare(b[0]))
@@ -311,7 +361,7 @@ function DashboardPage() {
         rowsCount: hist.length,
       };
     }).filter((t) => t.rowsCount > 0);
-  }, [opAll]);
+  }, [volumeUnificado]);
 
 
 
@@ -645,8 +695,8 @@ function DashboardPage() {
             <div>
               <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Tendência de Volume</h2>
               <p className="text-muted-foreground mt-1">
-                Histórico consolidado e projeção dos próximos 3 meses (regressão linear sobre os
-                últimos 12 meses cadastrados)
+                Histórico consolidado e projeção dos próximos 3 meses. A curva recalcula
+                automaticamente a cada lançamento em Cadastro Operacional ou Produtividade.
               </p>
             </div>
             <Button
