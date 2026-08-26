@@ -17,6 +17,7 @@ create table if not exists public.notificacoes (
   created_at  timestamptz not null default now()
 );
 alter table public.notificacoes enable row level security;
+drop policy if exists "notif_self" on public.notificacoes;
 create policy "notif_self" on public.notificacoes for all using (auth.uid() = user_id);
 create index if not exists notif_user_idx on public.notificacoes (user_id, lida, created_at desc);
 
@@ -164,6 +165,7 @@ create trigger trg_notif_encaminhamento
 -- ── Permite que os triggers gravem em audit_logs ─────────────
 -- A policy original só cobria SELECT, o que bloquearia os INSERTs
 -- feitos pelas triggers no contexto do usuário autenticado.
+drop policy if exists "audit_insert" on public.audit_logs;
 drop policy if exists "audit_insert" on public.audit_logs;
 create policy "audit_insert" on public.audit_logs
   for insert with check (auth.uid() is not null);

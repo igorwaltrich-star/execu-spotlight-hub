@@ -3,8 +3,10 @@ import type { ReactNode } from "react";
 import { usePerfil, type Papel } from "@/hooks/use-perfil";
 
 const LABEL: Record<Papel, string> = {
-  gestor: "Gestor", coordenador: "Coordenador",
-  supervisor: "Supervisor", analista: "Analista",
+  gestor: "Gestor",
+  coordenador: "Coordenador",
+  supervisor: "Supervisor",
+  analista: "Analista",
 };
 
 export function AcessoRestrito({ papeis }: { papeis: Papel[] }) {
@@ -17,8 +19,8 @@ export function AcessoRestrito({ papeis }: { papeis: Papel[] }) {
         </div>
         <h2 className="text-lg font-semibold mb-2">Acesso restrito</h2>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          Esta área está disponível apenas para {papeis.map(p => LABEL[p]).join(" e ")}.
-          Seu perfil atual é <strong>{LABEL[papel]}</strong>.
+          Esta área está disponível apenas para {papeis.map((p) => LABEL[p]).join(" e ")}. Seu
+          perfil atual é <strong>{LABEL[papel]}</strong>.
         </p>
         <p className="text-xs text-muted-foreground mt-3">
           Se você precisa de acesso, fale com o gestor da área.

@@ -5,19 +5,44 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Bell, CheckCheck, AlertTriangle, Target, CheckCircle2, CalendarCheck, MessageSquare, Inbox } from "lucide-react";
+import {
+  Bell,
+  CheckCheck,
+  AlertTriangle,
+  Target,
+  CheckCircle2,
+  CalendarCheck,
+  MessageSquare,
+  Inbox,
+} from "lucide-react";
 
-type Notif = { id: string; tipo: string; titulo: string; mensagem?: string; link?: string; lida: boolean; created_at: string };
+type Notif = {
+  id: string;
+  tipo: string;
+  titulo: string;
+  mensagem?: string;
+  link?: string;
+  lida: boolean;
+  created_at: string;
+};
 
 const ICONS: Record<string, typeof Bell> = {
-  atividade_atribuida: CheckCircle2, meta_atribuida: Target, meta_atingida: Target,
-  meta_nao_atingida: AlertTriangle, prazo_proximo: CalendarCheck, atrasado: AlertTriangle,
-  revisao_pendente: CalendarCheck, encaminhamento: MessageSquare,
+  atividade_atribuida: CheckCircle2,
+  meta_atribuida: Target,
+  meta_atingida: Target,
+  meta_nao_atingida: AlertTriangle,
+  prazo_proximo: CalendarCheck,
+  atrasado: AlertTriangle,
+  revisao_pendente: CalendarCheck,
+  encaminhamento: MessageSquare,
 };
 const CORES: Record<string, string> = {
-  meta_atingida: "text-success", meta_nao_atingida: "text-destructive",
-  atrasado: "text-destructive", prazo_proximo: "text-warning",
-  revisao_pendente: "text-warning", encaminhamento: "text-primary",
+  meta_atingida: "text-success",
+  meta_nao_atingida: "text-destructive",
+  atrasado: "text-destructive",
+  prazo_proximo: "text-warning",
+  revisao_pendente: "text-warning",
+  encaminhamento: "text-primary",
 };
 
 const tempoRelativo = (iso: string) => {
@@ -39,8 +64,12 @@ export function NotificacoesBell() {
     queryKey: ["notificacoes", user?.id],
     queryFn: async () => {
       if (!user) return [];
-      const { data, error } = await supabase.from("notificacoes").select("*")
-        .eq("user_id", user.id).order("created_at", { ascending: false }).limit(30);
+      const { data, error } = await supabase
+        .from("notificacoes")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(30);
       if (error) throw error;
       return (data ?? []) as Notif[];
     },
@@ -48,7 +77,7 @@ export function NotificacoesBell() {
     refetchInterval: 60000,
   });
 
-  const naoLidas = notifs.filter(n => !n.lida).length;
+  const naoLidas = notifs.filter((n) => !n.lida).length;
 
   const marcarLida = useMutation({
     mutationFn: async (id: string) => {
@@ -61,8 +90,11 @@ export function NotificacoesBell() {
   const marcarTodas = useMutation({
     mutationFn: async () => {
       if (!user) return;
-      const { error } = await supabase.from("notificacoes").update({ lida: true })
-        .eq("user_id", user.id).eq("lida", false);
+      const { error } = await supabase
+        .from("notificacoes")
+        .update({ lida: true })
+        .eq("user_id", user.id)
+        .eq("lida", false);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["notificacoes"] }),
@@ -76,7 +108,11 @@ export function NotificacoesBell() {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative h-8 w-8 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="relative h-8 w-8 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+        >
           <Bell className="h-4 w-4" />
           {naoLidas > 0 && (
             <span className="absolute -top-0.5 -right-0.5 h-4 min-w-4 px-1 rounded-full bg-destructive text-destructive-foreground text-[9px] font-semibold grid place-items-center">
@@ -89,8 +125,14 @@ export function NotificacoesBell() {
         <div className="flex items-center justify-between px-3 py-2 border-b">
           <span className="text-sm font-medium">Notificações</span>
           {naoLidas > 0 && (
-            <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => marcarTodas.mutate()}>
-              <CheckCheck className="h-3 w-3 mr-1" />Marcar todas
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 text-xs"
+              onClick={() => marcarTodas.mutate()}
+            >
+              <CheckCheck className="h-3 w-3 mr-1" />
+              Marcar todas
             </Button>
           )}
         </div>
@@ -101,7 +143,7 @@ export function NotificacoesBell() {
               Nenhuma notificação
             </div>
           )}
-          {notifs.map(n => {
+          {notifs.map((n) => {
             const Icon = ICONS[n.tipo] ?? Bell;
             const cor = CORES[n.tipo] ?? "text-muted-foreground";
             return (
@@ -114,11 +156,17 @@ export function NotificacoesBell() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-2">
                     <span className={`text-sm ${!n.lida ? "font-medium" : ""}`}>{n.titulo}</span>
-                    <span className="text-[10px] text-muted-foreground shrink-0">{tempoRelativo(n.created_at)}</span>
+                    <span className="text-[10px] text-muted-foreground shrink-0">
+                      {tempoRelativo(n.created_at)}
+                    </span>
                   </div>
-                  {n.mensagem && <p className="text-xs text-muted-foreground truncate">{n.mensagem}</p>}
+                  {n.mensagem && (
+                    <p className="text-xs text-muted-foreground truncate">{n.mensagem}</p>
+                  )}
                 </div>
-                {!n.lida && <span className="h-1.5 w-1.5 rounded-full bg-primary mt-1.5 shrink-0" />}
+                {!n.lida && (
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
+                )}
               </button>
             );
           })}

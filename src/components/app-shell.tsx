@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard, Database, Briefcase, BarChart3,
   AlertTriangle, DollarSign, ClipboardCheck, Clock,
-  CalendarWeek, CheckSquare, Target, RefreshCw,
+  CalendarDays, CheckSquare, Target, RefreshCw,
   MessageSquare, Users, UserCheck, LogOut, Anchor, FolderKanban, GraduationCap, FileText, Sparkles,
   ChevronDown, ChevronRight,
 } from "lucide-react";
@@ -28,7 +28,7 @@ const NAV_OP: NavItem[] = [
 
 const NAV_DHO: NavItem[] = [
   { to: "/dashboard-gestao",    label: "Dashboard Gestão",    icon: LayoutDashboard },
-  { to: "/minha-semana",        label: "Minha Semana",        icon: CalendarWeek },
+  { to: "/minha-semana",        label: "Minha Semana",        icon: CalendarDays },
   { to: "/atividades",          label: "Atividades",          icon: CheckSquare },
   { to: "/metas",               label: "Metas",               icon: Target },
   { to: "/revisao-semanal",     label: "Revisão Semanal",     icon: RefreshCw },

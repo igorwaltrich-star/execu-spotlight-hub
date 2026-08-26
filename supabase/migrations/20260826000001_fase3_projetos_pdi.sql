@@ -26,6 +26,7 @@ create table if not exists public.projetos (
   updated_at    timestamptz not null default now()
 );
 alter table public.projetos enable row level security;
+drop policy if exists "projetos_auth" on public.projetos;
 create policy "projetos_auth" on public.projetos for all using (auth.uid() is not null);
 create index if not exists projetos_status_idx on public.projetos (status, due_date);
 
@@ -38,6 +39,7 @@ create table if not exists public.projeto_atividades (
   unique (projeto_id, atividade_id)
 );
 alter table public.projeto_atividades enable row level security;
+drop policy if exists "projeto_ativ_auth" on public.projeto_atividades;
 create policy "projeto_ativ_auth" on public.projeto_atividades for all using (auth.uid() is not null);
 
 -- Vínculo meta → projeto
@@ -49,6 +51,7 @@ create table if not exists public.projeto_metas (
   unique (projeto_id, meta_id)
 );
 alter table public.projeto_metas enable row level security;
+drop policy if exists "projeto_metas_auth" on public.projeto_metas;
 create policy "projeto_metas_auth" on public.projeto_metas for all using (auth.uid() is not null);
 
 -- ── PDI estruturado ──────────────────────────────────────────
@@ -69,6 +72,7 @@ create table if not exists public.planos_desenvolvimento (
   updated_at      timestamptz not null default now()
 );
 alter table public.planos_desenvolvimento enable row level security;
+drop policy if exists "pdi_plano_auth" on public.planos_desenvolvimento;
 create policy "pdi_plano_auth" on public.planos_desenvolvimento for all using (auth.uid() is not null);
 create index if not exists pdi_plano_colab_idx on public.planos_desenvolvimento (colaborador_id, status);
 
@@ -85,6 +89,7 @@ create table if not exists public.atividades_desenvolvimento (
   created_at  timestamptz not null default now()
 );
 alter table public.atividades_desenvolvimento enable row level security;
+drop policy if exists "pdi_ativ_auth" on public.atividades_desenvolvimento;
 create policy "pdi_ativ_auth" on public.atividades_desenvolvimento for all using (auth.uid() is not null);
 
 -- Avaliações periódicas do PDI
@@ -98,4 +103,5 @@ create table if not exists public.avaliacoes_pdi (
   created_at  timestamptz not null default now()
 );
 alter table public.avaliacoes_pdi enable row level security;
+drop policy if exists "pdi_aval_auth" on public.avaliacoes_pdi;
 create policy "pdi_aval_auth" on public.avaliacoes_pdi for all using (auth.uid() is not null);

@@ -35,8 +35,12 @@ grant execute on function public.meu_papel() to authenticated;
 grant execute on function public.tem_papel(text[]) to authenticated;
 
 -- ── 2) Policies de profiles sem recursão ─────────────────────
-drop policy if exists "profiles_self"   on public.profiles;
-drop policy if exists "profiles_gestor" on public.profiles;
+drop policy if exists "profiles_self"        on public.profiles;
+drop policy if exists "profiles_gestor"      on public.profiles;
+drop policy if exists "profiles_read"        on public.profiles;
+drop policy if exists "profiles_update_self" on public.profiles;
+drop policy if exists "profiles_admin"       on public.profiles;
+drop policy if exists "profiles_insert_self" on public.profiles;
 
 -- todo autenticado lê a lista (necessário para exibir nomes)
 create policy "profiles_read" on public.profiles
@@ -96,22 +100,26 @@ on conflict (id) do nothing;
 
 -- ── 4) Restringe dados sensíveis de custo ────────────────────
 drop policy if exists "custo_gestor" on public.custo_pessoal_mensal;
+drop policy if exists "custo_restrito" on public.custo_pessoal_mensal;
 create policy "custo_restrito" on public.custo_pessoal_mensal
   for all using (public.tem_papel(array['gestor','coordenador']));
 
 -- banco de horas: cada um vê o seu; liderança vê todos
 drop policy if exists "banco_horas_auth" on public.banco_horas;
+drop policy if exists "banco_horas_lideranca" on public.banco_horas;
 create policy "banco_horas_lideranca" on public.banco_horas
   for all using (public.tem_papel(array['gestor','coordenador','supervisor']));
 
 -- auditoria: apenas gestor e coordenador consultam
 drop policy if exists "audit_gestor" on public.audit_logs;
+drop policy if exists "audit_leitura" on public.audit_logs;
 create policy "audit_leitura" on public.audit_logs
   for select using (public.tem_papel(array['gestor','coordenador']));
 
 -- ── 5) Revisões semanais sem recursão ────────────────────────
 drop policy if exists "revisoes_self"   on public.revisoes_semanais;
 drop policy if exists "revisoes_gestor" on public.revisoes_semanais;
+drop policy if exists "revisoes_lideranca" on public.revisoes_semanais;
 
 create policy "revisoes_self" on public.revisoes_semanais
   for all using (auth.uid() = user_id);

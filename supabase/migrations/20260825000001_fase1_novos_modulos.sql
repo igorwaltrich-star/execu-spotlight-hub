@@ -17,8 +17,10 @@ create table if not exists public.profiles (
   updated_at  timestamptz not null default now()
 );
 alter table public.profiles enable row level security;
+drop policy if exists "profiles_self" on public.profiles;
 create policy "profiles_self" on public.profiles
   for all using (auth.uid() = id);
+drop policy if exists "profiles_gestor" on public.profiles;
 create policy "profiles_gestor" on public.profiles
   for all using (
     exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'gestor')
@@ -40,6 +42,7 @@ create table if not exists public.alocacoes_periodo (
   unique (colaborador_id, operacao, mes)
 );
 alter table public.alocacoes_periodo enable row level security;
+drop policy if exists "alocacoes_auth" on public.alocacoes_periodo;
 create policy "alocacoes_auth" on public.alocacoes_periodo for all using (auth.uid() is not null);
 
 -- ── Registro de produtividade por pessoa ────────────────────
@@ -61,6 +64,7 @@ create table if not exists public.registros_produtividade (
   unique (colaborador_id, operacao, mes)
 );
 alter table public.registros_produtividade enable row level security;
+drop policy if exists "prod_auth" on public.registros_produtividade;
 create policy "prod_auth" on public.registros_produtividade for all using (auth.uid() is not null);
 
 -- ── Banco de horas ───────────────────────────────────────────
@@ -77,6 +81,7 @@ create table if not exists public.banco_horas (
   unique (colaborador_id, mes)
 );
 alter table public.banco_horas enable row level security;
+drop policy if exists "banco_horas_auth" on public.banco_horas;
 create policy "banco_horas_auth" on public.banco_horas for all using (auth.uid() is not null);
 
 -- ── Não conformidades ────────────────────────────────────────
@@ -106,6 +111,7 @@ create table if not exists public.nao_conformidades (
   updated_at          timestamptz not null default now()
 );
 alter table public.nao_conformidades enable row level security;
+drop policy if exists "nc_auth" on public.nao_conformidades;
 create policy "nc_auth" on public.nao_conformidades for all using (auth.uid() is not null);
 create index on public.nao_conformidades (operacao, data_ocorrencia);
 
@@ -132,6 +138,7 @@ create table if not exists public.custo_pessoal_mensal (
   unique (colaborador_id, mes_referencia)
 );
 alter table public.custo_pessoal_mensal enable row level security;
+drop policy if exists "custo_gestor" on public.custo_pessoal_mensal;
 create policy "custo_gestor" on public.custo_pessoal_mensal for all using (auth.uid() is not null);
 
 -- ── Check IN Operacional ─────────────────────────────────────
@@ -154,6 +161,7 @@ create table if not exists public.checkins_operacionais (
   created_at        timestamptz not null default now()
 );
 alter table public.checkins_operacionais enable row level security;
+drop policy if exists "checkin_op_auth" on public.checkins_operacionais;
 create policy "checkin_op_auth" on public.checkins_operacionais for all using (auth.uid() is not null);
 create index on public.checkins_operacionais (operacao, data);
 
@@ -168,6 +176,7 @@ create table if not exists public.equipes (
   updated_at  timestamptz not null default now()
 );
 alter table public.equipes enable row level security;
+drop policy if exists "equipes_auth" on public.equipes;
 create policy "equipes_auth" on public.equipes for all using (auth.uid() is not null);
 
 create table if not exists public.membros_equipe (
@@ -180,6 +189,7 @@ create table if not exists public.membros_equipe (
   unique (equipe_id, user_id)
 );
 alter table public.membros_equipe enable row level security;
+drop policy if exists "membros_auth" on public.membros_equipe;
 create policy "membros_auth" on public.membros_equipe for all using (auth.uid() is not null);
 
 -- ── Atividades (DHO) ─────────────────────────────────────────
@@ -206,6 +216,7 @@ create table if not exists public.atividades (
   updated_at      timestamptz not null default now()
 );
 alter table public.atividades enable row level security;
+drop policy if exists "atividades_auth" on public.atividades;
 create policy "atividades_auth" on public.atividades for all using (auth.uid() is not null);
 
 -- ── Ocorrências de atividades (recorrentes) ──────────────────
@@ -224,6 +235,7 @@ create table if not exists public.ocorrencias_atividade (
   created_at            timestamptz not null default now()
 );
 alter table public.ocorrencias_atividade enable row level security;
+drop policy if exists "ocorrencias_auth" on public.ocorrencias_atividade;
 create policy "ocorrencias_auth" on public.ocorrencias_atividade for all using (auth.uid() is not null);
 
 -- ── Metas (DHO) ──────────────────────────────────────────────
@@ -244,6 +256,7 @@ create table if not exists public.metas (
   updated_at      timestamptz not null default now()
 );
 alter table public.metas enable row level security;
+drop policy if exists "metas_auth" on public.metas;
 create policy "metas_auth" on public.metas for all using (auth.uid() is not null);
 
 create table if not exists public.resultados_meta (
@@ -262,6 +275,7 @@ create table if not exists public.resultados_meta (
   created_at            timestamptz not null default now()
 );
 alter table public.resultados_meta enable row level security;
+drop policy if exists "resultados_auth" on public.resultados_meta;
 create policy "resultados_auth" on public.resultados_meta for all using (auth.uid() is not null);
 
 -- ── Revisões semanais (DHO) ──────────────────────────────────
@@ -278,7 +292,9 @@ create table if not exists public.revisoes_semanais (
   unique (user_id, week_start)
 );
 alter table public.revisoes_semanais enable row level security;
+drop policy if exists "revisoes_self" on public.revisoes_semanais;
 create policy "revisoes_self" on public.revisoes_semanais for all using (auth.uid() = user_id);
+drop policy if exists "revisoes_gestor" on public.revisoes_semanais;
 create policy "revisoes_gestor" on public.revisoes_semanais for all using (
   exists (select 1 from public.profiles p where p.id = auth.uid() and p.role in ('gestor','coordenador','supervisor'))
 );
@@ -297,6 +313,7 @@ create table if not exists public.feedbacks (
   created_at      timestamptz not null default now()
 );
 alter table public.feedbacks enable row level security;
+drop policy if exists "feedbacks_auth" on public.feedbacks;
 create policy "feedbacks_auth" on public.feedbacks for all using (auth.uid() is not null);
 
 -- ── Check IN Gerencial (DHO) ─────────────────────────────────
@@ -312,6 +329,7 @@ create table if not exists public.checkins_gerenciais (
   created_at      timestamptz not null default now()
 );
 alter table public.checkins_gerenciais enable row level security;
+drop policy if exists "cg_auth" on public.checkins_gerenciais;
 create policy "cg_auth" on public.checkins_gerenciais for all using (auth.uid() is not null);
 
 create table if not exists public.checkin_gerencial_itens (
@@ -328,6 +346,7 @@ create table if not exists public.checkin_gerencial_itens (
   created_at            timestamptz not null default now()
 );
 alter table public.checkin_gerencial_itens enable row level security;
+drop policy if exists "cgi_auth" on public.checkin_gerencial_itens;
 create policy "cgi_auth" on public.checkin_gerencial_itens for all using (auth.uid() is not null);
 
 -- ── Audit logs ───────────────────────────────────────────────
@@ -342,6 +361,7 @@ create table if not exists public.audit_logs (
   created_at  timestamptz not null default now()
 );
 alter table public.audit_logs enable row level security;
+drop policy if exists "audit_gestor" on public.audit_logs;
 create policy "audit_gestor" on public.audit_logs for select using (
   exists (select 1 from public.profiles p where p.id = auth.uid() and p.role in ('gestor','coordenador'))
 );
