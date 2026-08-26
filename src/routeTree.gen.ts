@@ -60,11 +60,13 @@ import { Route as AuthenticatedBancoHorasRouteImport } from './routes/_authentic
 import { Route as AuthenticatedProjetosRouteImport } from './routes/_authenticated/projetos'
 import { Route as AuthenticatedPdiRouteImport } from './routes/_authenticated/pdi'
 import { Route as AuthenticatedRelatoriosRouteImport } from './routes/_authenticated/relatorios'
+import { Route as AuthenticatedInsightsRouteImport } from './routes/_authenticated/insights'
 
 const AuthenticatedBancoHorasRoute       = mkAuth('/banco-horas',              '/banco-horas',            AuthenticatedBancoHorasRouteImport)
 const AuthenticatedProjetosRoute         = mkAuth('/projetos',                 '/projetos',               AuthenticatedProjetosRouteImport)
 const AuthenticatedPdiRoute              = mkAuth('/pdi',                      '/pdi',                    AuthenticatedPdiRouteImport)
 const AuthenticatedRelatoriosRoute       = mkAuth('/relatorios',               '/relatorios',             AuthenticatedRelatoriosRouteImport)
+const AuthenticatedInsightsRoute         = mkAuth('/insights',                 '/insights',               AuthenticatedInsightsRouteImport)
 
 interface AuthenticatedRouteChildren {
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
@@ -92,6 +94,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedProjetosRoute: typeof AuthenticatedProjetosRoute
   AuthenticatedPdiRoute: typeof AuthenticatedPdiRoute
   AuthenticatedRelatoriosRoute: typeof AuthenticatedRelatoriosRoute
+  AuthenticatedInsightsRoute: typeof AuthenticatedInsightsRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -120,6 +123,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedProjetosRoute,
   AuthenticatedPdiRoute,
   AuthenticatedRelatoriosRoute,
+  AuthenticatedInsightsRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(AuthenticatedRouteChildren)
@@ -151,6 +155,7 @@ export interface FileRoutesByFullPath {
   '/projetos': typeof AuthenticatedProjetosRoute
   '/pdi': typeof AuthenticatedPdiRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
+  '/insights': typeof AuthenticatedInsightsRoute
 }
 
 export interface FileRoutesByTo extends FileRoutesByFullPath {}
@@ -184,6 +189,7 @@ export interface FileRoutesById {
   '/_authenticated/projetos': typeof AuthenticatedProjetosRoute
   '/_authenticated/pdi': typeof AuthenticatedPdiRoute
   '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
+  '/_authenticated/insights': typeof AuthenticatedInsightsRoute
 }
 
 export interface FileRouteTypes {

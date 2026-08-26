@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Database, Briefcase, BarChart3,
   AlertTriangle, DollarSign, ClipboardCheck, Clock,
   CalendarWeek, CheckSquare, Target, RefreshCw,
-  MessageSquare, Users, UserCheck, LogOut, Anchor, FolderKanban, GraduationCap, FileText,
+  MessageSquare, Users, UserCheck, LogOut, Anchor, FolderKanban, GraduationCap, FileText, Sparkles,
   ChevronDown, ChevronRight,
 } from "lucide-react";
 import { type ReactNode, useState } from "react";
@@ -22,6 +22,7 @@ const NAV_OP: NavItem[] = [
   { to: "/custo-operacional",         label: "Custo Operacional",        icon: DollarSign, papeis: ["gestor","coordenador"] },
   { to: "/banco-horas",               label: "Banco de Horas",           icon: Clock, papeis: ["gestor","coordenador","supervisor"] },
   { to: "/checkin-operacional",       label: "Check IN Operacional",     icon: ClipboardCheck },
+  { to: "/insights",                  label: "Insights",                 icon: Sparkles, papeis: ["gestor","coordenador","supervisor"] },
   { to: "/gerenciamento-operacional", label: "Gerenciamento",            icon: Briefcase },
 ];
 
