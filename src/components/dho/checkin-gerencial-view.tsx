@@ -125,16 +125,14 @@ export function CheckinGerencialView() {
   const saveCk = useMutation({
     mutationFn: async () => {
       if (!user || !ckForm.data) throw new Error("Data obrigatória");
-      const { error } = await supabase
-        .from("checkins_gerenciais")
-        .insert({
-          gestor_id: user.id,
-          data: ckForm.data,
-          frequencia: ckForm.frequencia,
-          status: "agendado",
-          observacoes: ckForm.observacoes || null,
-          participantes: [],
-        });
+      const { error } = await supabase.from("checkins_gerenciais").insert({
+        gestor_id: user.id,
+        data: ckForm.data,
+        frequencia: ckForm.frequencia,
+        status: "agendado",
+        observacoes: ckForm.observacoes || null,
+        participantes: [],
+      });
       if (error) throw error;
     },
     onSuccess: () => {
@@ -157,18 +155,16 @@ export function CheckinGerencialView() {
   const saveItem = useMutation({
     mutationFn: async () => {
       if (!selCkId || !itemForm.titulo) throw new Error("Título obrigatório");
-      const { error } = await supabase
-        .from("checkin_gerencial_itens")
-        .insert({
-          checkin_id: selCkId,
-          titulo: itemForm.titulo,
-          tipo: itemForm.tipo,
-          discussao: itemForm.discussao || null,
-          decisao: itemForm.decisao || null,
-          responsavel_id: itemForm.responsavel_id || null,
-          prazo: itemForm.prazo || null,
-          status_acompanhamento: "aberto",
-        });
+      const { error } = await supabase.from("checkin_gerencial_itens").insert({
+        checkin_id: selCkId,
+        titulo: itemForm.titulo,
+        tipo: itemForm.tipo,
+        discussao: itemForm.discussao || null,
+        decisao: itemForm.decisao || null,
+        responsavel_id: itemForm.responsavel_id || null,
+        prazo: itemForm.prazo || null,
+        status_acompanhamento: "aberto",
+      });
       if (error) throw error;
     },
     onSuccess: () => {

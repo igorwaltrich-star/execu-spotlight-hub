@@ -27,6 +27,12 @@ import {
 } from "@/components/ui/table";
 import { Plus, Pencil, Trash2, TrendingUp, Users, Activity } from "lucide-react";
 import { toast } from "sonner";
+import {
+  ImportarPlanilha,
+  parseMes,
+  parseNum,
+  buscarPorNome,
+} from "@/components/importar-planilha";
 
 type Registro = {
   id: string;
@@ -238,15 +244,65 @@ export function ProdutividadeView() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setOpenAloc(true);
-            }}
-          >
-            <Users className="h-4 w-4 mr-1.5" /> Registrar Rotation
-          </Button>
+          <div className="flex gap-2 flex-wrap">
+            <ImportarPlanilha
+              nomeArquivo="produtividade"
+              tabela="registros_produtividade"
+              onConflict="colaborador_id,operacao,mes"
+              invalidar={["registros_produtividade"]}
+              ajuda="Colaborador precisa existir no cadastro. Operação aceita o rótulo (Midea SC) ou a chave (midea_sc). Mês no formato AAAA-MM."
+              campos={[
+                {
+                  coluna: "Colaborador",
+                  exemplo: colabs[0]?.nome ?? "Nome do colaborador",
+                  obrigatorio: true,
+                  largura: 26,
+                },
+                { coluna: "Operacao", exemplo: "Midea SC", obrigatorio: true, largura: 16 },
+                { coluna: "Mes", exemplo: new Date().toISOString().slice(0, 7), obrigatorio: true },
+                { coluna: "Volume", exemplo: 85, obrigatorio: true },
+                { coluna: "Dias trabalhados", exemplo: 22, obrigatorio: true, largura: 18 },
+                { coluna: "Dias uteis", exemplo: 22, obrigatorio: true },
+                { coluna: "Observacoes", exemplo: "", largura: 30 },
+              ]}
+              montarRegistro={(l) => {
+                const c = buscarPorNome(colabs, l.colaborador);
+                if (!c) return { ok: false, erro: `Colaborador "${l.colaborador}" nao encontrado` };
+                const op = UNIDADES.find(
+                  (u) =>
+                    u.key === l.operacao.toLowerCase() ||
+                    u.label.toLowerCase() === l.operacao.toLowerCase(),
+                );
+                if (!op) return { ok: false, erro: `Operacao "${l.operacao}" nao reconhecida` };
+                const mes = parseMes(l.mes);
+                if (!mes) return { ok: false, erro: `Mes "${l.mes}" invalido (use AAAA-MM)` };
+                const uteis = parseNum(l.dias_uteis);
+                if (uteis <= 0) return { ok: false, erro: "Dias uteis deve ser maior que zero" };
+                return {
+                  ok: true,
+                  registro: {
+                    user_id: user?.id,
+                    colaborador_id: c.id,
+                    operacao: op.key,
+                    mes,
+                    volume_processos: Math.round(parseNum(l.volume)),
+                    dias_trabalhados: parseNum(l.dias_trabalhados),
+                    dias_uteis_mes: Math.round(uteis),
+                    observacoes: l.observacoes || null,
+                  },
+                };
+              }}
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setOpenAloc(true);
+              }}
+            >
+              <Users className="h-4 w-4 mr-1.5" /> Registrar Rotation
+            </Button>
+          </div>
           <Button
             size="sm"
             onClick={() => {

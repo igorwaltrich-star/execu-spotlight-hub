@@ -20,6 +20,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { Plus, CheckCircle, AlertTriangle, XCircle } from "lucide-react";
 import { toast } from "sonner";
+import { ImportarPlanilha, parseData, parseNum } from "@/components/importar-planilha";
 
 type CheckIn = {
   id: string;
@@ -152,15 +153,71 @@ export function CheckInOpView() {
           <h1 className="text-xl font-semibold">Check IN Operacional</h1>
           <p className="text-sm text-muted-foreground mt-0.5">Status diário/semanal por operação</p>
         </div>
-        <Button
-          size="sm"
-          onClick={() => {
-            setForm(emptyForm);
-            setOpen(true);
-          }}
-        >
-          <Plus className="h-4 w-4 mr-1.5" /> Novo Check IN
-        </Button>
+        <div className="flex gap-2 flex-wrap">
+          <ImportarPlanilha
+            nomeArquivo="checkin-operacional"
+            tabela="checkins_operacionais"
+            invalidar={["checkins_operacionais"]}
+            ajuda="Status: normal, atencao, critico. Ausentes separados por virgula."
+            campos={[
+              { coluna: "Data", exemplo: new Date().toISOString().slice(0, 10), obrigatorio: true },
+              { coluna: "Operacao", exemplo: "Midea SC", obrigatorio: true },
+              { coluna: "Status", exemplo: "normal", obrigatorio: true },
+              { coluna: "Volume previsto", exemplo: "", largura: 16 },
+              { coluna: "Volume realizado", exemplo: "", largura: 16 },
+              { coluna: "Ausentes", exemplo: "", largura: 24 },
+              { coluna: "Pendencias", exemplo: "", largura: 32 },
+              { coluna: "Observacoes", exemplo: "", largura: 32 },
+            ]}
+            montarRegistro={(l) => {
+              const op = UNIDADES.find(
+                (u) =>
+                  u.key === l.operacao.toLowerCase() ||
+                  u.label.toLowerCase() === l.operacao.toLowerCase(),
+              );
+              if (!op) return { ok: false, erro: `Operacao "${l.operacao}" nao reconhecida` };
+              const data = parseData(l.data);
+              if (!data) return { ok: false, erro: `Data "${l.data}" invalida` };
+              const st = (l.status || "normal").toLowerCase();
+              if (!["normal", "atencao", "critico"].includes(st))
+                return { ok: false, erro: `Status "${l.status}" invalido` };
+              return {
+                ok: true,
+                registro: {
+                  user_id: user?.id,
+                  operacao: op.key,
+                  data,
+                  frequencia: "diario",
+                  status_geral: st,
+                  presentes: [],
+                  ausentes: l.ausentes
+                    ? l.ausentes
+                        .split(",")
+                        .map((x) => x.trim())
+                        .filter(Boolean)
+                    : [],
+                  volume_previsto: l.volume_previsto
+                    ? Math.round(parseNum(l.volume_previsto))
+                    : null,
+                  volume_realizado: l.volume_realizado
+                    ? Math.round(parseNum(l.volume_realizado))
+                    : null,
+                  pendencias: l.pendencias || null,
+                  observacoes: l.observacoes || null,
+                },
+              };
+            }}
+          />
+          <Button
+            size="sm"
+            onClick={() => {
+              setForm(emptyForm);
+              setOpen(true);
+            }}
+          >
+            <Plus className="h-4 w-4 mr-1.5" /> Novo Check IN
+          </Button>
+        </div>
       </div>
 
       <Select value={filtroOp} onValueChange={setFiltroOp}>

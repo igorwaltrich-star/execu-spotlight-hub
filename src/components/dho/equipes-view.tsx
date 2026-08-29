@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Plus, Pencil, Trash2, Users, UserPlus, UserMinus } from "lucide-react";
 import { toast } from "sonner";
+import { ImportarPlanilha, buscarPorNome } from "@/components/importar-planilha";
 
 type Equipe = { id: string; nome: string; descricao?: string; gestor_id?: string; ativo: boolean };
 type Membro = { id: string; equipe_id: string; user_id: string; ativo: boolean };
@@ -100,17 +101,15 @@ export function EquipesView() {
   const addMembro = useMutation({
     mutationFn: async () => {
       if (!selEquipe || !newMembroId) throw new Error("Selecione um colaborador");
-      const { error } = await supabase
-        .from("membros_equipe")
-        .upsert(
-          {
-            equipe_id: selEquipe.id,
-            user_id: newMembroId,
-            ativo: true,
-            data_entrada: new Date().toISOString().slice(0, 10),
-          },
-          { onConflict: "equipe_id,user_id" },
-        );
+      const { error } = await supabase.from("membros_equipe").upsert(
+        {
+          equipe_id: selEquipe.id,
+          user_id: newMembroId,
+          ativo: true,
+          data_entrada: new Date().toISOString().slice(0, 10),
+        },
+        { onConflict: "equipe_id,user_id" },
+      );
       if (error) throw error;
     },
     onSuccess: () => {
@@ -145,17 +144,43 @@ export function EquipesView() {
           <h1 className="text-xl font-semibold">Equipes</h1>
           <p className="text-sm text-muted-foreground mt-0.5">Gestão de equipes e membros</p>
         </div>
-        <Button
-          size="sm"
-          onClick={() => {
-            setForm({ nome: "", descricao: "", gestor_id: "" });
-            setEditId(null);
-            setOpen(true);
-          }}
-        >
-          <Plus className="h-4 w-4 mr-1.5" />
-          Nova Equipe
-        </Button>
+        <div className="flex gap-2 flex-wrap">
+          <ImportarPlanilha
+            nomeArquivo="equipes"
+            tabela="equipes"
+            invalidar={["equipes"]}
+            ajuda="O gestor deve existir no cadastro de colaboradores. Os membros sao adicionados depois, pelo botao Gerenciar."
+            campos={[
+              { coluna: "Nome", exemplo: "Importacao", obrigatorio: true, largura: 24 },
+              { coluna: "Descricao", exemplo: "", largura: 34 },
+              { coluna: "Gestor", exemplo: "", largura: 24 },
+            ]}
+            montarRegistro={(l) => {
+              const g = l.gestor ? buscarPorNome(colabs, l.gestor) : undefined;
+              if (l.gestor && !g) return { ok: false, erro: `Gestor "${l.gestor}" nao encontrado` };
+              return {
+                ok: true,
+                registro: {
+                  nome: l.nome,
+                  descricao: l.descricao || null,
+                  gestor_id: g?.id ?? null,
+                  ativo: true,
+                },
+              };
+            }}
+          />
+          <Button
+            size="sm"
+            onClick={() => {
+              setForm({ nome: "", descricao: "", gestor_id: "" });
+              setEditId(null);
+              setOpen(true);
+            }}
+          >
+            <Plus className="h-4 w-4 mr-1.5" />
+            Nova Equipe
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

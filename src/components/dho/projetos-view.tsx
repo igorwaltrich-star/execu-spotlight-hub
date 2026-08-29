@@ -29,6 +29,12 @@ import {
   Link2,
 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  ImportarPlanilha,
+  parseData,
+  parseNum,
+  buscarPorNome,
+} from "@/components/importar-planilha";
 
 type Projeto = {
   id: string;
@@ -276,17 +282,70 @@ export function ProjetosView() {
             Agrupamento de atividades com objetivo, prazo e progresso
           </p>
         </div>
-        <Button
-          size="sm"
-          onClick={() => {
-            setForm(emptyForm);
-            setEditId(null);
-            setOpen(true);
-          }}
-        >
-          <Plus className="h-4 w-4 mr-1.5" />
-          Novo Projeto
-        </Button>
+        <div className="flex gap-2 flex-wrap">
+          <ImportarPlanilha
+            nomeArquivo="projetos"
+            tabela="projetos"
+            invalidar={["projetos"]}
+            ajuda="Prioridade: baixa, media, alta, critica. Status: nao_iniciado, em_andamento, concluido, atrasado, pausado, cancelado."
+            campos={[
+              {
+                coluna: "Nome",
+                exemplo: "Implantar novo procedimento",
+                obrigatorio: true,
+                largura: 32,
+              },
+              { coluna: "Objetivo", exemplo: "", largura: 32 },
+              { coluna: "Responsavel", exemplo: "", largura: 24 },
+              { coluna: "Inicio", exemplo: "" },
+              { coluna: "Prazo", exemplo: "" },
+              { coluna: "Prioridade", exemplo: "media" },
+              { coluna: "Status", exemplo: "nao_iniciado", largura: 16 },
+              { coluna: "Progresso", exemplo: 0 },
+            ]}
+            montarRegistro={(l) => {
+              const prio = (l.prioridade || "media").toLowerCase();
+              if (!PRIORIDADES.some((p) => p.v === prio))
+                return { ok: false, erro: `Prioridade "${l.prioridade}" invalida` };
+              const st = (l.status || "nao_iniciado").toLowerCase();
+              if (!STATUS.some((x) => x.v === st))
+                return { ok: false, erro: `Status "${l.status}" invalido` };
+              const resp = l.responsavel ? buscarPorNome(colabs, l.responsavel) : undefined;
+              if (l.responsavel && !resp)
+                return { ok: false, erro: `Responsavel "${l.responsavel}" nao encontrado` };
+              if (l.inicio && !parseData(l.inicio))
+                return { ok: false, erro: `Inicio "${l.inicio}" invalido` };
+              if (l.prazo && !parseData(l.prazo))
+                return { ok: false, erro: `Prazo "${l.prazo}" invalido` };
+              return {
+                ok: true,
+                registro: {
+                  nome: l.nome,
+                  objetivo: l.objetivo || null,
+                  responsavel_id: resp?.id ?? null,
+                  start_date: l.inicio ? parseData(l.inicio) : null,
+                  due_date: l.prazo ? parseData(l.prazo) : null,
+                  prioridade: prio,
+                  status: st,
+                  progresso: Math.max(0, Math.min(100, Math.round(parseNum(l.progresso)))),
+                  owner_id: user?.id,
+                  created_by: user?.id,
+                },
+              };
+            }}
+          />
+          <Button
+            size="sm"
+            onClick={() => {
+              setForm(emptyForm);
+              setEditId(null);
+              setOpen(true);
+            }}
+          >
+            <Plus className="h-4 w-4 mr-1.5" />
+            Novo Projeto
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

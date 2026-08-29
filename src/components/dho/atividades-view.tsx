@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/table";
 import { Plus, Pencil, Trash2, CheckCircle2, Clock, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
+import { ImportarPlanilha, parseData } from "@/components/importar-planilha";
 
 type Atividade = {
   id: string;
@@ -180,16 +181,74 @@ export function AtividadesView() {
             Gestão de atividades rotineiras e com prazo
           </p>
         </div>
-        <Button
-          size="sm"
-          onClick={() => {
-            setForm(emptyForm);
-            setEditId(null);
-            setOpen(true);
-          }}
-        >
-          <Plus className="h-4 w-4 mr-1.5" /> Nova Atividade
-        </Button>
+        <div className="flex gap-2 flex-wrap">
+          <ImportarPlanilha
+            nomeArquivo="atividades"
+            tabela="atividades"
+            invalidar={["atividades"]}
+            ajuda="Tipo: rotineira, prazo, projeto, pdi. Prioridade: baixa, media, alta, critica."
+            campos={[
+              {
+                coluna: "Titulo",
+                exemplo: "Conferir processos pendentes",
+                obrigatorio: true,
+                largura: 34,
+              },
+              { coluna: "Descricao", exemplo: "", largura: 34 },
+              { coluna: "Tipo", exemplo: "rotineira", obrigatorio: true },
+              { coluna: "Prioridade", exemplo: "media", obrigatorio: true },
+              { coluna: "Inicio", exemplo: "" },
+              { coluna: "Prazo", exemplo: "" },
+              { coluna: "Recorrencia", exemplo: "semanal" },
+              { coluna: "Status", exemplo: "nao_iniciada", largura: 16 },
+              { coluna: "Observacoes", exemplo: "", largura: 30 },
+            ]}
+            montarRegistro={(l) => {
+              const tipo = (l.tipo || "rotineira").toLowerCase();
+              if (!TIPOS.some((t) => t.v === tipo))
+                return { ok: false, erro: `Tipo "${l.tipo}" invalido` };
+              const prio = (l.prioridade || "media").toLowerCase();
+              if (!PRIORIDADES.some((p) => p.v === prio))
+                return { ok: false, erro: `Prioridade "${l.prioridade}" invalida` };
+              const st = (l.status || "nao_iniciada").toLowerCase();
+              if (!STATUS_LIST.some((x) => x.v === st))
+                return { ok: false, erro: `Status "${l.status}" invalido` };
+              const rec = (l.recorrencia || "").toLowerCase();
+              if (rec && !["semanal", "quinzenal", "mensal", "personalizada"].includes(rec))
+                return { ok: false, erro: `Recorrencia "${l.recorrencia}" invalida` };
+              if (l.inicio && !parseData(l.inicio))
+                return { ok: false, erro: `Inicio "${l.inicio}" invalido` };
+              if (l.prazo && !parseData(l.prazo))
+                return { ok: false, erro: `Prazo "${l.prazo}" invalido` };
+              return {
+                ok: true,
+                registro: {
+                  titulo: l.titulo,
+                  descricao: l.descricao || null,
+                  tipo,
+                  prioridade: prio,
+                  status: st,
+                  recorrencia: rec || null,
+                  start_date: l.inicio ? parseData(l.inicio) : null,
+                  due_date: l.prazo ? parseData(l.prazo) : null,
+                  observacoes: l.observacoes || null,
+                  owner_id: user?.id,
+                  created_by: user?.id,
+                },
+              };
+            }}
+          />
+          <Button
+            size="sm"
+            onClick={() => {
+              setForm(emptyForm);
+              setEditId(null);
+              setOpen(true);
+            }}
+          >
+            <Plus className="h-4 w-4 mr-1.5" /> Nova Atividade
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-4 gap-3">

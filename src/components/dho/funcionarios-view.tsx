@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/table";
 import { Plus, Pencil, Trash2, UserCheck, ShieldCheck } from "lucide-react";
 import { usePerfil, type Papel } from "@/hooks/use-perfil";
+import { ImportarPlanilha } from "@/components/importar-planilha";
 import { toast } from "sonner";
 
 type Colab = { id: string; nome: string; cargo?: string; area?: string };
@@ -112,14 +113,12 @@ export function FuncionariosView() {
           .eq("id", editId);
         if (error) throw error;
       } else {
-        const { error } = await supabase
-          .from("colaboradores")
-          .insert({
-            user_id: user.id,
-            nome: form.nome,
-            cargo: form.cargo || null,
-            area: form.operacao || form.area || null,
-          });
+        const { error } = await supabase.from("colaboradores").insert({
+          user_id: user.id,
+          nome: form.nome,
+          cargo: form.cargo || null,
+          area: form.operacao || form.area || null,
+        });
         if (error) throw error;
       }
     },
@@ -166,17 +165,46 @@ export function FuncionariosView() {
             Cadastro de colaboradores da equipe
           </p>
         </div>
-        <Button
-          size="sm"
-          onClick={() => {
-            setForm(emptyForm);
-            setEditId(null);
-            setOpen(true);
-          }}
-        >
-          <Plus className="h-4 w-4 mr-1.5" />
-          Novo Funcionário
-        </Button>
+        <div className="flex gap-2 flex-wrap">
+          <ImportarPlanilha
+            nomeArquivo="funcionarios"
+            tabela="colaboradores"
+            invalidar={["colaboradores"]}
+            ajuda="Operacao aceita o rotulo (Midea SC) ou a chave (midea_sc)."
+            campos={[
+              { coluna: "Nome", exemplo: "Nome completo", obrigatorio: true, largura: 28 },
+              { coluna: "Cargo", exemplo: "Analista de Importacao", largura: 26 },
+              { coluna: "Operacao", exemplo: "Midea SC", largura: 16 },
+            ]}
+            montarRegistro={(l) => {
+              let area: string | null = null;
+              if (l.operacao) {
+                const op = UNIDADES.find(
+                  (u) =>
+                    u.key === l.operacao.toLowerCase() ||
+                    u.label.toLowerCase() === l.operacao.toLowerCase(),
+                );
+                if (!op) return { ok: false, erro: `Operacao "${l.operacao}" nao reconhecida` };
+                area = op.key;
+              }
+              return {
+                ok: true,
+                registro: { user_id: user?.id, nome: l.nome, cargo: l.cargo || null, area },
+              };
+            }}
+          />
+          <Button
+            size="sm"
+            onClick={() => {
+              setForm(emptyForm);
+              setEditId(null);
+              setOpen(true);
+            }}
+          >
+            <Plus className="h-4 w-4 mr-1.5" />
+            Novo Funcionário
+          </Button>
+        </div>
       </div>
 
       <div className="flex gap-3 items-center">

@@ -28,6 +28,12 @@ import {
 } from "@/components/ui/table";
 import { Plus, Pencil, Trash2, AlertTriangle, DollarSign, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
+import {
+  ImportarPlanilha,
+  parseData,
+  parseNum,
+  buscarPorNome,
+} from "@/components/importar-planilha";
 
 type NC = {
   id: string;
@@ -177,16 +183,84 @@ export function NaoConformidadesView() {
             Registro de ocorrências com controle de custo e recuperação
           </p>
         </div>
-        <Button
-          size="sm"
-          onClick={() => {
-            setForm(emptyForm);
-            setEditId(null);
-            setOpen(true);
-          }}
-        >
-          <Plus className="h-4 w-4 mr-1.5" /> Nova Ocorrência
-        </Button>
+        <div className="flex gap-2 flex-wrap">
+          <ImportarPlanilha
+            nomeArquivo="nao-conformidades"
+            tabela="nao_conformidades"
+            invalidar={["nao_conformidades"]}
+            ajuda="Tipo: erro_digitacao, prazo_perdido, doc_incorreto, comunicacao, outro. Data em AAAA-MM-DD ou DD/MM/AAAA."
+            campos={[
+              { coluna: "Data", exemplo: new Date().toISOString().slice(0, 10), obrigatorio: true },
+              { coluna: "Operacao", exemplo: "Bosch", obrigatorio: true },
+              { coluna: "Tipo", exemplo: "prazo_perdido", obrigatorio: true, largura: 18 },
+              {
+                coluna: "Descricao",
+                exemplo: "Descreva a ocorrencia",
+                obrigatorio: true,
+                largura: 36,
+              },
+              { coluna: "Responsavel", exemplo: "", largura: 24 },
+              { coluna: "Ref Pinho", exemplo: "PNH-2026-0001", largura: 18 },
+              { coluna: "Ref Cliente", exemplo: "", largura: 18 },
+              { coluna: "Numero OC", exemplo: "", largura: 16 },
+              { coluna: "Numero Processo", exemplo: "", largura: 18 },
+              { coluna: "Custo", exemplo: 0 },
+              { coluna: "Reembolsavel", exemplo: "nao" },
+              { coluna: "Status", exemplo: "pendente", largura: 16 },
+              { coluna: "Valor Recuperado", exemplo: 0, largura: 18 },
+            ]}
+            montarRegistro={(l) => {
+              const op = UNIDADES.find(
+                (u) =>
+                  u.key === l.operacao.toLowerCase() ||
+                  u.label.toLowerCase() === l.operacao.toLowerCase(),
+              );
+              if (!op) return { ok: false, erro: `Operacao "${l.operacao}" nao reconhecida` };
+              const data = parseData(l.data);
+              if (!data) return { ok: false, erro: `Data "${l.data}" invalida` };
+              const tipo = l.tipo.toLowerCase();
+              if (!TIPOS.some((t) => t.value === tipo))
+                return { ok: false, erro: `Tipo "${l.tipo}" invalido` };
+              const status = (l.status || "nao_aplicavel").toLowerCase();
+              if (!STATUS_FIN.some((x) => x.value === status))
+                return { ok: false, erro: `Status "${l.status}" invalido` };
+              const resp = l.responsavel ? buscarPorNome(colabs, l.responsavel) : undefined;
+              if (l.responsavel && !resp)
+                return { ok: false, erro: `Responsavel "${l.responsavel}" nao encontrado` };
+              return {
+                ok: true,
+                registro: {
+                  user_id: user?.id,
+                  operacao: op.key,
+                  tipo,
+                  descricao: l.descricao,
+                  data_ocorrencia: data,
+                  colaborador_id: resp?.id ?? null,
+                  ref_pinho: l.ref_pinho || null,
+                  ref_cliente: l.ref_cliente || null,
+                  numero_oc: l.numero_oc || null,
+                  numero_processo: l.numero_processo || null,
+                  custo_gerado: parseNum(l.custo),
+                  reembolsavel: ["sim", "true", "1", "s"].includes(
+                    (l.reembolsavel || "").toLowerCase(),
+                  ),
+                  status_financeiro: status,
+                  valor_recuperado: parseNum(l.valor_recuperado),
+                },
+              };
+            }}
+          />
+          <Button
+            size="sm"
+            onClick={() => {
+              setForm(emptyForm);
+              setEditId(null);
+              setOpen(true);
+            }}
+          >
+            <Plus className="h-4 w-4 mr-1.5" /> Nova Ocorrência
+          </Button>
+        </div>
       </div>
 
       <div className="flex gap-3 flex-wrap">

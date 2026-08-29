@@ -27,6 +27,7 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { Plus, Pencil, Trash2, Target, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
+import { ImportarPlanilha, parseData, parseNum } from "@/components/importar-planilha";
 
 type Meta = {
   id: string;
@@ -228,16 +229,68 @@ export function MetasView() {
           >
             <TrendingUp className="h-4 w-4 mr-1.5" /> Registrar Resultado
           </Button>
-          <Button
-            size="sm"
-            onClick={() => {
-              setForm(emptyMeta);
-              setEditId(null);
-              setOpenMeta(true);
-            }}
-          >
-            <Plus className="h-4 w-4 mr-1.5" /> Nova Meta
-          </Button>
+          <div className="flex gap-2 flex-wrap">
+            <ImportarPlanilha
+              nomeArquivo="metas"
+              tabela="metas"
+              invalidar={["metas"]}
+              ajuda="Unidade sugerida: processos, quantidade, percentual, horas, dias, documentos."
+              campos={[
+                {
+                  coluna: "Titulo",
+                  exemplo: "Processar 50 processos por semana",
+                  obrigatorio: true,
+                  largura: 34,
+                },
+                { coluna: "Descricao", exemplo: "", largura: 30 },
+                { coluna: "Valor esperado", exemplo: 50, obrigatorio: true, largura: 16 },
+                { coluna: "Unidade", exemplo: "processos", obrigatorio: true },
+                {
+                  coluna: "Inicio",
+                  exemplo: new Date().toISOString().slice(0, 10),
+                  obrigatorio: true,
+                },
+                { coluna: "Prazo", exemplo: "", obrigatorio: true },
+                { coluna: "Recorrencia", exemplo: "semanal" },
+              ]}
+              montarRegistro={(l) => {
+                const ini = parseData(l.inicio);
+                if (!ini) return { ok: false, erro: `Inicio "${l.inicio}" invalido` };
+                const fim = parseData(l.prazo);
+                if (!fim) return { ok: false, erro: `Prazo "${l.prazo}" invalido` };
+                const val = parseNum(l.valor_esperado);
+                if (val <= 0) return { ok: false, erro: "Valor esperado deve ser maior que zero" };
+                const rec = (l.recorrencia || "").toLowerCase();
+                if (rec && !["semanal", "quinzenal", "mensal"].includes(rec))
+                  return { ok: false, erro: `Recorrencia "${l.recorrencia}" invalida` };
+                return {
+                  ok: true,
+                  registro: {
+                    titulo: l.titulo,
+                    descricao: l.descricao || null,
+                    valor_esperado: val,
+                    unidade: l.unidade || "quantidade",
+                    start_date: ini,
+                    end_date: fim,
+                    recorrencia: rec || null,
+                    status: "ativa",
+                    owner_id: user?.id,
+                    created_by: user?.id,
+                  },
+                };
+              }}
+            />
+            <Button
+              size="sm"
+              onClick={() => {
+                setForm(emptyMeta);
+                setEditId(null);
+                setOpenMeta(true);
+              }}
+            >
+              <Plus className="h-4 w-4 mr-1.5" /> Nova Meta
+            </Button>
+          </div>
         </div>
       </div>
 

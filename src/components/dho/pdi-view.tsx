@@ -29,6 +29,12 @@ import {
   MessageSquarePlus,
 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  ImportarPlanilha,
+  parseData,
+  parseNum,
+  buscarPorNome,
+} from "@/components/importar-planilha";
 
 type Plano = {
   id: string;
@@ -299,17 +305,75 @@ export function PdiView() {
             Competências, atividades de desenvolvimento e avaliações periódicas
           </p>
         </div>
-        <Button
-          size="sm"
-          onClick={() => {
-            setForm(emptyPlano);
-            setEditId(null);
-            setOpenPlano(true);
-          }}
-        >
-          <Plus className="h-4 w-4 mr-1.5" />
-          Novo PDI
-        </Button>
+        <div className="flex gap-2 flex-wrap">
+          <ImportarPlanilha
+            nomeArquivo="pdi"
+            tabela="planos_desenvolvimento"
+            invalidar={["planos_desenvolvimento"]}
+            ajuda="Status: nao_iniciado, em_andamento, concluido, atrasado, cancelado."
+            campos={[
+              {
+                coluna: "Colaborador",
+                exemplo: "Nome do colaborador",
+                obrigatorio: true,
+                largura: 26,
+              },
+              {
+                coluna: "Competencia",
+                exemplo: "Dominio de DUIMP",
+                obrigatorio: true,
+                largura: 28,
+              },
+              {
+                coluna: "Objetivo",
+                exemplo: "O que se espera ao final",
+                obrigatorio: true,
+                largura: 34,
+              },
+              { coluna: "Indicador", exemplo: "", largura: 26 },
+              { coluna: "Inicio", exemplo: "" },
+              { coluna: "Prazo", exemplo: "" },
+              { coluna: "Status", exemplo: "nao_iniciado", largura: 16 },
+              { coluna: "Progresso", exemplo: 0 },
+            ]}
+            montarRegistro={(l) => {
+              const c = buscarPorNome(colabs, l.colaborador);
+              if (!c) return { ok: false, erro: `Colaborador "${l.colaborador}" nao encontrado` };
+              const st = (l.status || "nao_iniciado").toLowerCase();
+              if (!STATUS.some((x) => x.v === st))
+                return { ok: false, erro: `Status "${l.status}" invalido` };
+              if (l.inicio && !parseData(l.inicio))
+                return { ok: false, erro: `Inicio "${l.inicio}" invalido` };
+              if (l.prazo && !parseData(l.prazo))
+                return { ok: false, erro: `Prazo "${l.prazo}" invalido` };
+              return {
+                ok: true,
+                registro: {
+                  colaborador_id: c.id,
+                  competencia: l.competencia,
+                  objetivo: l.objetivo,
+                  indicador: l.indicador || null,
+                  start_date: l.inicio ? parseData(l.inicio) : null,
+                  due_date: l.prazo ? parseData(l.prazo) : null,
+                  status: st,
+                  progresso: Math.max(0, Math.min(100, Math.round(parseNum(l.progresso)))),
+                  created_by: user?.id,
+                },
+              };
+            }}
+          />
+          <Button
+            size="sm"
+            onClick={() => {
+              setForm(emptyPlano);
+              setEditId(null);
+              setOpenPlano(true);
+            }}
+          >
+            <Plus className="h-4 w-4 mr-1.5" />
+            Novo PDI
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
