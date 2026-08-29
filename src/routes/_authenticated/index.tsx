@@ -201,7 +201,7 @@ function DashboardPage() {
 
   // Global month filter (applies to every slide)
   const [filtroMesGlobal, setFiltroMesGlobal] = useState<string>("all");
-  const [filtroGrupoKpi, setFiltroGrupoKpi] = useState<"all" | "midea" | "bosch" | "outros">("all");
+  const [filtroGrupoKpi, setFiltroGrupoKpi] = useState<"all" | UnidadeKey>("all");
   const [showCusto, setShowCusto] = useState(false);
 
   // Visibilidade de seções do dashboard
@@ -407,21 +407,21 @@ function DashboardPage() {
     [opAll, filtroMesGlobal],
   );
   const opGlobalKpi = useMemo(
-    () => opGlobal.filter((r) => filtroGrupoKpi === "all" || grupoDe(r.unidade) === filtroGrupoKpi),
+    () => opGlobal.filter((r) => filtroGrupoKpi === "all" || r.unidade === filtroGrupoKpi),
     [opGlobal, filtroGrupoKpi],
   );
   const allMonthly = aggByMonth(opGlobalKpi);
   const totalVolume = allMonthly.reduce((s, r) => s + r.volume, 0);
   const totalPessoasMes = allMonthly.reduce((s, r) => s + r.pessoas, 0);
   const avgProd = totalPessoasMes > 0 ? totalVolume / totalPessoasMes : 0;
-  const headcountTotal = UNIDADES.filter((u) => filtroGrupoKpi === "all" || u.grupo === filtroGrupoKpi).reduce((sum, u) => {
+  const headcountTotal = UNIDADES.filter((u) => filtroGrupoKpi === "all" || u.key === filtroGrupoKpi).reduce((sum, u) => {
     const rows = opGlobalKpi.filter((r) => r.unidade === u.key);
     return sum + rows.reduce((m, r) => Math.max(m, Number(r.pessoas ?? 0)), 0);
   }, 0);
 
   const filtroGrupoUnids = filtroGrupoKpi === "all"
     ? UNIDADES
-    : UNIDADES.filter((u) => u.grupo === filtroGrupoKpi);
+    : UNIDADES.filter((u) => u.key === filtroGrupoKpi);
   const avgMetaKpi = filtroGrupoUnids.length > 0
     ? filtroGrupoUnids.reduce((s, u) => s + metaProdUnidade(u.key), 0) / filtroGrupoUnids.length
     : META_PRODUTIVIDADE;
@@ -433,10 +433,17 @@ function DashboardPage() {
       { key: "bosch", titulo: "Bosch" },
       { key: "outros", titulo: "Outras Operações" },
     ];
+    const grupoSelecionado =
+      filtroGrupoKpi === "all"
+        ? null
+        : (UNIDADES.find((u) => u.key === filtroGrupoKpi)?.grupo ?? null);
+
     return grupos
-      .filter((g) => filtroGrupoKpi === "all" || filtroGrupoKpi === g.key)
+      .filter((g) => grupoSelecionado === null || grupoSelecionado === g.key)
       .map((g) => {
-        const unidades = UNIDADES.filter((u) => u.grupo === g.key).map((u) => {
+        const unidades = UNIDADES.filter(
+          (u) => u.grupo === g.key && (filtroGrupoKpi === "all" || u.key === filtroGrupoKpi),
+        ).map((u) => {
           const rows = opGlobal.filter((r) => r.unidade === u.key);
           const volume = rows.reduce((s, r) => s + r.volume, 0);
           const headcount = rows.reduce((m, r) => Math.max(m, Number(r.pessoas ?? 0)), 0);
@@ -450,7 +457,11 @@ function DashboardPage() {
             meta: metaProdUnidade(u.key),
           };
         });
-        const rowsGrupo = opGlobal.filter((r) => grupoDe(r.unidade) === g.key);
+        const rowsGrupo = opGlobal.filter(
+          (r) =>
+            grupoDe(r.unidade) === g.key &&
+            (filtroGrupoKpi === "all" || r.unidade === filtroGrupoKpi),
+        );
         const volume = rowsGrupo.reduce((s, r) => s + r.volume, 0);
         const totalPessoas = rowsGrupo.reduce((s, r) => s + Number(r.pessoas ?? 0), 0);
         const headcount = unidades.reduce((s, u) => s + u.headcount, 0);
@@ -1280,16 +1291,26 @@ function FiltroGrupo({
   value,
   onChange,
 }: {
-  value: "all" | "midea" | "bosch" | "outros";
-  onChange: (v: "all" | "midea" | "bosch" | "outros") => void;
+  value: "all" | UnidadeKey;
+  onChange: (v: "all" | UnidadeKey) => void;
 }) {
+  // Uma aba por operação. Com 10 opções a lista rola na horizontal
+  // em telas estreitas em vez de comprimir os rótulos.
   return (
-    <Tabs value={value} onValueChange={(v) => onChange(v as "all" | "midea" | "bosch" | "outros")}>
-      <TabsList>
-        <TabsTrigger value="all">Toda Operação</TabsTrigger>
-        <TabsTrigger value="midea">Midea</TabsTrigger>
-        <TabsTrigger value="bosch">Bosch</TabsTrigger>
-        <TabsTrigger value="outros">Outros</TabsTrigger>
+    <Tabs
+      value={value}
+      onValueChange={(v) => onChange(v as "all" | UnidadeKey)}
+      className="max-w-full"
+    >
+      <TabsList className="flex w-full justify-start overflow-x-auto">
+        <TabsTrigger value="all" className="shrink-0">
+          Todas
+        </TabsTrigger>
+        {UNIDADES.map((u) => (
+          <TabsTrigger key={u.key} value={u.key} className="shrink-0">
+            {u.label}
+          </TabsTrigger>
+        ))}
       </TabsList>
     </Tabs>
   );
