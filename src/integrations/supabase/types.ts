@@ -1691,6 +1691,77 @@ export type Database = {
         }
         Relationships: []
       }
+      riscos_operacionais: {
+        Row: {
+          categoria: string
+          colaborador_id: string | null
+          created_at: string
+          data_identificacao: string
+          descricao: string
+          id: string
+          impacto: number
+          operacao: string
+          origem: string
+          plano_acao: string
+          prazo: string | null
+          probabilidade: number
+          responsavel: string
+          severidade: number | null
+          status: string
+          titulo: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          categoria?: string
+          colaborador_id?: string | null
+          created_at?: string
+          data_identificacao?: string
+          descricao?: string
+          id?: string
+          impacto?: number
+          operacao?: string
+          origem?: string
+          plano_acao?: string
+          prazo?: string | null
+          probabilidade?: number
+          responsavel?: string
+          severidade?: number | null
+          status?: string
+          titulo: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          categoria?: string
+          colaborador_id?: string | null
+          created_at?: string
+          data_identificacao?: string
+          descricao?: string
+          id?: string
+          impacto?: number
+          operacao?: string
+          origem?: string
+          plano_acao?: string
+          prazo?: string | null
+          probabilidade?: number
+          responsavel?: string
+          severidade?: number | null
+          status?: string
+          titulo?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "riscos_operacionais_colaborador_id_fkey"
+            columns: ["colaborador_id"]
+            isOneToOne: false
+            referencedRelation: "colaboradores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scorecard_avaliacoes: {
         Row: {
           avaliador_id: string | null
