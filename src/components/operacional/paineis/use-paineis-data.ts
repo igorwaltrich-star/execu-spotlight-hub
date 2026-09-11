@@ -10,7 +10,7 @@ export type OpMensal = {
   produtividade: number | null;
 };
 
-export type CustoMes = { mes_referencia: string; operacao: string; total: number };
+export type CustoMes = { mes_referencia: string; operacao: string; total: number | null };
 
 export type NC = {
   id: string;
