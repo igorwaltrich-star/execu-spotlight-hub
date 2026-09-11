@@ -953,10 +953,29 @@ export function ScorecardView() {
                       {STATUS_CICLO[ciclo?.status ?? "rascunho"]?.l}
                     </Badge>
                     {podeGerirCiclo && ciclo?.status === "rascunho" && (
-                      <Button size="sm" onClick={() => mudarStatus(ciclo, "publicado")}>
-                        <Send className="h-4 w-4 mr-1.5" />
-                        Publicar
-                      </Button>
+                      <>
+                        <Button size="sm" onClick={() => mudarStatus(ciclo, "publicado")}>
+                          <Send className="h-4 w-4 mr-1.5" />
+                          Publicar
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-destructive"
+                          disabled={excluirCiclo.isPending}
+                          onClick={() => {
+                            if (
+                              window.confirm(
+                                `Excluir o rascunho "${ciclo.nome}"? Esta ação não pode ser desfeita.`,
+                              )
+                            )
+                              excluirCiclo.mutate(ciclo);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 mr-1.5" />
+                          Excluir rascunho
+                        </Button>
+                      </>
                     )}
                     {podeGerirCiclo && ciclo?.status === "publicado" && (
                       <Button
