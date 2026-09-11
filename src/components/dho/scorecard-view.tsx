@@ -329,6 +329,20 @@ export function ScorecardView() {
     }
   };
 
+  const excluirCiclo = useMutation({
+    mutationFn: async (c: Ciclo) => {
+      if (c.status !== "rascunho") throw new Error("Só é possível excluir ciclos em rascunho");
+      const { error } = await supabase.from("scorecard_ciclos").delete().eq("id", c.id);
+      if (error) throw error;
+    },
+    onSuccess: (_d, c) => {
+      toast.success(`Ciclo "${c.nome}" excluído`);
+      if (cicloSel === c.id) setCicloSel("");
+      qc.invalidateQueries({ queryKey: ["sc_ciclos"] });
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Erro ao excluir ciclo"),
+  });
+
   const [formAval, setFormAval] = useState<Record<string, string>>({});
   const abrirAval = (colabId: string) => {
     const av = avals.find((a) => a.ciclo_id === ciclo?.id && a.colaborador_id === colabId);
