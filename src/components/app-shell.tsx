@@ -20,6 +20,7 @@ const NAV_OP: NavItem[] = [
   { to: "/produtividade",             label: "Produtividade",            icon: BarChart3 },
   { to: "/nao-conformidades",         label: "Não Conformidades",        icon: AlertTriangle },
   { to: "/custo-operacional",         label: "Custo Operacional",        icon: DollarSign, papeis: ["gestor","coordenador"] },
+  { to: "/margem-contribucao",        label: "Margem de Contribuição",   icon: TrendingUp },
   { to: "/banco-horas",               label: "Banco de Horas",           icon: Clock, papeis: ["gestor","coordenador","supervisor"] },
   { to: "/checkin-operacional",       label: "Check IN Operacional",     icon: ClipboardCheck },
   { to: "/insights",                  label: "Insights",                 icon: Sparkles, papeis: ["gestor","coordenador","supervisor"] },
