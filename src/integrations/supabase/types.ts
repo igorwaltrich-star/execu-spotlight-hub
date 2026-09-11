@@ -1573,28 +1573,43 @@ export type Database = {
         Row: {
           colaborador_id: string
           created_at: string
-          fte: number
+          dias_trabalhados: number
+          dias_uteis_mes: number
+          fte: number | null
           id: string
           mes: string
+          observacoes: string | null
           operacao: string
+          produtividade: number | null
+          user_id: string | null
           volume_processos: number
         }
         Insert: {
           colaborador_id: string
           created_at?: string
-          fte?: number
+          dias_trabalhados?: number
+          dias_uteis_mes?: number
+          fte?: number | null
           id?: string
           mes: string
+          observacoes?: string | null
           operacao: string
+          produtividade?: number | null
+          user_id?: string | null
           volume_processos?: number
         }
         Update: {
           colaborador_id?: string
           created_at?: string
-          fte?: number
+          dias_trabalhados?: number
+          dias_uteis_mes?: number
+          fte?: number | null
           id?: string
           mes?: string
+          observacoes?: string | null
           operacao?: string
+          produtividade?: number | null
+          user_id?: string | null
           volume_processos?: number
         }
         Relationships: []
