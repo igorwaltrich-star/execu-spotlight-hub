@@ -131,7 +131,14 @@ export function NaoConformidadesView() {
     mutationFn: async () => {
       if (!user || !form.operacao || !form.descricao || !form.data_ocorrencia)
         throw new Error("Preencha operação, descrição e data");
-      const payload = { ...form, user_id: user.id, colaborador_id: form.colaborador_id || null };
+      const payload = {
+        ...form,
+        operacao: form.operacao,
+        descricao: form.descricao,
+        data_ocorrencia: form.data_ocorrencia,
+        user_id: user.id,
+        colaborador_id: form.colaborador_id || null,
+      };
       if (editId) {
         const { error } = await supabase.from("nao_conformidades").update(payload).eq("id", editId);
         if (error) throw error;
