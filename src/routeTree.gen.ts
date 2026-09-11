@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as AuthenticatedSlaMideaRouteImport } from './routes/_authenticated/sla-midea'
 import { Route as AuthenticatedSlaBoschRouteImport } from './routes/_authenticated/sla-bosch'
+import { Route as AuthenticatedScorecardRouteImport } from './routes/_authenticated/scorecard'
 import { Route as AuthenticatedRevisaoSemanalRouteImport } from './routes/_authenticated/revisao-semanal'
 import { Route as AuthenticatedRelatoriosRouteImport } from './routes/_authenticated/relatorios'
 import { Route as AuthenticatedProjetosRouteImport } from './routes/_authenticated/projetos'
@@ -60,6 +61,11 @@ const AuthenticatedSlaMideaRoute = AuthenticatedSlaMideaRouteImport.update({
 const AuthenticatedSlaBoschRoute = AuthenticatedSlaBoschRouteImport.update({
   id: '/sla-bosch',
   path: '/sla-bosch',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedScorecardRoute = AuthenticatedScorecardRouteImport.update({
+  id: '/scorecard',
+  path: '/scorecard',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedRevisaoSemanalRoute =
@@ -216,6 +222,7 @@ export interface FileRoutesByFullPath {
   '/projetos': typeof AuthenticatedProjetosRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/revisao-semanal': typeof AuthenticatedRevisaoSemanalRoute
+  '/scorecard': typeof AuthenticatedScorecardRoute
   '/sla-bosch': typeof AuthenticatedSlaBoschRoute
   '/sla-midea': typeof AuthenticatedSlaMideaRoute
 }
@@ -244,6 +251,7 @@ export interface FileRoutesByTo {
   '/projetos': typeof AuthenticatedProjetosRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/revisao-semanal': typeof AuthenticatedRevisaoSemanalRoute
+  '/scorecard': typeof AuthenticatedScorecardRoute
   '/sla-bosch': typeof AuthenticatedSlaBoschRoute
   '/sla-midea': typeof AuthenticatedSlaMideaRoute
   '/': typeof AuthenticatedIndexRoute
@@ -275,6 +283,7 @@ export interface FileRoutesById {
   '/_authenticated/projetos': typeof AuthenticatedProjetosRoute
   '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
   '/_authenticated/revisao-semanal': typeof AuthenticatedRevisaoSemanalRoute
+  '/_authenticated/scorecard': typeof AuthenticatedScorecardRoute
   '/_authenticated/sla-bosch': typeof AuthenticatedSlaBoschRoute
   '/_authenticated/sla-midea': typeof AuthenticatedSlaMideaRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
@@ -307,6 +316,7 @@ export interface FileRouteTypes {
     | '/projetos'
     | '/relatorios'
     | '/revisao-semanal'
+    | '/scorecard'
     | '/sla-bosch'
     | '/sla-midea'
   fileRoutesByTo: FileRoutesByTo
@@ -335,6 +345,7 @@ export interface FileRouteTypes {
     | '/projetos'
     | '/relatorios'
     | '/revisao-semanal'
+    | '/scorecard'
     | '/sla-bosch'
     | '/sla-midea'
     | '/'
@@ -365,6 +376,7 @@ export interface FileRouteTypes {
     | '/_authenticated/projetos'
     | '/_authenticated/relatorios'
     | '/_authenticated/revisao-semanal'
+    | '/_authenticated/scorecard'
     | '/_authenticated/sla-bosch'
     | '/_authenticated/sla-midea'
     | '/_authenticated/'
@@ -410,6 +422,13 @@ declare module '@tanstack/react-router' {
       path: '/sla-bosch'
       fullPath: '/sla-bosch'
       preLoaderRoute: typeof AuthenticatedSlaBoschRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/scorecard': {
+      id: '/_authenticated/scorecard'
+      path: '/scorecard'
+      fullPath: '/scorecard'
+      preLoaderRoute: typeof AuthenticatedScorecardRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/revisao-semanal': {
@@ -600,6 +619,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedProjetosRoute: typeof AuthenticatedProjetosRoute
   AuthenticatedRelatoriosRoute: typeof AuthenticatedRelatoriosRoute
   AuthenticatedRevisaoSemanalRoute: typeof AuthenticatedRevisaoSemanalRoute
+  AuthenticatedScorecardRoute: typeof AuthenticatedScorecardRoute
   AuthenticatedSlaBoschRoute: typeof AuthenticatedSlaBoschRoute
   AuthenticatedSlaMideaRoute: typeof AuthenticatedSlaMideaRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
@@ -631,6 +651,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedProjetosRoute: AuthenticatedProjetosRoute,
   AuthenticatedRelatoriosRoute: AuthenticatedRelatoriosRoute,
   AuthenticatedRevisaoSemanalRoute: AuthenticatedRevisaoSemanalRoute,
+  AuthenticatedScorecardRoute: AuthenticatedScorecardRoute,
   AuthenticatedSlaBoschRoute: AuthenticatedSlaBoschRoute,
   AuthenticatedSlaMideaRoute: AuthenticatedSlaMideaRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,

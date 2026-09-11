@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Database, Briefcase, BarChart3,
   AlertTriangle, DollarSign, ClipboardCheck, Clock,
   CalendarDays, CheckSquare, Target, RefreshCw,
-  MessageSquare, Users, UserCheck, LogOut, Anchor, FolderKanban, GraduationCap, FileText, Sparkles,
+  MessageSquare, Users, UserCheck, LogOut, Anchor, FolderKanban, GraduationCap, FileText, Sparkles, Award,
   ChevronDown, ChevronRight,
 } from "lucide-react";
 import { type ReactNode, useState } from "react";
@@ -36,6 +36,7 @@ const NAV_DHO: NavItem[] = [
   { to: "/equipes",             label: "Equipes",             icon: Users, papeis: ["gestor","coordenador"] },
   { to: "/funcionarios",        label: "Funcionários",        icon: UserCheck, papeis: ["gestor","coordenador"] },
   { to: "/projetos",            label: "Projetos",            icon: FolderKanban },
+  { to: "/scorecard",          label: "Scorecard",           icon: Award, papeis: ["gestor","coordenador","supervisor"] },
   { to: "/pdi",                 label: "PDI",                 icon: GraduationCap },
   { to: "/relatorios",          label: "Relatórios",          icon: FileText, papeis: ["gestor","coordenador"] },
 ];
