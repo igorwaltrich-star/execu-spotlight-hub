@@ -151,7 +151,9 @@ export function ImportarPlanilha({
       });
 
       if (registros.length > 0) {
-        const q = supabase.from(tabela);
+        const q = (supabase.from as unknown as (t: string) => ReturnType<typeof supabase.from>)(
+          tabela,
+        );
         const { error } = onConflict
           ? await q.upsert(registros as never[], { onConflict })
           : await q.insert(registros as never[]);

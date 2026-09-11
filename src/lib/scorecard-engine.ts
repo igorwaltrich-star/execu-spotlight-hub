@@ -54,6 +54,7 @@ export type PesoBpmn = {
   peso: number;
   participacao: number;
   ativo: boolean;
+  referencia?: string | null;
 };
 export type RegistroProd = {
   colaborador_id: string;

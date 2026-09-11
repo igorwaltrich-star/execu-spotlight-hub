@@ -107,8 +107,8 @@ export function FuncionariosView() {
           .from("colaboradores")
           .update({
             nome: form.nome,
-            cargo: form.cargo || null,
-            area: form.operacao || form.area || null,
+            cargo: form.cargo || "",
+            area: form.operacao || form.area || "",
           })
           .eq("id", editId);
         if (error) throw error;
@@ -116,8 +116,8 @@ export function FuncionariosView() {
         const { error } = await supabase.from("colaboradores").insert({
           user_id: user.id,
           nome: form.nome,
-          cargo: form.cargo || null,
-          area: form.operacao || form.area || null,
+          cargo: form.cargo || "",
+          area: form.operacao || form.area || "",
         });
         if (error) throw error;
       }
