@@ -133,7 +133,9 @@ export function RelatoriosView() {
   const fetchAll =
     <T,>(table: string) =>
     async () => {
-      const { data, error } = await supabase.from(table).select("*");
+      const { data, error } = await (
+        supabase.from as unknown as (t: string) => ReturnType<typeof supabase.from>
+      )(table).select("*");
       if (error) throw error;
       return (data ?? []) as T[];
     };

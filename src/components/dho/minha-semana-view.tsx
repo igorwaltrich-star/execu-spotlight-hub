@@ -43,7 +43,7 @@ const STATUS_CLS: Record<string, string> = {
   nao_iniciada: "text-muted-foreground",
   bloqueada: "text-warning",
 };
-const fmtDate = (d?: string) => (d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR") : "—");
+const fmtDate = (d?: string | null) => (d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR") : "—");
 
 export function MinhaSemanaView() {
   const { user } = useAuth();

@@ -149,7 +149,9 @@ export function ScorecardView() {
   const fetchAll =
     <T,>(t: string, ord?: string) =>
     async () => {
-      let q = supabase.from(t).select("*");
+      let q = (supabase.from as unknown as (x: string) => ReturnType<typeof supabase.from>)(
+        t,
+      ).select("*");
       if (ord) q = q.order(ord, { ascending: false });
       const { data, error } = await q;
       if (error) throw error;
@@ -310,7 +312,11 @@ export function ScorecardView() {
   });
 
   const mudarStatus = async (c: Ciclo, status: string) => {
-    const patch: Record<string, unknown> = { status };
+    const patch: {
+      status: string;
+      publicado_em?: string;
+      fechado_em?: string;
+    } = { status };
     if (status === "publicado") patch.publicado_em = new Date().toISOString();
     if (status === "fechado") patch.fechado_em = new Date().toISOString();
     const { error } = await supabase.from("scorecard_ciclos").update(patch).eq("id", c.id);
