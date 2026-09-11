@@ -8,8 +8,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { TrendingUp, TrendingDown, Sparkles, AlertTriangle, Trash2, Pencil, X } from "lucide-react";
+import { TrendingUp, TrendingDown, Sparkles, AlertTriangle, Trash2, Pencil, X, Brain, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { gerarSwotIA } from "@/lib/swot-ia.functions";
 
 type Row = {
   id: string;
@@ -18,6 +19,7 @@ type Row = {
   fraquezas: string[];
   oportunidades: string[];
   ameacas: string[];
+  insight: string | null;
 };
 
 const QUADRANTES = [
@@ -37,7 +39,7 @@ export function Swot() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("swot")
-        .select("id, titulo, forcas, fraquezas, oportunidades, ameacas")
+        .select("id, titulo, forcas, fraquezas, oportunidades, ameacas, insight")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as Row[];
@@ -48,8 +50,9 @@ export function Swot() {
   const [titulo, setTitulo] = useState("");
   const [textos, setTextos] = useState<Record<string, string>>({});
   const [editId, setEditId] = useState<string | null>(null);
+  const [insight, setInsight] = useState("");
 
-  const resetForm = () => { setTitulo(""); setTextos({}); setEditId(null); };
+  const resetForm = () => { setTitulo(""); setTextos({}); setEditId(null); setInsight(""); };
 
   const startEdit = (r: Row) => {
     setTitulo(r.titulo);
@@ -59,6 +62,7 @@ export function Swot() {
       oportunidades: r.oportunidades.join("\n"),
       ameacas: r.ameacas.join("\n"),
     });
+    setInsight(r.insight ?? "");
     setEditId(r.id);
     // Scroll to top of form
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -77,6 +81,7 @@ export function Swot() {
         fraquezas: split("fraquezas"),
         oportunidades: split("oportunidades"),
         ameacas: split("ameacas"),
+        insight: insight.trim() || null,
       });
       if (error) throw error;
     },
@@ -97,6 +102,7 @@ export function Swot() {
         fraquezas: split("fraquezas"),
         oportunidades: split("oportunidades"),
         ameacas: split("ameacas"),
+        insight: insight.trim() || null,
       }).eq("id", editId);
       if (error) throw error;
     },
@@ -116,16 +122,43 @@ export function Swot() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["swot"] }),
   });
 
+  const gerarIA = useMutation({
+    mutationFn: async () => await gerarSwotIA({ data: undefined }),
+    onSuccess: (r) => {
+      setTextos({
+        forcas: r.forcas.join("\n"),
+        fraquezas: r.fraquezas.join("\n"),
+        oportunidades: r.oportunidades.join("\n"),
+        ameacas: r.ameacas.join("\n"),
+      });
+      setInsight(r.insight);
+      if (!titulo) {
+        const hoje = new Date();
+        setTitulo(`SWOT automática — ${hoje.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}`);
+      }
+      toast.success("Insight gerado. Revise e salve.");
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Não foi possível gerar o insight"),
+  });
+
   return (
     <div className="space-y-4">
       <Card className={editId ? "border-primary/50 ring-1 ring-primary/30" : ""}>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>{editId ? "Editar Análise SWOT" : "Nova Análise SWOT"}</CardTitle>
-          {editId && (
-            <Button size="sm" variant="outline" onClick={resetForm}>
-              <X className="h-4 w-4 mr-1" />Cancelar edição
+          <div className="flex gap-2">
+            <Button size="sm" variant="secondary" onClick={() => gerarIA.mutate()} disabled={gerarIA.isPending}>
+              {gerarIA.isPending
+                ? <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                : <Brain className="h-4 w-4 mr-1" />}
+              {gerarIA.isPending ? "Analisando dados..." : "Gerar insight com IA"}
             </Button>
-          )}
+            {editId && (
+              <Button size="sm" variant="outline" onClick={resetForm}>
+                <X className="h-4 w-4 mr-1" />Cancelar edição
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
@@ -147,6 +180,11 @@ export function Swot() {
               );
             })}
           </div>
+          <div>
+            <Label>Diagnóstico (insight automático)</Label>
+            <Textarea rows={5} value={insight} onChange={(e) => setInsight(e.target.value)}
+              placeholder="Gerado automaticamente pela IA a partir dos dados operacionais e financeiros — pode ser editado." />
+          </div>
           <Button onClick={() => editId ? update.mutate() : save.mutate()}
             disabled={save.isPending || update.isPending}>
             {editId ? "Salvar alterações" : "Salvar análise"}
@@ -167,7 +205,15 @@ export function Swot() {
               </Button>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-3">
+            {r.insight && (
+              <div className="p-3 rounded-lg border bg-muted/40">
+                <div className="flex items-center gap-1 font-medium mb-1 text-primary">
+                  <Brain className="h-4 w-4" />Diagnóstico
+                </div>
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{r.insight}</p>
+              </div>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {QUADRANTES.map((q) => {
                 const Icon = q.icon;
