@@ -6,7 +6,7 @@ import {
   AlertTriangle, DollarSign, ClipboardCheck, Clock,
   CalendarDays, CheckSquare, Target, RefreshCw,
   MessageSquare, Users, UserCheck, LogOut, Anchor, FolderKanban, GraduationCap, FileText, Sparkles, Award,
-  ChevronDown, ChevronRight,
+  ChevronDown, ChevronRight, TrendingUp,
 } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { NotificacoesBell } from "@/components/notificacoes-bell";

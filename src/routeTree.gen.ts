@@ -25,6 +25,7 @@ import { Route as AuthenticatedNaoConformidadesRouteImport } from './routes/_aut
 import { Route as AuthenticatedMinhaSemanaRouteImport } from './routes/_authenticated/minha-semana'
 import { Route as AuthenticatedMetasRouteImport } from './routes/_authenticated/metas'
 import { Route as AuthenticatedMelhoriasRouteImport } from './routes/_authenticated/melhorias'
+import { Route as AuthenticatedMargemContribucaoRouteImport } from './routes/_authenticated/margem-contribucao'
 import { Route as AuthenticatedInsightsRouteImport } from './routes/_authenticated/insights'
 import { Route as AuthenticatedGerenciamentoOperacionalRouteImport } from './routes/_authenticated/gerenciamento-operacional'
 import { Route as AuthenticatedFuncionariosRouteImport } from './routes/_authenticated/funcionarios'
@@ -122,6 +123,12 @@ const AuthenticatedMelhoriasRoute = AuthenticatedMelhoriasRouteImport.update({
   path: '/melhorias',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedMargemContribucaoRoute =
+  AuthenticatedMargemContribucaoRouteImport.update({
+    id: '/margem-contribucao',
+    path: '/margem-contribucao',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedInsightsRoute = AuthenticatedInsightsRouteImport.update({
   id: '/insights',
   path: '/insights',
@@ -212,6 +219,7 @@ export interface FileRoutesByFullPath {
   '/funcionarios': typeof AuthenticatedFuncionariosRoute
   '/gerenciamento-operacional': typeof AuthenticatedGerenciamentoOperacionalRoute
   '/insights': typeof AuthenticatedInsightsRoute
+  '/margem-contribucao': typeof AuthenticatedMargemContribucaoRoute
   '/melhorias': typeof AuthenticatedMelhoriasRoute
   '/metas': typeof AuthenticatedMetasRoute
   '/minha-semana': typeof AuthenticatedMinhaSemanaRoute
@@ -241,6 +249,7 @@ export interface FileRoutesByTo {
   '/funcionarios': typeof AuthenticatedFuncionariosRoute
   '/gerenciamento-operacional': typeof AuthenticatedGerenciamentoOperacionalRoute
   '/insights': typeof AuthenticatedInsightsRoute
+  '/margem-contribucao': typeof AuthenticatedMargemContribucaoRoute
   '/melhorias': typeof AuthenticatedMelhoriasRoute
   '/metas': typeof AuthenticatedMetasRoute
   '/minha-semana': typeof AuthenticatedMinhaSemanaRoute
@@ -273,6 +282,7 @@ export interface FileRoutesById {
   '/_authenticated/funcionarios': typeof AuthenticatedFuncionariosRoute
   '/_authenticated/gerenciamento-operacional': typeof AuthenticatedGerenciamentoOperacionalRoute
   '/_authenticated/insights': typeof AuthenticatedInsightsRoute
+  '/_authenticated/margem-contribucao': typeof AuthenticatedMargemContribucaoRoute
   '/_authenticated/melhorias': typeof AuthenticatedMelhoriasRoute
   '/_authenticated/metas': typeof AuthenticatedMetasRoute
   '/_authenticated/minha-semana': typeof AuthenticatedMinhaSemanaRoute
@@ -306,6 +316,7 @@ export interface FileRouteTypes {
     | '/funcionarios'
     | '/gerenciamento-operacional'
     | '/insights'
+    | '/margem-contribucao'
     | '/melhorias'
     | '/metas'
     | '/minha-semana'
@@ -335,6 +346,7 @@ export interface FileRouteTypes {
     | '/funcionarios'
     | '/gerenciamento-operacional'
     | '/insights'
+    | '/margem-contribucao'
     | '/melhorias'
     | '/metas'
     | '/minha-semana'
@@ -366,6 +378,7 @@ export interface FileRouteTypes {
     | '/_authenticated/funcionarios'
     | '/_authenticated/gerenciamento-operacional'
     | '/_authenticated/insights'
+    | '/_authenticated/margem-contribucao'
     | '/_authenticated/melhorias'
     | '/_authenticated/metas'
     | '/_authenticated/minha-semana'
@@ -501,6 +514,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMelhoriasRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/margem-contribucao': {
+      id: '/_authenticated/margem-contribucao'
+      path: '/margem-contribucao'
+      fullPath: '/margem-contribucao'
+      preLoaderRoute: typeof AuthenticatedMargemContribucaoRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/insights': {
       id: '/_authenticated/insights'
       path: '/insights'
@@ -609,6 +629,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedFuncionariosRoute: typeof AuthenticatedFuncionariosRoute
   AuthenticatedGerenciamentoOperacionalRoute: typeof AuthenticatedGerenciamentoOperacionalRoute
   AuthenticatedInsightsRoute: typeof AuthenticatedInsightsRoute
+  AuthenticatedMargemContribucaoRoute: typeof AuthenticatedMargemContribucaoRoute
   AuthenticatedMelhoriasRoute: typeof AuthenticatedMelhoriasRoute
   AuthenticatedMetasRoute: typeof AuthenticatedMetasRoute
   AuthenticatedMinhaSemanaRoute: typeof AuthenticatedMinhaSemanaRoute
@@ -641,6 +662,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedGerenciamentoOperacionalRoute:
     AuthenticatedGerenciamentoOperacionalRoute,
   AuthenticatedInsightsRoute: AuthenticatedInsightsRoute,
+  AuthenticatedMargemContribucaoRoute: AuthenticatedMargemContribucaoRoute,
   AuthenticatedMelhoriasRoute: AuthenticatedMelhoriasRoute,
   AuthenticatedMetasRoute: AuthenticatedMetasRoute,
   AuthenticatedMinhaSemanaRoute: AuthenticatedMinhaSemanaRoute,
