@@ -1,0 +1,1 @@
+ALTER TABLE public.swot ADD COLUMN IF NOT EXISTS insight text;

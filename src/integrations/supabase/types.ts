@@ -1961,6 +1961,7 @@ export type Database = {
           forcas: string[]
           fraquezas: string[]
           id: string
+          insight: string | null
           oportunidades: string[]
           titulo: string
           updated_at: string
@@ -1972,6 +1973,7 @@ export type Database = {
           forcas?: string[]
           fraquezas?: string[]
           id?: string
+          insight?: string | null
           oportunidades?: string[]
           titulo?: string
           updated_at?: string
@@ -1983,6 +1985,7 @@ export type Database = {
           forcas?: string[]
           fraquezas?: string[]
           id?: string
+          insight?: string | null
           oportunidades?: string[]
           titulo?: string
           updated_at?: string
