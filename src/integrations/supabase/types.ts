@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      alocacoes_periodo: {
+        Row: {
+          colaborador_id: string
+          created_at: string
+          created_by: string | null
+          dias_na_operacao: number
+          dias_uteis_mes: number
+          fte: number | null
+          id: string
+          mes: string
+          motivo: string | null
+          operacao: string
+          tipo: string
+        }
+        Insert: {
+          colaborador_id: string
+          created_at?: string
+          created_by?: string | null
+          dias_na_operacao?: number
+          dias_uteis_mes?: number
+          fte?: number | null
+          id?: string
+          mes: string
+          motivo?: string | null
+          operacao: string
+          tipo?: string
+        }
+        Update: {
+          colaborador_id?: string
+          created_at?: string
+          created_by?: string | null
+          dias_na_operacao?: number
+          dias_uteis_mes?: number
+          fte?: number | null
+          id?: string
+          mes?: string
+          motivo?: string | null
+          operacao?: string
+          tipo?: string
+        }
+        Relationships: []
+      }
       analises_performance: {
         Row: {
           arquivos: Json
@@ -227,6 +269,42 @@ export type Database = {
           },
         ]
       }
+      banco_horas: {
+        Row: {
+          colaborador_id: string
+          created_at: string
+          horas_debito: number
+          horas_extras: number
+          id: string
+          mes: string
+          observacoes: string | null
+          saldo_acumulado: number
+          user_id: string | null
+        }
+        Insert: {
+          colaborador_id: string
+          created_at?: string
+          horas_debito?: number
+          horas_extras?: number
+          id?: string
+          mes: string
+          observacoes?: string | null
+          saldo_acumulado?: number
+          user_id?: string | null
+        }
+        Update: {
+          colaborador_id?: string
+          created_at?: string
+          horas_debito?: number
+          horas_extras?: number
+          id?: string
+          mes?: string
+          observacoes?: string | null
+          saldo_acumulado?: number
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       checkin_gerencial_itens: {
         Row: {
           checkin_id: string
@@ -307,6 +385,57 @@ export type Database = {
           participantes?: string[]
           pauta_previa?: Json | null
           status?: string
+        }
+        Relationships: []
+      }
+      checkins_operacionais: {
+        Row: {
+          ausentes: string[]
+          created_at: string
+          data: string
+          frequencia: string
+          id: string
+          observacoes: string | null
+          operacao: string
+          pendencias: string | null
+          presentes: string[]
+          responsavel_id: string | null
+          status_geral: string
+          user_id: string | null
+          volume_previsto: number | null
+          volume_realizado: number | null
+        }
+        Insert: {
+          ausentes?: string[]
+          created_at?: string
+          data: string
+          frequencia?: string
+          id?: string
+          observacoes?: string | null
+          operacao: string
+          pendencias?: string | null
+          presentes?: string[]
+          responsavel_id?: string | null
+          status_geral?: string
+          user_id?: string | null
+          volume_previsto?: number | null
+          volume_realizado?: number | null
+        }
+        Update: {
+          ausentes?: string[]
+          created_at?: string
+          data?: string
+          frequencia?: string
+          id?: string
+          observacoes?: string | null
+          operacao?: string
+          pendencias?: string | null
+          presentes?: string[]
+          responsavel_id?: string | null
+          status_geral?: string
+          user_id?: string | null
+          volume_previsto?: number | null
+          volume_realizado?: number | null
         }
         Relationships: []
       }
@@ -520,6 +649,63 @@ export type Database = {
           saldo_dias?: number
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      custo_pessoal_mensal: {
+        Row: {
+          aviso_previo: number
+          beneficios: number
+          colaborador_id: string
+          created_at: string
+          fgts: number
+          fonte: string
+          id: string
+          inss: number
+          mes_referencia: string
+          operacao: string
+          provisao_13: number
+          provisao_ferias: number
+          salario_bruto: number
+          tipo_contrato: string
+          total: number | null
+          user_id: string | null
+        }
+        Insert: {
+          aviso_previo?: number
+          beneficios?: number
+          colaborador_id: string
+          created_at?: string
+          fgts?: number
+          fonte?: string
+          id?: string
+          inss?: number
+          mes_referencia: string
+          operacao: string
+          provisao_13?: number
+          provisao_ferias?: number
+          salario_bruto?: number
+          tipo_contrato?: string
+          total?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          aviso_previo?: number
+          beneficios?: number
+          colaborador_id?: string
+          created_at?: string
+          fgts?: number
+          fonte?: string
+          id?: string
+          inss?: number
+          mes_referencia?: string
+          operacao?: string
+          provisao_13?: number
+          provisao_ferias?: number
+          salario_bruto?: number
+          tipo_contrato?: string
+          total?: number | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -860,6 +1046,69 @@ export type Database = {
           },
         ]
       }
+      nao_conformidades: {
+        Row: {
+          colaborador_id: string | null
+          created_at: string
+          custo_gerado: number
+          data_ocorrencia: string
+          data_resolucao: string | null
+          descricao: string
+          forma_resolucao: string | null
+          id: string
+          numero_oc: string | null
+          numero_processo: string | null
+          operacao: string
+          reembolsavel: boolean
+          ref_cliente: string | null
+          ref_pinho: string | null
+          status_financeiro: string
+          tipo: string
+          user_id: string | null
+          valor_recuperado: number | null
+        }
+        Insert: {
+          colaborador_id?: string | null
+          created_at?: string
+          custo_gerado?: number
+          data_ocorrencia?: string
+          data_resolucao?: string | null
+          descricao: string
+          forma_resolucao?: string | null
+          id?: string
+          numero_oc?: string | null
+          numero_processo?: string | null
+          operacao: string
+          reembolsavel?: boolean
+          ref_cliente?: string | null
+          ref_pinho?: string | null
+          status_financeiro?: string
+          tipo?: string
+          user_id?: string | null
+          valor_recuperado?: number | null
+        }
+        Update: {
+          colaborador_id?: string | null
+          created_at?: string
+          custo_gerado?: number
+          data_ocorrencia?: string
+          data_resolucao?: string | null
+          descricao?: string
+          forma_resolucao?: string | null
+          id?: string
+          numero_oc?: string | null
+          numero_processo?: string | null
+          operacao?: string
+          reembolsavel?: boolean
+          ref_cliente?: string | null
+          ref_pinho?: string | null
+          status_financeiro?: string
+          tipo?: string
+          user_id?: string | null
+          valor_recuperado?: number | null
+        }
+        Relationships: []
+      }
       navy_seal: {
         Row: {
           colaborador_id: string
@@ -886,6 +1135,39 @@ export type Database = {
           observacoes?: string
           tag?: Database["public"]["Enums"]["navy_seal_tag"]
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notificacoes: {
+        Row: {
+          created_at: string
+          id: string
+          lida: boolean
+          link: string | null
+          mensagem: string | null
+          tipo: string
+          titulo: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lida?: boolean
+          link?: string | null
+          mensagem?: string | null
+          tipo: string
+          titulo: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lida?: boolean
+          link?: string | null
+          mensagem?: string | null
+          tipo?: string
+          titulo?: string
           user_id?: string
         }
         Relationships: []
