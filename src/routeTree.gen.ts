@@ -28,6 +28,7 @@ import { Route as AuthenticatedMetasRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedMelhoriasRouteImport } from './routes/_authenticated/melhorias'
 import { Route as AuthenticatedMargemContribucaoRouteImport } from './routes/_authenticated/margem-contribucao'
 import { Route as AuthenticatedInsightsRouteImport } from './routes/_authenticated/insights'
+import { Route as AuthenticatedGestaoFinanceiraRouteImport } from './routes/_authenticated/gestao-financeira'
 import { Route as AuthenticatedGerenciamentoOperacionalRouteImport } from './routes/_authenticated/gerenciamento-operacional'
 import { Route as AuthenticatedFuncionariosRouteImport } from './routes/_authenticated/funcionarios'
 import { Route as AuthenticatedEquipesRouteImport } from './routes/_authenticated/equipes'
@@ -141,6 +142,12 @@ const AuthenticatedInsightsRoute = AuthenticatedInsightsRouteImport.update({
   path: '/insights',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedGestaoFinanceiraRoute =
+  AuthenticatedGestaoFinanceiraRouteImport.update({
+    id: '/gestao-financeira',
+    path: '/gestao-financeira',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedGerenciamentoOperacionalRoute =
   AuthenticatedGerenciamentoOperacionalRouteImport.update({
     id: '/gerenciamento-operacional',
@@ -225,6 +232,7 @@ export interface FileRoutesByFullPath {
   '/equipes': typeof AuthenticatedEquipesRoute
   '/funcionarios': typeof AuthenticatedFuncionariosRoute
   '/gerenciamento-operacional': typeof AuthenticatedGerenciamentoOperacionalRoute
+  '/gestao-financeira': typeof AuthenticatedGestaoFinanceiraRoute
   '/insights': typeof AuthenticatedInsightsRoute
   '/margem-contribucao': typeof AuthenticatedMargemContribucaoRoute
   '/melhorias': typeof AuthenticatedMelhoriasRoute
@@ -256,6 +264,7 @@ export interface FileRoutesByTo {
   '/equipes': typeof AuthenticatedEquipesRoute
   '/funcionarios': typeof AuthenticatedFuncionariosRoute
   '/gerenciamento-operacional': typeof AuthenticatedGerenciamentoOperacionalRoute
+  '/gestao-financeira': typeof AuthenticatedGestaoFinanceiraRoute
   '/insights': typeof AuthenticatedInsightsRoute
   '/margem-contribucao': typeof AuthenticatedMargemContribucaoRoute
   '/melhorias': typeof AuthenticatedMelhoriasRoute
@@ -290,6 +299,7 @@ export interface FileRoutesById {
   '/_authenticated/equipes': typeof AuthenticatedEquipesRoute
   '/_authenticated/funcionarios': typeof AuthenticatedFuncionariosRoute
   '/_authenticated/gerenciamento-operacional': typeof AuthenticatedGerenciamentoOperacionalRoute
+  '/_authenticated/gestao-financeira': typeof AuthenticatedGestaoFinanceiraRoute
   '/_authenticated/insights': typeof AuthenticatedInsightsRoute
   '/_authenticated/margem-contribucao': typeof AuthenticatedMargemContribucaoRoute
   '/_authenticated/melhorias': typeof AuthenticatedMelhoriasRoute
@@ -325,6 +335,7 @@ export interface FileRouteTypes {
     | '/equipes'
     | '/funcionarios'
     | '/gerenciamento-operacional'
+    | '/gestao-financeira'
     | '/insights'
     | '/margem-contribucao'
     | '/melhorias'
@@ -356,6 +367,7 @@ export interface FileRouteTypes {
     | '/equipes'
     | '/funcionarios'
     | '/gerenciamento-operacional'
+    | '/gestao-financeira'
     | '/insights'
     | '/margem-contribucao'
     | '/melhorias'
@@ -389,6 +401,7 @@ export interface FileRouteTypes {
     | '/_authenticated/equipes'
     | '/_authenticated/funcionarios'
     | '/_authenticated/gerenciamento-operacional'
+    | '/_authenticated/gestao-financeira'
     | '/_authenticated/insights'
     | '/_authenticated/margem-contribucao'
     | '/_authenticated/melhorias'
@@ -548,6 +561,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInsightsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/gestao-financeira': {
+      id: '/_authenticated/gestao-financeira'
+      path: '/gestao-financeira'
+      fullPath: '/gestao-financeira'
+      preLoaderRoute: typeof AuthenticatedGestaoFinanceiraRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/gerenciamento-operacional': {
       id: '/_authenticated/gerenciamento-operacional'
       path: '/gerenciamento-operacional'
@@ -648,6 +668,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedEquipesRoute: typeof AuthenticatedEquipesRoute
   AuthenticatedFuncionariosRoute: typeof AuthenticatedFuncionariosRoute
   AuthenticatedGerenciamentoOperacionalRoute: typeof AuthenticatedGerenciamentoOperacionalRoute
+  AuthenticatedGestaoFinanceiraRoute: typeof AuthenticatedGestaoFinanceiraRoute
   AuthenticatedInsightsRoute: typeof AuthenticatedInsightsRoute
   AuthenticatedMargemContribucaoRoute: typeof AuthenticatedMargemContribucaoRoute
   AuthenticatedMelhoriasRoute: typeof AuthenticatedMelhoriasRoute
@@ -682,6 +703,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedFuncionariosRoute: AuthenticatedFuncionariosRoute,
   AuthenticatedGerenciamentoOperacionalRoute:
     AuthenticatedGerenciamentoOperacionalRoute,
+  AuthenticatedGestaoFinanceiraRoute: AuthenticatedGestaoFinanceiraRoute,
   AuthenticatedInsightsRoute: AuthenticatedInsightsRoute,
   AuthenticatedMargemContribucaoRoute: AuthenticatedMargemContribucaoRoute,
   AuthenticatedMelhoriasRoute: AuthenticatedMelhoriasRoute,
