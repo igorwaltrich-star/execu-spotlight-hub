@@ -5,8 +5,8 @@
  * operacionais já registrados — não dependem de percepção:
  *
  *   Produtividade ajustada  volume × peso de complexidade (BPMN) ÷ FTE
- *   Qualidade               retrabalho e não conformidades atribuídas
- *   Confiabilidade          prazo cumprido nas atividades e revisões
+ *   Qualidade               não conformidades atribuídas por volume
+ *   Confiabilidade          avaliação registrada pela liderança
  *
  * Multiplicação e Iniciativa não têm fonte automática: são avaliadas
  * pelo gestor e, por isso, exigem evidência escrita. O motor recusa
@@ -68,9 +68,6 @@ export type NaoConf = {
   data_ocorrencia: string;
   custo_gerado: number;
 };
-export type OcorrAtiv = { atividade_id: string; week_start: string; resultado?: string | null };
-export type AtivDona = { id: string; owner_id?: string | null };
-
 /**
  * Fator de complexidade de uma operação, derivado do BPMN.
  * Média dos pesos ponderada pela participação de cada processo no mix.
@@ -176,8 +173,6 @@ export type DetalheQualidade = {
  */
 export function calcularQualidade(
   ncs: NaoConf[],
-  ocorr: OcorrAtiv[],
-  ativs: AtivDona[],
   regs: RegistroProd[],
   colaboradorId: string,
   periodo: { inicio: string; fim: string },
@@ -188,79 +183,25 @@ export function calcularQualidade(
       n.data_ocorrencia >= periodo.inicio &&
       n.data_ocorrencia <= periodo.fim,
   );
-  const meusIds = new Set(ativs.filter((a) => a.owner_id === colaboradorId).map((a) => a.id));
-  const minhasOcorr = ocorr.filter(
-    (o) =>
-      meusIds.has(o.atividade_id) && o.week_start >= periodo.inicio && o.week_start <= periodo.fim,
-  );
-  const retrabalho = minhasOcorr.filter((o) => o.resultado === "desvios").length;
-
   const volume = regs
     .filter(
       (r) => r.colaborador_id === colaboradorId && r.mes >= periodo.inicio && r.mes <= periodo.fim,
     )
     .reduce((s, r) => s + Number(r.volume_processos ?? 0), 0);
 
-  if (minhasNcs.length === 0 && minhasOcorr.length === 0 && volume === 0)
+  if (minhasNcs.length === 0 && volume === 0)
     return { nota: 0, ocorrencias: 0, custo: 0, retrabalho: 0, baseAvaliada: 0, semDados: true };
 
-  // taxa por 100 processos; sem volume, usa as revisões como base
-  const base = volume > 0 ? volume : Math.max(minhasOcorr.length, 1);
-  const taxa = ((minhasNcs.length + retrabalho) / base) * 100;
+  const base = Math.max(volume, 1);
+  const taxa = (minhasNcs.length / base) * 100;
 
   // 1% de incidência custa 10 pontos — 10% zera a dimensão
   return {
     nota: nota(100 - taxa * 10),
     ocorrencias: minhasNcs.length,
     custo: minhasNcs.reduce((s, n) => s + Number(n.custo_gerado ?? 0), 0),
-    retrabalho,
+    retrabalho: 0,
     baseAvaliada: base,
-    semDados: false,
-  };
-}
-
-export type DetalheConfiabilidade = {
-  nota: number;
-  noPrazo: number;
-  comAtraso: number;
-  naoRealizado: number;
-  total: number;
-  semDados: boolean;
-};
-
-/**
- * Confiabilidade usa a mesma escala da revisão semanal:
- * sucesso 100, atraso 80, desvios 60, não realizado 0.
- */
-const PONTOS_RESULTADO: Record<string, number> = {
-  sucesso: 100,
-  atraso: 80,
-  desvios: 60,
-  nao_realizado: 0,
-  nao_aplicavel: 100,
-};
-
-export function calcularConfiabilidade(
-  ocorr: OcorrAtiv[],
-  ativs: AtivDona[],
-  colaboradorId: string,
-  periodo: { inicio: string; fim: string },
-): DetalheConfiabilidade {
-  const meusIds = new Set(ativs.filter((a) => a.owner_id === colaboradorId).map((a) => a.id));
-  const minhas = ocorr.filter(
-    (o) =>
-      meusIds.has(o.atividade_id) && o.week_start >= periodo.inicio && o.week_start <= periodo.fim,
-  );
-  if (minhas.length === 0)
-    return { nota: 0, noPrazo: 0, comAtraso: 0, naoRealizado: 0, total: 0, semDados: true };
-
-  const soma = minhas.reduce((s, o) => s + (PONTOS_RESULTADO[o.resultado ?? ""] ?? 0), 0);
-  return {
-    nota: nota(soma / minhas.length),
-    noPrazo: minhas.filter((o) => o.resultado === "sucesso").length,
-    comAtraso: minhas.filter((o) => o.resultado === "atraso").length,
-    naoRealizado: minhas.filter((o) => o.resultado === "nao_realizado").length,
-    total: minhas.length,
     semDados: false,
   };
 }

@@ -8,11 +8,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import {
   Bell,
   CheckCheck,
-  AlertTriangle,
-  Target,
-  CheckCircle2,
-  CalendarCheck,
-  MessageSquare,
   Inbox,
 } from "lucide-react";
 
@@ -27,23 +22,8 @@ type Notif = {
 };
 
 const ICONS: Record<string, typeof Bell> = {
-  atividade_atribuida: CheckCircle2,
-  meta_atribuida: Target,
-  meta_atingida: Target,
-  meta_nao_atingida: AlertTriangle,
-  prazo_proximo: CalendarCheck,
-  atrasado: AlertTriangle,
-  revisao_pendente: CalendarCheck,
-  encaminhamento: MessageSquare,
 };
-const CORES: Record<string, string> = {
-  meta_atingida: "text-success",
-  meta_nao_atingida: "text-destructive",
-  atrasado: "text-destructive",
-  prazo_proximo: "text-warning",
-  revisao_pendente: "text-warning",
-  encaminhamento: "text-primary",
-};
+const CORES: Record<string, string> = {};
 
 const tempoRelativo = (iso: string) => {
   const min = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);

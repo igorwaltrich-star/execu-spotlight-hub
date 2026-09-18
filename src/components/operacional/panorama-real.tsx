@@ -19,7 +19,7 @@ import {
   ReferenceLine,
   Cell,
 } from "recharts";
-import { TrendingUp, Users, AlertTriangle, DollarSign, ClipboardCheck } from "lucide-react";
+import { TrendingUp, Users, AlertTriangle, DollarSign } from "lucide-react";
 
 type Prod = {
   colaborador_id: string;
@@ -37,7 +37,6 @@ type NC = {
   status_financeiro: string;
 };
 type Custo = { operacao: string; mes_referencia: string; total: number };
-type CheckIn = { operacao: string; data: string; status_geral: string };
 
 const fmtBRL = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
@@ -91,19 +90,6 @@ export function PanoramaReal() {
     enabled: podeVerCusto,
   });
 
-  const { data: checkins = [] } = useQuery({
-    queryKey: ["pan_checkin"],
-    queryFn: async () => {
-      const desde = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
-      const { data, error } = await supabase
-        .from("checkins_operacionais")
-        .select("operacao,data,status_geral")
-        .gte("data", desde);
-      if (error) throw error;
-      return (data ?? []) as CheckIn[];
-    },
-  });
-
   /* ── agregação por operação ── */
   const porOperacao = useMemo(() => {
     return UNIDADES.map((u) => {
@@ -154,18 +140,6 @@ export function PanoramaReal() {
       recuperado,
     };
   }, [porOperacao, ncs, prod]);
-
-  /* ── check-ins da semana ── */
-  const checkinResumo = useMemo(() => {
-    const hoje = new Date().toISOString().slice(0, 10);
-    const doDia = checkins.filter((c) => c.data === hoje);
-    return {
-      hoje: doDia.length,
-      criticos: checkins.filter((c) => c.status_geral === "critico").length,
-      atencao: checkins.filter((c) => c.status_geral === "atencao").length,
-      semRegistro: UNIDADES.filter((u) => !doDia.find((c) => c.operacao === u.key)).length,
-    };
-  }, [checkins]);
 
   const semDados = porOperacao.length === 0;
 
@@ -287,39 +261,6 @@ export function PanoramaReal() {
               </Card>
             )}
           </div>
-
-          {/* Check IN da semana */}
-          {checkins.length > 0 && (
-            <Card>
-              <CardContent className="pt-4 flex items-center gap-6 flex-wrap">
-                <div className="flex items-center gap-2">
-                  <ClipboardCheck className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium">Check IN — últimos 7 dias</span>
-                </div>
-                <div className="flex gap-4 text-sm">
-                  <span>
-                    <strong>{checkinResumo.hoje}</strong>{" "}
-                    <span className="text-muted-foreground">registrados hoje</span>
-                  </span>
-                  {checkinResumo.atencao > 0 && (
-                    <span className="text-warning">
-                      <strong>{checkinResumo.atencao}</strong> em atenção
-                    </span>
-                  )}
-                  {checkinResumo.criticos > 0 && (
-                    <span className="text-destructive">
-                      <strong>{checkinResumo.criticos}</strong> críticos
-                    </span>
-                  )}
-                  {checkinResumo.semRegistro > 0 && (
-                    <span className="text-muted-foreground">
-                      <strong>{checkinResumo.semRegistro}</strong> operações sem registro hoje
-                    </span>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          )}
 
           {/* Produtividade vs meta */}
           <Card>
