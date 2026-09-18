@@ -3,9 +3,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard, Database, Briefcase, BarChart3,
-  AlertTriangle, DollarSign, ClipboardCheck, Clock,
-  CalendarDays, CheckSquare, Target, RefreshCw,
-  MessageSquare, Users, UserCheck, LogOut, Anchor, FolderKanban, GraduationCap, FileText, Sparkles, Award, Wallet,
+  AlertTriangle, DollarSign, Clock,
+  Users, UserCheck, LogOut, Anchor, GraduationCap, Sparkles, Award, Wallet,
   ChevronDown, ChevronRight, TrendingUp, Gauge,
 } from "lucide-react";
 import { type ReactNode, useState } from "react";
@@ -22,7 +21,6 @@ const NAV_OP: NavItem[] = [
   { to: "/custo-operacional",         label: "Custo Operacional",        icon: DollarSign, papeis: ["gestor","coordenador"] },
   { to: "/margem-contribucao",        label: "Margem de Contribuição",   icon: TrendingUp },
   { to: "/banco-horas",               label: "Banco de Horas",           icon: Clock, papeis: ["gestor","coordenador","supervisor"] },
-  { to: "/checkin-operacional",       label: "Check IN Operacional",     icon: ClipboardCheck },
   { to: "/paineis-operacionais",      label: "Painéis Operacionais",     icon: Gauge },
   { to: "/insights",                  label: "Insights",                 icon: Sparkles, papeis: ["gestor","coordenador","supervisor"] },
   { to: "/gestao-financeira",         label: "Gestão Financeira",        icon: Wallet, papeis: ["gestor","coordenador","supervisor"] },
@@ -31,17 +29,10 @@ const NAV_OP: NavItem[] = [
 
 const NAV_DHO: NavItem[] = [
   { to: "/dashboard-gestao",    label: "Dashboard Gestão",    icon: LayoutDashboard },
-  { to: "/minha-semana",        label: "Minha Semana",        icon: CalendarDays },
-  { to: "/atividades",          label: "Atividades",          icon: CheckSquare },
-  { to: "/metas",               label: "Metas",               icon: Target },
-  { to: "/revisao-semanal",     label: "Revisão Semanal",     icon: RefreshCw },
-  { to: "/checkin-gerencial",   label: "Check IN Gerencial",  icon: MessageSquare },
   { to: "/equipes",             label: "Equipes",             icon: Users, papeis: ["gestor","coordenador"] },
   { to: "/funcionarios",        label: "Funcionários",        icon: UserCheck, papeis: ["gestor","coordenador"] },
-  { to: "/projetos",            label: "Projetos",            icon: FolderKanban },
   { to: "/scorecard",          label: "Scorecard",           icon: Award, papeis: ["gestor","coordenador","supervisor"] },
   { to: "/pdi",                 label: "PDI",                 icon: GraduationCap },
-  { to: "/relatorios",          label: "Relatórios",          icon: FileText, papeis: ["gestor","coordenador"] },
 ];
 
 function NavGroup({ label, items, defaultOpen = true }: { label: string; items: NavItem[]; defaultOpen?: boolean }) {
