@@ -107,6 +107,8 @@ export function GestaoFinanceiraView() {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [importando, setImportando] = useState(false);
+  const [progresso, setProgresso] = useState<{ feito: number; total: number } | null>(null);
+  const [erroImport, setErroImport] = useState<string | null>(null);
   const [filtroCC, setFiltroCC] = useState("all");
   const [de, setDe] = useState("");
   const [ate, setAte] = useState("");
@@ -226,6 +228,7 @@ export function GestaoFinanceiraView() {
   /* ── importação da planilha do Sigraweb ── */
   const importar = async (file: File) => {
     setImportando(true);
+    setErroImport(null);
     try {
       const buf = await file.arrayBuffer();
       const wb = XLSX.read(buf, { type: "array" });
@@ -274,23 +277,37 @@ export function GestaoFinanceiraView() {
       }
       if (registros.length === 0) throw new Error("Nenhuma linha com código Sigra encontrada");
 
+      // lotes menores reduzem o risco de timeout na base grande
+      const TAMANHO_LOTE = 250;
       let gravados = 0;
-      for (let i = 0; i < registros.length; i += 500) {
-        const lote = registros.slice(i, i + 500);
+      for (let i = 0; i < registros.length; i += TAMANHO_LOTE) {
+        const lote = registros.slice(i, i + TAMANHO_LOTE);
         const { error } = await supabase
           .from("financeiro_processos")
           .upsert(lote as never[], { onConflict: "sigra" });
-        if (error) throw error;
+
+        if (error) {
+          // o erro do Supabase traz contexto que a mensagem sozinha esconde
+          const partes = [error.message, error.details, error.hint].filter(Boolean).join(" · ");
+          const codigo = error.code ? ` [${error.code}]` : "";
+          throw new Error(
+            `Falha no lote ${Math.floor(i / TAMANHO_LOTE) + 1}${codigo}: ${partes || "erro desconhecido"}`,
+          );
+        }
         gravados += lote.length;
+        setProgresso({ feito: gravados, total: registros.length });
       }
       qc.invalidateQueries({ queryKey: ["fin_processos"] });
       toast.success(
         `${n0(gravados)} processos importados${semSigra ? ` · ${semSigra} linha(s) sem Sigra ignorada(s)` : ""}`,
       );
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Falha ao importar");
+      const msg = e instanceof Error ? e.message : String(e);
+      setErroImport(msg);
+      toast.error("Importação falhou — veja o detalhe na tela");
     } finally {
       setImportando(false);
+      setProgresso(null);
     }
   };
 
@@ -407,6 +424,71 @@ export function GestaoFinanceiraView() {
           </div>
         )}
       </div>
+
+      {importando && progresso && (
+        <Card>
+          <CardContent className="pt-4">
+            <div className="flex items-center justify-between text-sm mb-2">
+              <span>Importando processos…</span>
+              <span className="text-muted-foreground">
+                {n0(progresso.feito)} de {n0(progresso.total)}
+              </span>
+            </div>
+            <Progress value={(progresso.feito / progresso.total) * 100} className="h-2" />
+          </CardContent>
+        </Card>
+      )}
+
+      {erroImport && (
+        <Card className="border-destructive">
+          <CardContent className="pt-4 space-y-3">
+            <div className="flex gap-3">
+              <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium mb-1">Falha na importação</div>
+                <p className="text-sm font-mono bg-muted rounded p-2 break-words">{erroImport}</p>
+              </div>
+            </div>
+            <div className="text-sm space-y-1.5 pl-7">
+              <div className="font-medium">Causas mais comuns:</div>
+              {[
+                [
+                  "relation",
+                  "A tabela ainda não existe — a migration do módulo financeiro não rodou no Supabase.",
+                ],
+                [
+                  "row-level security",
+                  "Seu perfil não tem permissão de escrita. Confira em Funcionários se você está como gestor, coordenador ou supervisor.",
+                ],
+                [
+                  "tem_papel",
+                  "A função de perfil não existe — a migration de controle de acesso não rodou.",
+                ],
+                ["duplicate key", "Há códigos Sigra repetidos na planilha."],
+                [
+                  "timeout",
+                  "Base muito grande para uma tentativa só. Filtre a planilha por período e importe em partes.",
+                ],
+              ].map(([chave, texto]) => (
+                <div
+                  key={chave}
+                  className={`flex gap-2 ${
+                    erroImport.toLowerCase().includes(chave)
+                      ? "text-destructive font-medium"
+                      : "text-muted-foreground"
+                  }`}
+                >
+                  <span>·</span>
+                  <span>{texto}</span>
+                </div>
+              ))}
+            </div>
+            <Button variant="outline" size="sm" onClick={() => setErroImport(null)}>
+              Fechar
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {procs.length === 0 ? (
         <Card>
