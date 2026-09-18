@@ -11,7 +11,6 @@ import {
   type DadosProd,
   type DadosNC,
   type DadosCusto,
-  type DadosCheckin,
   type DadosBanco,
 } from "@/lib/insights-engine";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -152,18 +151,6 @@ export function InsightsView() {
     },
     enabled: podeVerCusto,
   });
-  const { data: checkins = [] } = useQuery({
-    queryKey: ["ins_checkin", mes],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("checkins_operacionais")
-        .select("operacao,data,status_geral,ausentes")
-        .gte("data", mes + "-01")
-        .lte("data", fimDoMes(mes));
-      if (error) throw error;
-      return (data ?? []) as DadosCheckin[];
-    },
-  });
   const { data: bancoHoras = [] } = useQuery({
     queryKey: ["ins_banco", mes],
     queryFn: async () => {
@@ -186,7 +173,6 @@ export function InsightsView() {
         ncsAnterior,
         custos,
         custosAnterior,
-        checkins,
         bancoHoras,
         nomeColaborador: nome,
         podeVerCusto,
@@ -198,7 +184,6 @@ export function InsightsView() {
       ncsAnterior,
       custos,
       custosAnterior,
-      checkins,
       bancoHoras,
       colabs,
       podeVerCusto,

@@ -47,12 +47,6 @@ export type DadosNC = {
   reembolsavel: boolean;
 };
 export type DadosCusto = { operacao: string; mes_referencia: string; total: number };
-export type DadosCheckin = {
-  operacao: string;
-  data: string;
-  status_geral: string;
-  ausentes: string[];
-};
 export type DadosBanco = { colaborador_id: string; mes: string; saldo_acumulado: number };
 
 const fmtBRL = (v: number) =>
@@ -75,7 +69,6 @@ export function gerarInsights(params: {
   ncsAnterior: DadosNC[];
   custos: DadosCusto[];
   custosAnterior: DadosCusto[];
-  checkins: DadosCheckin[];
   bancoHoras: DadosBanco[];
   nomeColaborador: (id: string) => string;
   podeVerCusto: boolean;
@@ -87,7 +80,6 @@ export function gerarInsights(params: {
     ncsAnterior,
     custos,
     custosAnterior,
-    checkins,
     bancoHoras,
     nomeColaborador,
     podeVerCusto,
@@ -376,59 +368,6 @@ export function gerarInsights(params: {
           peso: 55,
         });
       }
-    }
-  }
-
-  /* ═══ PROCESSO / CHECK-IN ═══ */
-
-  if (checkins.length > 0) {
-    const criticos = checkins.filter((c) => c.status_geral === "critico");
-    if (criticos.length > 0) {
-      const porOpCrit = new Map<string, number>();
-      criticos.forEach((c) => porOpCrit.set(c.operacao, (porOpCrit.get(c.operacao) ?? 0) + 1));
-      const top = Array.from(porOpCrit.entries()).sort((a, b) => b[1] - a[1])[0];
-      out.push({
-        id: "checkin-criticos",
-        severidade: "critico",
-        categoria: "processo",
-        titulo: `${criticos.length} check-in(s) com status crítico`,
-        descricao: top
-          ? `Maior incidência em ${label(top[0])} com ${top[1]} registro(s) crítico(s).`
-          : "",
-        acao: "Revisar as pendências registradas nesses dias.",
-        peso: 92,
-      });
-    }
-
-    // Cobertura de check-in
-    const dias = new Set(checkins.map((c) => c.data)).size;
-    const opsComCheckin = new Set(checkins.map((c) => c.operacao)).size;
-    const opsAtivas = comProd.length || UNIDADES.length;
-    if (dias > 0 && opsComCheckin < opsAtivas) {
-      out.push({
-        id: "checkin-cobertura",
-        severidade: "info",
-        categoria: "processo",
-        titulo: `${opsAtivas - opsComCheckin} operação(ões) sem check-in no período`,
-        descricao:
-          "Sem registro diário, intercorrências e ausências não entram no histórico e o FTE fica menos preciso.",
-        peso: 50,
-      });
-    }
-
-    // Ausências
-    const totalAusencias = checkins.reduce((s, c) => s + (c.ausentes?.length ?? 0), 0);
-    if (totalAusencias >= 5) {
-      out.push({
-        id: "checkin-ausencias",
-        severidade: "atencao",
-        categoria: "pessoas",
-        titulo: `${totalAusencias} ausência(s) registrada(s) no período`,
-        descricao:
-          "Volume de ausências afeta diretamente o FTE e, por consequência, a produtividade calculada.",
-        acao: "Confirmar se as ausências estão refletidas nos dias trabalhados lançados em Produtividade.",
-        peso: 62,
-      });
     }
   }
 
