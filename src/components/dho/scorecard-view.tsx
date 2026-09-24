@@ -13,15 +13,12 @@ import {
   tendencia,
   calcularProdutividade,
   calcularQualidade,
-  calcularConfiabilidade,
   fatorComplexidade,
   type DimensaoKey,
   type PesosCiclo,
   type PesoBpmn,
   type RegistroProd,
   type NaoConf,
-  type OcorrAtiv,
-  type AtivDona,
 } from "@/lib/scorecard-engine";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -182,15 +179,6 @@ export function ScorecardView() {
     queryKey: ["sc_ncs"],
     queryFn: fetchAll<NaoConf>("nao_conformidades"),
   });
-  const { data: ocorr = [] } = useQuery({
-    queryKey: ["sc_ocorr"],
-    queryFn: fetchAll<OcorrAtiv>("ocorrencias_atividade"),
-  });
-  const { data: ativs = [] } = useQuery({
-    queryKey: ["sc_ativs"],
-    queryFn: fetchAll<AtivDona>("atividades"),
-  });
-
   const ciclo = useMemo(
     () =>
       ciclos.find((c) => c.id === cicloSel) ??
@@ -216,8 +204,7 @@ export function ScorecardView() {
     const av = avals.find((a) => a.ciclo_id === c.id && a.colaborador_id === colabId);
 
     const prod = calcularProdutividade(regsProd, bpmn, colabId, per);
-    const qual = calcularQualidade(ncs, ocorr, ativs, regsProd, colabId, per);
-    const conf = calcularConfiabilidade(ocorr, ativs, colabId, per);
+    const qual = calcularQualidade(ncs, regsProd, colabId, per);
 
     const usar = (calc: number, semDados: boolean, origem?: string, manual?: number) =>
       origem === "ajustado" && manual != null ? Number(manual) : semDados ? null : calc;
@@ -230,22 +217,17 @@ export function ScorecardView() {
         av?.nota_produtividade,
       ),
       qualidade: usar(qual.nota, qual.semDados, av?.origem_qualidade, av?.nota_qualidade),
-      confiabilidade: usar(
-        conf.nota,
-        conf.semDados,
-        av?.origem_confiabilidade,
-        av?.nota_confiabilidade,
-      ),
+      confiabilidade: av?.nota_confiabilidade != null ? Number(av.nota_confiabilidade) : null,
       multiplicacao: av?.nota_multiplicacao != null ? Number(av.nota_multiplicacao) : null,
       iniciativa: av?.nota_iniciativa != null ? Number(av.nota_iniciativa) : null,
     };
-    return { ...consolidar(notas, pesos), notas, prod, qual, conf, av };
+    return { ...consolidar(notas, pesos), notas, prod, qual, av };
   };
 
   const scorecards = useMemo(() => {
     if (!ciclo) return [];
     return colabs.map((c) => ({ colaborador: c, ...scorecardDe(c.id, ciclo) }));
-  }, [colabs, ciclo, avals, bpmn, regsProd, ncs, ocorr, ativs, pesos]);
+  }, [colabs, ciclo, avals, bpmn, regsProd, ncs, pesos]);
 
   const avaliados = scorecards.filter((s) => s.pesoAplicado > 0);
   const destaques = scorecards.filter((s) => s.av?.destaque && s.av.motivo_destaque);
@@ -266,7 +248,7 @@ export function ScorecardView() {
       });
       return { ciclo: c.nome, media: Number(media.toFixed(1)), avaliados: scs.length, ...porDim };
     });
-  }, [ciclos, colabs, avals, bpmn, regsProd, ncs, ocorr, ativs]);
+  }, [ciclos, colabs, avals, bpmn, regsProd, ncs]);
 
   const serieEquipe = evolucao.map((e) => e.media);
   const tendEquipe = tendencia(serieEquipe);
@@ -347,6 +329,8 @@ export function ScorecardView() {
   const abrirAval = (colabId: string) => {
     const av = avals.find((a) => a.ciclo_id === ciclo?.id && a.colaborador_id === colabId);
     setFormAval({
+      nota_confiabilidade:
+        av?.nota_confiabilidade != null ? String(av.nota_confiabilidade) : "",
       nota_multiplicacao: av?.nota_multiplicacao != null ? String(av.nota_multiplicacao) : "",
       nota_iniciativa: av?.nota_iniciativa != null ? String(av.nota_iniciativa) : "",
       evidencia_multiplicacao: av?.evidencia_multiplicacao ?? "",
@@ -377,6 +361,10 @@ export function ScorecardView() {
           colaborador_id: colabAval,
           nota_multiplicacao: mult ? Number(mult) : null,
           nota_iniciativa: ini ? Number(ini) : null,
+          nota_confiabilidade: formAval.nota_confiabilidade
+            ? Number(formAval.nota_confiabilidade)
+            : null,
+          origem_confiabilidade: "avaliacao_lideranca",
           evidencia_multiplicacao: formAval.evidencia_multiplicacao || null,
           evidencia_iniciativa: formAval.evidencia_iniciativa || null,
           destaque: !!formAval.destaque,
@@ -731,8 +719,8 @@ export function ScorecardView() {
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm">Colaboradores · {ciclo?.nome}</CardTitle>
                   <CardDescription>
-                    Ordem alfabética. Produtividade, qualidade e confiabilidade vêm dos dados;
-                    multiplicação e iniciativa exigem evidência escrita.
+                    Ordem alfabética. Produtividade e qualidade vêm dos dados; confiabilidade,
+                    multiplicação e iniciativa são registradas pela liderança.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="p-0">
@@ -1008,7 +996,7 @@ export function ScorecardView() {
                         <TableCell className="text-sm text-muted-foreground">{d.mede}</TableCell>
                         <TableCell>
                           <Badge variant="outline" className="text-[10px]">
-                            {["multiplicacao", "iniciativa"].includes(d.key)
+                            {["confiabilidade", "multiplicacao", "iniciativa"].includes(d.key)
                               ? "avaliação"
                               : "dados"}
                           </Badge>
@@ -1222,11 +1210,7 @@ export function ScorecardView() {
                       },
                       {
                         k: "qualidade" as const,
-                        det: `${s.qual.ocorrencias} ocorrência(s) · ${s.qual.retrabalho} retrabalho · base ${s.qual.baseAvaliada}`,
-                      },
-                      {
-                        k: "confiabilidade" as const,
-                        det: `${s.conf.noPrazo} no prazo · ${s.conf.comAtraso} atraso · ${s.conf.naoRealizado} não feito`,
+                        det: `${s.qual.ocorrencias} não conformidade(s) · base ${s.qual.baseAvaliada} processos`,
                       },
                     ].map(({ k, det }) => {
                       const n = s.notas[k];
@@ -1253,7 +1237,28 @@ export function ScorecardView() {
                   {/* dimensões avaliadas */}
                   <div className="space-y-3">
                     <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      Avaliação do gestor — exige evidência
+                      Avaliação da liderança
+                    </div>
+                    <div className="p-3 rounded border">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium flex-1">
+                          Confiabilidade <span className="text-muted-foreground">({pesos.confiabilidade}%)</span>
+                        </span>
+                        <Input
+                          type="number"
+                          min={0}
+                          max={100}
+                          className="w-20 h-8"
+                          value={formAval.nota_confiabilidade ?? ""}
+                          onChange={(e) =>
+                            setFormAval((f) => ({ ...f, nota_confiabilidade: e.target.value }))
+                          }
+                          placeholder="0-100"
+                        />
+                      </div>
+                    </div>
+                    <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Multiplicação e iniciativa — exigem evidência
                     </div>
                     {(
                       [
