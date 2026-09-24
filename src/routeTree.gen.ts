@@ -15,16 +15,11 @@ import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedSlaMideaRouteImport } from './routes/_authenticated/sla-midea'
 import { Route as AuthenticatedSlaBoschRouteImport } from './routes/_authenticated/sla-bosch'
 import { Route as AuthenticatedScorecardRouteImport } from './routes/_authenticated/scorecard'
-import { Route as AuthenticatedRevisaoSemanalRouteImport } from './routes/_authenticated/revisao-semanal'
-import { Route as AuthenticatedRelatoriosRouteImport } from './routes/_authenticated/relatorios'
-import { Route as AuthenticatedProjetosRouteImport } from './routes/_authenticated/projetos'
 import { Route as AuthenticatedProdutividadeRouteImport } from './routes/_authenticated/produtividade'
 import { Route as AuthenticatedPlanoAcaoRouteImport } from './routes/_authenticated/plano-acao'
 import { Route as AuthenticatedPdiRouteImport } from './routes/_authenticated/pdi'
 import { Route as AuthenticatedPaineisOperacionaisRouteImport } from './routes/_authenticated/paineis-operacionais'
 import { Route as AuthenticatedNaoConformidadesRouteImport } from './routes/_authenticated/nao-conformidades'
-import { Route as AuthenticatedMinhaSemanaRouteImport } from './routes/_authenticated/minha-semana'
-import { Route as AuthenticatedMetasRouteImport } from './routes/_authenticated/metas'
 import { Route as AuthenticatedMelhoriasRouteImport } from './routes/_authenticated/melhorias'
 import { Route as AuthenticatedMargemContribucaoRouteImport } from './routes/_authenticated/margem-contribucao'
 import { Route as AuthenticatedInsightsRouteImport } from './routes/_authenticated/insights'
@@ -35,12 +30,9 @@ import { Route as AuthenticatedEquipesRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedDiagnosticoRouteImport } from './routes/_authenticated/diagnostico'
 import { Route as AuthenticatedDashboardGestaoRouteImport } from './routes/_authenticated/dashboard-gestao'
 import { Route as AuthenticatedCustoOperacionalRouteImport } from './routes/_authenticated/custo-operacional'
-import { Route as AuthenticatedCheckinOperacionalRouteImport } from './routes/_authenticated/checkin-operacional'
-import { Route as AuthenticatedCheckinGerencialRouteImport } from './routes/_authenticated/checkin-gerencial'
 import { Route as AuthenticatedCadastroOportunidadesRouteImport } from './routes/_authenticated/cadastro-oportunidades'
 import { Route as AuthenticatedCadastroRouteImport } from './routes/_authenticated/cadastro'
 import { Route as AuthenticatedBancoHorasRouteImport } from './routes/_authenticated/banco-horas'
-import { Route as AuthenticatedAtividadesRouteImport } from './routes/_authenticated/atividades'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -71,22 +63,6 @@ const AuthenticatedScorecardRoute = AuthenticatedScorecardRouteImport.update({
   path: '/scorecard',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedRevisaoSemanalRoute =
-  AuthenticatedRevisaoSemanalRouteImport.update({
-    id: '/revisao-semanal',
-    path: '/revisao-semanal',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedRelatoriosRoute = AuthenticatedRelatoriosRouteImport.update({
-  id: '/relatorios',
-  path: '/relatorios',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedProjetosRoute = AuthenticatedProjetosRouteImport.update({
-  id: '/projetos',
-  path: '/projetos',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
 const AuthenticatedProdutividadeRoute =
   AuthenticatedProdutividadeRouteImport.update({
     id: '/produtividade',
@@ -115,17 +91,6 @@ const AuthenticatedNaoConformidadesRoute =
     path: '/nao-conformidades',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
-const AuthenticatedMinhaSemanaRoute =
-  AuthenticatedMinhaSemanaRouteImport.update({
-    id: '/minha-semana',
-    path: '/minha-semana',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedMetasRoute = AuthenticatedMetasRouteImport.update({
-  id: '/metas',
-  path: '/metas',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
 const AuthenticatedMelhoriasRoute = AuthenticatedMelhoriasRouteImport.update({
   id: '/melhorias',
   path: '/melhorias',
@@ -183,18 +148,6 @@ const AuthenticatedCustoOperacionalRoute =
     path: '/custo-operacional',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
-const AuthenticatedCheckinOperacionalRoute =
-  AuthenticatedCheckinOperacionalRouteImport.update({
-    id: '/checkin-operacional',
-    path: '/checkin-operacional',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedCheckinGerencialRoute =
-  AuthenticatedCheckinGerencialRouteImport.update({
-    id: '/checkin-gerencial',
-    path: '/checkin-gerencial',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
 const AuthenticatedCadastroOportunidadesRoute =
   AuthenticatedCadastroOportunidadesRouteImport.update({
     id: '/cadastro-oportunidades',
@@ -211,21 +164,13 @@ const AuthenticatedBancoHorasRoute = AuthenticatedBancoHorasRouteImport.update({
   path: '/banco-horas',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedAtividadesRoute = AuthenticatedAtividadesRouteImport.update({
-  id: '/atividades',
-  path: '/atividades',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/login': typeof LoginRoute
-  '/atividades': typeof AuthenticatedAtividadesRoute
   '/banco-horas': typeof AuthenticatedBancoHorasRoute
   '/cadastro': typeof AuthenticatedCadastroRoute
   '/cadastro-oportunidades': typeof AuthenticatedCadastroOportunidadesRoute
-  '/checkin-gerencial': typeof AuthenticatedCheckinGerencialRoute
-  '/checkin-operacional': typeof AuthenticatedCheckinOperacionalRoute
   '/custo-operacional': typeof AuthenticatedCustoOperacionalRoute
   '/dashboard-gestao': typeof AuthenticatedDashboardGestaoRoute
   '/diagnostico': typeof AuthenticatedDiagnosticoRoute
@@ -236,28 +181,20 @@ export interface FileRoutesByFullPath {
   '/insights': typeof AuthenticatedInsightsRoute
   '/margem-contribucao': typeof AuthenticatedMargemContribucaoRoute
   '/melhorias': typeof AuthenticatedMelhoriasRoute
-  '/metas': typeof AuthenticatedMetasRoute
-  '/minha-semana': typeof AuthenticatedMinhaSemanaRoute
   '/nao-conformidades': typeof AuthenticatedNaoConformidadesRoute
   '/paineis-operacionais': typeof AuthenticatedPaineisOperacionaisRoute
   '/pdi': typeof AuthenticatedPdiRoute
   '/plano-acao': typeof AuthenticatedPlanoAcaoRoute
   '/produtividade': typeof AuthenticatedProdutividadeRoute
-  '/projetos': typeof AuthenticatedProjetosRoute
-  '/relatorios': typeof AuthenticatedRelatoriosRoute
-  '/revisao-semanal': typeof AuthenticatedRevisaoSemanalRoute
   '/scorecard': typeof AuthenticatedScorecardRoute
   '/sla-bosch': typeof AuthenticatedSlaBoschRoute
   '/sla-midea': typeof AuthenticatedSlaMideaRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
-  '/atividades': typeof AuthenticatedAtividadesRoute
   '/banco-horas': typeof AuthenticatedBancoHorasRoute
   '/cadastro': typeof AuthenticatedCadastroRoute
   '/cadastro-oportunidades': typeof AuthenticatedCadastroOportunidadesRoute
-  '/checkin-gerencial': typeof AuthenticatedCheckinGerencialRoute
-  '/checkin-operacional': typeof AuthenticatedCheckinOperacionalRoute
   '/custo-operacional': typeof AuthenticatedCustoOperacionalRoute
   '/dashboard-gestao': typeof AuthenticatedDashboardGestaoRoute
   '/diagnostico': typeof AuthenticatedDiagnosticoRoute
@@ -268,16 +205,11 @@ export interface FileRoutesByTo {
   '/insights': typeof AuthenticatedInsightsRoute
   '/margem-contribucao': typeof AuthenticatedMargemContribucaoRoute
   '/melhorias': typeof AuthenticatedMelhoriasRoute
-  '/metas': typeof AuthenticatedMetasRoute
-  '/minha-semana': typeof AuthenticatedMinhaSemanaRoute
   '/nao-conformidades': typeof AuthenticatedNaoConformidadesRoute
   '/paineis-operacionais': typeof AuthenticatedPaineisOperacionaisRoute
   '/pdi': typeof AuthenticatedPdiRoute
   '/plano-acao': typeof AuthenticatedPlanoAcaoRoute
   '/produtividade': typeof AuthenticatedProdutividadeRoute
-  '/projetos': typeof AuthenticatedProjetosRoute
-  '/relatorios': typeof AuthenticatedRelatoriosRoute
-  '/revisao-semanal': typeof AuthenticatedRevisaoSemanalRoute
   '/scorecard': typeof AuthenticatedScorecardRoute
   '/sla-bosch': typeof AuthenticatedSlaBoschRoute
   '/sla-midea': typeof AuthenticatedSlaMideaRoute
@@ -287,12 +219,9 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
-  '/_authenticated/atividades': typeof AuthenticatedAtividadesRoute
   '/_authenticated/banco-horas': typeof AuthenticatedBancoHorasRoute
   '/_authenticated/cadastro': typeof AuthenticatedCadastroRoute
   '/_authenticated/cadastro-oportunidades': typeof AuthenticatedCadastroOportunidadesRoute
-  '/_authenticated/checkin-gerencial': typeof AuthenticatedCheckinGerencialRoute
-  '/_authenticated/checkin-operacional': typeof AuthenticatedCheckinOperacionalRoute
   '/_authenticated/custo-operacional': typeof AuthenticatedCustoOperacionalRoute
   '/_authenticated/dashboard-gestao': typeof AuthenticatedDashboardGestaoRoute
   '/_authenticated/diagnostico': typeof AuthenticatedDiagnosticoRoute
@@ -303,16 +232,11 @@ export interface FileRoutesById {
   '/_authenticated/insights': typeof AuthenticatedInsightsRoute
   '/_authenticated/margem-contribucao': typeof AuthenticatedMargemContribucaoRoute
   '/_authenticated/melhorias': typeof AuthenticatedMelhoriasRoute
-  '/_authenticated/metas': typeof AuthenticatedMetasRoute
-  '/_authenticated/minha-semana': typeof AuthenticatedMinhaSemanaRoute
   '/_authenticated/nao-conformidades': typeof AuthenticatedNaoConformidadesRoute
   '/_authenticated/paineis-operacionais': typeof AuthenticatedPaineisOperacionaisRoute
   '/_authenticated/pdi': typeof AuthenticatedPdiRoute
   '/_authenticated/plano-acao': typeof AuthenticatedPlanoAcaoRoute
   '/_authenticated/produtividade': typeof AuthenticatedProdutividadeRoute
-  '/_authenticated/projetos': typeof AuthenticatedProjetosRoute
-  '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
-  '/_authenticated/revisao-semanal': typeof AuthenticatedRevisaoSemanalRoute
   '/_authenticated/scorecard': typeof AuthenticatedScorecardRoute
   '/_authenticated/sla-bosch': typeof AuthenticatedSlaBoschRoute
   '/_authenticated/sla-midea': typeof AuthenticatedSlaMideaRoute
@@ -323,12 +247,9 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
-    | '/atividades'
     | '/banco-horas'
     | '/cadastro'
     | '/cadastro-oportunidades'
-    | '/checkin-gerencial'
-    | '/checkin-operacional'
     | '/custo-operacional'
     | '/dashboard-gestao'
     | '/diagnostico'
@@ -339,28 +260,20 @@ export interface FileRouteTypes {
     | '/insights'
     | '/margem-contribucao'
     | '/melhorias'
-    | '/metas'
-    | '/minha-semana'
     | '/nao-conformidades'
     | '/paineis-operacionais'
     | '/pdi'
     | '/plano-acao'
     | '/produtividade'
-    | '/projetos'
-    | '/relatorios'
-    | '/revisao-semanal'
     | '/scorecard'
     | '/sla-bosch'
     | '/sla-midea'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
-    | '/atividades'
     | '/banco-horas'
     | '/cadastro'
     | '/cadastro-oportunidades'
-    | '/checkin-gerencial'
-    | '/checkin-operacional'
     | '/custo-operacional'
     | '/dashboard-gestao'
     | '/diagnostico'
@@ -371,16 +284,11 @@ export interface FileRouteTypes {
     | '/insights'
     | '/margem-contribucao'
     | '/melhorias'
-    | '/metas'
-    | '/minha-semana'
     | '/nao-conformidades'
     | '/paineis-operacionais'
     | '/pdi'
     | '/plano-acao'
     | '/produtividade'
-    | '/projetos'
-    | '/relatorios'
-    | '/revisao-semanal'
     | '/scorecard'
     | '/sla-bosch'
     | '/sla-midea'
@@ -389,12 +297,9 @@ export interface FileRouteTypes {
     | '__root__'
     | '/_authenticated'
     | '/login'
-    | '/_authenticated/atividades'
     | '/_authenticated/banco-horas'
     | '/_authenticated/cadastro'
     | '/_authenticated/cadastro-oportunidades'
-    | '/_authenticated/checkin-gerencial'
-    | '/_authenticated/checkin-operacional'
     | '/_authenticated/custo-operacional'
     | '/_authenticated/dashboard-gestao'
     | '/_authenticated/diagnostico'
@@ -405,16 +310,11 @@ export interface FileRouteTypes {
     | '/_authenticated/insights'
     | '/_authenticated/margem-contribucao'
     | '/_authenticated/melhorias'
-    | '/_authenticated/metas'
-    | '/_authenticated/minha-semana'
     | '/_authenticated/nao-conformidades'
     | '/_authenticated/paineis-operacionais'
     | '/_authenticated/pdi'
     | '/_authenticated/plano-acao'
     | '/_authenticated/produtividade'
-    | '/_authenticated/projetos'
-    | '/_authenticated/relatorios'
-    | '/_authenticated/revisao-semanal'
     | '/_authenticated/scorecard'
     | '/_authenticated/sla-bosch'
     | '/_authenticated/sla-midea'
@@ -470,27 +370,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedScorecardRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/revisao-semanal': {
-      id: '/_authenticated/revisao-semanal'
-      path: '/revisao-semanal'
-      fullPath: '/revisao-semanal'
-      preLoaderRoute: typeof AuthenticatedRevisaoSemanalRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/relatorios': {
-      id: '/_authenticated/relatorios'
-      path: '/relatorios'
-      fullPath: '/relatorios'
-      preLoaderRoute: typeof AuthenticatedRelatoriosRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/projetos': {
-      id: '/_authenticated/projetos'
-      path: '/projetos'
-      fullPath: '/projetos'
-      preLoaderRoute: typeof AuthenticatedProjetosRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
     '/_authenticated/produtividade': {
       id: '/_authenticated/produtividade'
       path: '/produtividade'
@@ -524,20 +403,6 @@ declare module '@tanstack/react-router' {
       path: '/nao-conformidades'
       fullPath: '/nao-conformidades'
       preLoaderRoute: typeof AuthenticatedNaoConformidadesRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/minha-semana': {
-      id: '/_authenticated/minha-semana'
-      path: '/minha-semana'
-      fullPath: '/minha-semana'
-      preLoaderRoute: typeof AuthenticatedMinhaSemanaRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/metas': {
-      id: '/_authenticated/metas'
-      path: '/metas'
-      fullPath: '/metas'
-      preLoaderRoute: typeof AuthenticatedMetasRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/melhorias': {
@@ -610,20 +475,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCustoOperacionalRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/checkin-operacional': {
-      id: '/_authenticated/checkin-operacional'
-      path: '/checkin-operacional'
-      fullPath: '/checkin-operacional'
-      preLoaderRoute: typeof AuthenticatedCheckinOperacionalRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/checkin-gerencial': {
-      id: '/_authenticated/checkin-gerencial'
-      path: '/checkin-gerencial'
-      fullPath: '/checkin-gerencial'
-      preLoaderRoute: typeof AuthenticatedCheckinGerencialRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
     '/_authenticated/cadastro-oportunidades': {
       id: '/_authenticated/cadastro-oportunidades'
       path: '/cadastro-oportunidades'
@@ -645,23 +496,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBancoHorasRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/atividades': {
-      id: '/_authenticated/atividades'
-      path: '/atividades'
-      fullPath: '/atividades'
-      preLoaderRoute: typeof AuthenticatedAtividadesRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
   }
 }
 
 interface AuthenticatedRouteChildren {
-  AuthenticatedAtividadesRoute: typeof AuthenticatedAtividadesRoute
   AuthenticatedBancoHorasRoute: typeof AuthenticatedBancoHorasRoute
   AuthenticatedCadastroRoute: typeof AuthenticatedCadastroRoute
   AuthenticatedCadastroOportunidadesRoute: typeof AuthenticatedCadastroOportunidadesRoute
-  AuthenticatedCheckinGerencialRoute: typeof AuthenticatedCheckinGerencialRoute
-  AuthenticatedCheckinOperacionalRoute: typeof AuthenticatedCheckinOperacionalRoute
   AuthenticatedCustoOperacionalRoute: typeof AuthenticatedCustoOperacionalRoute
   AuthenticatedDashboardGestaoRoute: typeof AuthenticatedDashboardGestaoRoute
   AuthenticatedDiagnosticoRoute: typeof AuthenticatedDiagnosticoRoute
@@ -672,16 +513,11 @@ interface AuthenticatedRouteChildren {
   AuthenticatedInsightsRoute: typeof AuthenticatedInsightsRoute
   AuthenticatedMargemContribucaoRoute: typeof AuthenticatedMargemContribucaoRoute
   AuthenticatedMelhoriasRoute: typeof AuthenticatedMelhoriasRoute
-  AuthenticatedMetasRoute: typeof AuthenticatedMetasRoute
-  AuthenticatedMinhaSemanaRoute: typeof AuthenticatedMinhaSemanaRoute
   AuthenticatedNaoConformidadesRoute: typeof AuthenticatedNaoConformidadesRoute
   AuthenticatedPaineisOperacionaisRoute: typeof AuthenticatedPaineisOperacionaisRoute
   AuthenticatedPdiRoute: typeof AuthenticatedPdiRoute
   AuthenticatedPlanoAcaoRoute: typeof AuthenticatedPlanoAcaoRoute
   AuthenticatedProdutividadeRoute: typeof AuthenticatedProdutividadeRoute
-  AuthenticatedProjetosRoute: typeof AuthenticatedProjetosRoute
-  AuthenticatedRelatoriosRoute: typeof AuthenticatedRelatoriosRoute
-  AuthenticatedRevisaoSemanalRoute: typeof AuthenticatedRevisaoSemanalRoute
   AuthenticatedScorecardRoute: typeof AuthenticatedScorecardRoute
   AuthenticatedSlaBoschRoute: typeof AuthenticatedSlaBoschRoute
   AuthenticatedSlaMideaRoute: typeof AuthenticatedSlaMideaRoute
@@ -689,13 +525,10 @@ interface AuthenticatedRouteChildren {
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
-  AuthenticatedAtividadesRoute: AuthenticatedAtividadesRoute,
   AuthenticatedBancoHorasRoute: AuthenticatedBancoHorasRoute,
   AuthenticatedCadastroRoute: AuthenticatedCadastroRoute,
   AuthenticatedCadastroOportunidadesRoute:
     AuthenticatedCadastroOportunidadesRoute,
-  AuthenticatedCheckinGerencialRoute: AuthenticatedCheckinGerencialRoute,
-  AuthenticatedCheckinOperacionalRoute: AuthenticatedCheckinOperacionalRoute,
   AuthenticatedCustoOperacionalRoute: AuthenticatedCustoOperacionalRoute,
   AuthenticatedDashboardGestaoRoute: AuthenticatedDashboardGestaoRoute,
   AuthenticatedDiagnosticoRoute: AuthenticatedDiagnosticoRoute,
@@ -707,16 +540,11 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedInsightsRoute: AuthenticatedInsightsRoute,
   AuthenticatedMargemContribucaoRoute: AuthenticatedMargemContribucaoRoute,
   AuthenticatedMelhoriasRoute: AuthenticatedMelhoriasRoute,
-  AuthenticatedMetasRoute: AuthenticatedMetasRoute,
-  AuthenticatedMinhaSemanaRoute: AuthenticatedMinhaSemanaRoute,
   AuthenticatedNaoConformidadesRoute: AuthenticatedNaoConformidadesRoute,
   AuthenticatedPaineisOperacionaisRoute: AuthenticatedPaineisOperacionaisRoute,
   AuthenticatedPdiRoute: AuthenticatedPdiRoute,
   AuthenticatedPlanoAcaoRoute: AuthenticatedPlanoAcaoRoute,
   AuthenticatedProdutividadeRoute: AuthenticatedProdutividadeRoute,
-  AuthenticatedProjetosRoute: AuthenticatedProjetosRoute,
-  AuthenticatedRelatoriosRoute: AuthenticatedRelatoriosRoute,
-  AuthenticatedRevisaoSemanalRoute: AuthenticatedRevisaoSemanalRoute,
   AuthenticatedScorecardRoute: AuthenticatedScorecardRoute,
   AuthenticatedSlaBoschRoute: AuthenticatedSlaBoschRoute,
   AuthenticatedSlaMideaRoute: AuthenticatedSlaMideaRoute,
