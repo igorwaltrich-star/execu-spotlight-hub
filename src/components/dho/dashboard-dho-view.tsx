@@ -2,778 +2,143 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useColaboradores } from "@/components/gestao/use-colaboradores";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  LineChart,
-  Line,
-  PieChart,
-  Pie,
-  Cell,
-} from "recharts";
-import {
-  Users,
-  CheckCircle2,
-  AlertCircle,
-  Target,
-  TrendingUp,
-  TrendingDown,
-  Minus,
-  Clock,
-  MessageSquare,
-  CalendarCheck,
-} from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AlertTriangle, Award, BriefcaseBusiness, CheckCircle2, Clock3, Users } from "lucide-react";
 
-type Atividade = {
-  id: string;
-  titulo: string;
-  owner_id?: string;
-  equipe_id?: string;
-  status: string;
-  prioridade: string;
-  due_date?: string;
-  tipo: string;
-};
-type Ocorrencia = {
-  id: string;
-  atividade_id: string;
-  week_start: string;
-  resultado?: string;
-  pontuacao?: number;
-};
-type Meta = {
-  id: string;
-  titulo: string;
-  owner_id?: string;
-  equipe_id?: string;
-  valor_esperado: number;
-  unidade: string;
-  status: string;
-};
-type Resultado = {
-  id: string;
-  meta_id: string;
-  periodo_inicio: string;
-  pct_atingimento: number;
-  valor_realizado: number;
-};
-type Revisao = {
-  id: string;
-  user_id: string;
-  week_start: string;
-  status: string;
-  pontuacao_geral?: number;
-};
-type Equipe = { id: string; nome: string };
+type Equipe = { id: string; nome: string; ativo: boolean };
 type Membro = { equipe_id: string; user_id: string; ativo: boolean };
-type ItemCk = {
-  id: string;
-  tipo: string;
-  titulo: string;
-  responsavel_id?: string;
-  prazo?: string;
-  status_acompanhamento: string;
+type Perfil = { id: string; ativo: boolean };
+type Ciclo = { id: string; nome: string; periodo_inicio: string; periodo_fim: string; status: string };
+type Avaliacao = {
+  ciclo_id: string;
+  colaborador_id: string;
+  destaque: boolean;
+  nota_produtividade: number | null;
+  nota_qualidade: number | null;
+  nota_confiabilidade: number | null;
+  nota_multiplicacao: number | null;
+  nota_iniciativa: number | null;
 };
+type Plano = { id: string; colaborador_id: string; status: string; progresso: number; due_date: string | null };
+type AtividadePdi = { plano_id: string; status: string; due_date: string | null };
 
-const C = {
-  primary: "var(--color-primary)",
-  accent: "var(--color-accent)",
-  success: "var(--color-success)",
-  warning: "var(--color-warning)",
-  destructive: "var(--color-destructive)",
-  muted: "var(--color-muted-foreground)",
-};
-const RES_CFG: Record<string, { label: string; color: string }> = {
-  sucesso: { label: "Sucesso", color: C.success },
-  atraso: { label: "Com atraso", color: "#F5C842" },
-  desvios: { label: "Com desvios", color: C.warning },
-  nao_realizado: { label: "Não realizado", color: C.destructive },
-  nao_aplicavel: { label: "Não aplicável", color: C.muted },
-};
+const DIMENSOES = [
+  ["nota_produtividade", "Produtividade"],
+  ["nota_qualidade", "Qualidade"],
+  ["nota_confiabilidade", "Confiabilidade"],
+  ["nota_multiplicacao", "Multiplicação"],
+  ["nota_iniciativa", "Iniciativa"],
+] as const;
 
-function weekKey(offset: number) {
-  const d = new Date();
-  d.setDate(d.getDate() - ((d.getDay() + 6) % 7) + offset * 7);
-  return d.toISOString().slice(0, 10);
-}
-const weekLabel = (iso: string) => {
-  const d = new Date(iso + "T00:00:00");
-  return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}`;
+const media = (valores: Array<number | null | undefined>) => {
+  const validos = valores.filter((v): v is number => v != null);
+  return validos.length ? validos.reduce((s, v) => s + Number(v), 0) / validos.length : null;
 };
 
 export function DashboardDhoView() {
-  const { data: colabs = [] } = useColaboradores();
+  const { data: colaboradores = [] } = useColaboradores();
   const [equipeSel, setEquipeSel] = useState("all");
+  const fetchAll = <T,>(tabela: string, ordem?: string) => async () => {
+    let query = (supabase.from as unknown as (t: string) => ReturnType<typeof supabase.from>)(tabela).select("*");
+    if (ordem) query = query.order(ordem, { ascending: false });
+    const { data, error } = await query;
+    if (error) throw error;
+    return (data ?? []) as T[];
+  };
 
-  const fetchAll =
-    <T,>(table: string) =>
-    async () => {
-      const { data, error } = await (
-        supabase.from as unknown as (t: string) => ReturnType<typeof supabase.from>
-      )(table).select("*");
-      if (error) throw error;
-      return (data ?? []) as T[];
-    };
+  const { data: equipes = [] } = useQuery({ queryKey: ["equipes"], queryFn: fetchAll<Equipe>("equipes") });
+  const { data: membros = [] } = useQuery({ queryKey: ["membros_equipe"], queryFn: fetchAll<Membro>("membros_equipe") });
+  const { data: perfis = [] } = useQuery({ queryKey: ["dash_profiles"], queryFn: fetchAll<Perfil>("profiles") });
+  const { data: ciclos = [] } = useQuery({ queryKey: ["sc_ciclos"], queryFn: fetchAll<Ciclo>("scorecard_ciclos", "periodo_inicio") });
+  const { data: avaliacoes = [] } = useQuery({ queryKey: ["sc_avals"], queryFn: fetchAll<Avaliacao>("scorecard_avaliacoes") });
+  const { data: planos = [] } = useQuery({ queryKey: ["planos_desenvolvimento"], queryFn: fetchAll<Plano>("planos_desenvolvimento") });
+  const { data: atividadesPdi = [] } = useQuery({ queryKey: ["atividades_desenvolvimento"], queryFn: fetchAll<AtividadePdi>("atividades_desenvolvimento") });
 
-  const { data: atividades = [] } = useQuery({
-    queryKey: ["dho_atividades"],
-    queryFn: fetchAll<Atividade>("atividades"),
-  });
-  const { data: ocorrencias = [] } = useQuery({
-    queryKey: ["dho_ocorrencias"],
-    queryFn: fetchAll<Ocorrencia>("ocorrencias_atividade"),
-  });
-  const { data: metas = [] } = useQuery({
-    queryKey: ["dho_metas"],
-    queryFn: fetchAll<Meta>("metas"),
-  });
-  const { data: resultados = [] } = useQuery({
-    queryKey: ["dho_resultados"],
-    queryFn: fetchAll<Resultado>("resultados_meta"),
-  });
-  const { data: revisoes = [] } = useQuery({
-    queryKey: ["dho_revisoes"],
-    queryFn: fetchAll<Revisao>("revisoes_semanais"),
-  });
-  const { data: equipes = [] } = useQuery({
-    queryKey: ["dho_equipes"],
-    queryFn: fetchAll<Equipe>("equipes"),
-  });
-  const { data: membros = [] } = useQuery({
-    queryKey: ["dho_membros"],
-    queryFn: fetchAll<Membro>("membros_equipe"),
-  });
-  const { data: itensCk = [] } = useQuery({
-    queryKey: ["dho_itens_ck"],
-    queryFn: fetchAll<ItemCk>("checkin_gerencial_itens"),
-  });
+  const equipesAtivas = equipes.filter((e) => e.ativo);
+  const membrosAtivos = membros.filter((m) => m.ativo);
+  const idsEquipe = useMemo(() => equipeSel === "all" ? null : new Set(membrosAtivos.filter((m) => m.equipe_id === equipeSel).map((m) => m.user_id)), [equipeSel, membrosAtivos]);
+  const colabsFiltrados = colaboradores.filter((c) => !idsEquipe || idsEquipe.has(c.id));
+  const colabIds = new Set(colabsFiltrados.map((c) => c.id));
+  const cicloAtual = ciclos.find((c) => c.status === "publicado") ?? ciclos.find((c) => c.status === "fechado") ?? ciclos[0];
+  const avaliacoesCiclo = avaliacoes.filter((a) => a.ciclo_id === cicloAtual?.id && colabIds.has(a.colaborador_id));
+  const planosFiltrados = planos.filter((p) => colabIds.has(p.colaborador_id));
+  const planoIds = new Set(planosFiltrados.map((p) => p.id));
+  const atividadesFiltradas = atividadesPdi.filter((a) => planoIds.has(a.plano_id));
+  const hoje = new Date().toISOString().slice(0, 10);
+  const em30dias = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
 
-  const nome = (id?: string) => (id ? (colabs.find((c) => c.id === id)?.nome ?? "—") : "—");
+  const scorePorPessoa = avaliacoesCiclo.map((a) => ({
+    ...a,
+    score: media(DIMENSOES.map(([campo]) => a[campo])),
+  }));
+  const mediaGeral = media(scorePorPessoa.map((a) => a.score));
+  const dimensoes = DIMENSOES.map(([campo, label]) => ({ label, valor: media(avaliacoesCiclo.map((a) => a[campo])) }));
+  const ranking = colabsFiltrados.map((c) => {
+    const av = scorePorPessoa.find((a) => a.colaborador_id === c.id);
+    const ps = planosFiltrados.filter((p) => p.colaborador_id === c.id);
+    const equipe = equipesAtivas.find((e) => membrosAtivos.some((m) => m.user_id === c.id && m.equipe_id === e.id));
+    return { ...c, equipe: equipe?.nome ?? "Sem equipe", score: av?.score ?? null, destaque: av?.destaque ?? false, pdis: ps.length, progresso: media(ps.map((p) => p.progresso)) };
+  }).sort((a, b) => (b.score ?? -1) - (a.score ?? -1));
 
-  /* ── filtro por equipe ── */
-  const membrosDaEquipe = useMemo(
-    () =>
-      equipeSel === "all"
-        ? null
-        : new Set(
-            membros.filter((m) => m.equipe_id === equipeSel && m.ativo).map((m) => m.user_id),
-          ),
-    [membros, equipeSel],
-  );
-  const ativFiltradas = useMemo(
-    () =>
-      membrosDaEquipe
-        ? atividades.filter((a) => a.owner_id && membrosDaEquipe.has(a.owner_id))
-        : atividades,
-    [atividades, membrosDaEquipe],
-  );
-  const metasFiltradas = useMemo(
-    () =>
-      membrosDaEquipe ? metas.filter((m) => m.owner_id && membrosDaEquipe.has(m.owner_id)) : metas,
-    [metas, membrosDaEquipe],
-  );
-
-  /* ── KPIs ── */
-  const kpis = useMemo(() => {
-    const total = ativFiltradas.length;
-    const concl = ativFiltradas.filter((a) => a.status === "concluida").length;
-    const atras = ativFiltradas.filter((a) => a.status === "atrasada").length;
-    const semanaAtual = weekKey(0);
-    const revSemana = revisoes.filter((r) => r.week_start === semanaAtual);
-    const esperadas = membrosDaEquipe ? membrosDaEquipe.size : colabs.length;
-    const metaComRes = metasFiltradas
-      .map((m) => {
-        const r = resultados
-          .filter((x) => x.meta_id === m.id)
-          .sort((a, b) => b.periodo_inicio.localeCompare(a.periodo_inicio))[0];
-        return r ? Number(r.pct_atingimento) : null;
-      })
-      .filter((v): v is number => v !== null);
-    return {
-      colaboradores: esperadas,
-      equipes: equipes.length,
-      pctConcluidas: total > 0 ? Math.round((concl / total) * 100) : 0,
-      totalAtiv: total,
-      atrasadas: atras,
-      revisoesPendentes: Math.max(
-        esperadas - revSemana.filter((r) => r.status !== "pendente").length,
-        0,
-      ),
-      metasAtingidas: metaComRes.filter((v) => v >= 100).length,
-      totalMetas: metaComRes.length,
-      mediaAting:
-        metaComRes.length > 0 ? metaComRes.reduce((s, v) => s + v, 0) / metaComRes.length : 0,
-    };
-  }, [ativFiltradas, metasFiltradas, resultados, revisoes, colabs, equipes, membrosDaEquipe]);
-
-  /* ── evolução 8 semanas ── */
-  const evolucao = useMemo(() => {
-    const ativIds = new Set(ativFiltradas.map((a) => a.id));
-    return Array.from({ length: 8 }, (_, i) => {
-      const wk = weekKey(-(7 - i));
-      const ocs = ocorrencias.filter((o) => o.week_start === wk && ativIds.has(o.atividade_id));
-      const tot = ocs.length || 1;
-      const cnt = (r: string) => ocs.filter((o) => o.resultado === r).length;
-      return {
-        semana: weekLabel(wk),
-        Sucesso: Math.round((cnt("sucesso") / tot) * 100),
-        Atraso: Math.round((cnt("atraso") / tot) * 100),
-        Desvios: Math.round((cnt("desvios") / tot) * 100),
-        "Não realizado": Math.round((cnt("nao_realizado") / tot) * 100),
-        _registros: ocs.length,
-      };
-    });
-  }, [ocorrencias, ativFiltradas]);
-
-  const temHistorico = evolucao.some((e) => e._registros > 0);
-
-  /* ── distribuição resultados ── */
-  const distribuicao = useMemo(() => {
-    const ativIds = new Set(ativFiltradas.map((a) => a.id));
-    const ocs = ocorrencias.filter((o) => ativIds.has(o.atividade_id));
-    return Object.entries(RES_CFG)
-      .map(([k, cfg]) => ({
-        name: cfg.label,
-        value: ocs.filter((o) => o.resultado === k).length,
-        color: cfg.color,
-      }))
-      .filter((d) => d.value > 0);
-  }, [ocorrencias, ativFiltradas]);
-
-  /* ── status atividades ── */
-  const statusDist = useMemo(() => {
-    const map: Record<string, { label: string; color: string }> = {
-      concluida: { label: "Concluídas", color: C.success },
-      em_andamento: { label: "Em andamento", color: C.primary },
-      atrasada: { label: "Atrasadas", color: C.destructive },
-      nao_iniciada: { label: "Não iniciadas", color: C.muted },
-      bloqueada: { label: "Bloqueadas", color: C.warning },
-    };
-    return Object.entries(map)
-      .map(([k, cfg]) => ({
-        status: cfg.label,
-        qtd: ativFiltradas.filter((a) => a.status === k).length,
-        color: cfg.color,
-      }))
-      .filter((d) => d.qtd > 0);
-  }, [ativFiltradas]);
-
-  /* ── desempenho por colaborador ── */
-  const porColaborador = useMemo(() => {
-    const ativByOwner = new Map<string, string[]>();
-    ativFiltradas.forEach((a) => {
-      if (!a.owner_id) return;
-      const arr = ativByOwner.get(a.owner_id) ?? [];
-      arr.push(a.id);
-      ativByOwner.set(a.owner_id, arr);
-    });
-    return Array.from(ativByOwner.entries())
-      .map(([uid, ids]) => {
-        const idSet = new Set(ids);
-        const ocs = ocorrencias.filter((o) => idSet.has(o.atividade_id));
-        const semanas = Array.from({ length: 4 }, (_, i) => {
-          const wk = weekKey(-(3 - i));
-          const wkOcs = ocs.filter((o) => o.week_start === wk);
-          return wkOcs.length > 0
-            ? wkOcs.reduce((s, o) => s + Number(o.pontuacao ?? 0), 0) / wkOcs.length
-            : null;
-        });
-        const validas = semanas.filter((v): v is number => v !== null);
-        const media = validas.length > 0 ? validas.reduce((s, v) => s + v, 0) / validas.length : 0;
-        const primeira = validas[0] ?? 0,
-          ultima = validas[validas.length - 1] ?? 0;
-        const delta = ultima - primeira;
-        return {
-          user_id: uid,
-          nome: nome(uid),
-          media,
-          delta,
-          tendencia: validas.length < 2 ? "flat" : delta > 5 ? "up" : delta < -5 ? "down" : "flat",
-          atividades: ids.length,
-          avaliacoes: ocs.length,
-        };
-      })
-      .sort((a, b) => b.media - a.media);
-  }, [ativFiltradas, ocorrencias, colabs]);
-
-  /* ── metas por equipe ── */
-  const metasPorEquipe = useMemo(() => {
-    return equipes
-      .map((e) => {
-        const mems = new Set(
-          membros.filter((m) => m.equipe_id === e.id && m.ativo).map((m) => m.user_id),
-        );
-        const ms = metas.filter((m) => m.owner_id && mems.has(m.owner_id));
-        const pcts = ms
-          .map((m) => {
-            const r = resultados
-              .filter((x) => x.meta_id === m.id)
-              .sort((a, b) => b.periodo_inicio.localeCompare(a.periodo_inicio))[0];
-            return r ? Number(r.pct_atingimento) : null;
-          })
-          .filter((v): v is number => v !== null);
-        return {
-          equipe: e.nome,
-          total: ms.length,
-          atingidas: pcts.filter((v) => v >= 100).length,
-          media: pcts.length > 0 ? pcts.reduce((s, v) => s + v, 0) / pcts.length : 0,
-        };
-      })
-      .filter((x) => x.total > 0);
-  }, [equipes, membros, metas, resultados]);
-
-  /* ── alertas ── */
-  const alertas = useMemo(() => {
-    const out: { tipo: "err" | "warn" | "info"; texto: string }[] = [];
-    if (kpis.revisoesPendentes > 0)
-      out.push({
-        tipo: "err",
-        texto: `${kpis.revisoesPendentes} colaborador(es) não fizeram a revisão semanal`,
-      });
-    if (kpis.atrasadas > 0)
-      out.push({ tipo: "err", texto: `${kpis.atrasadas} atividade(s) atrasada(s)` });
-    porColaborador
-      .filter((p) => p.tendencia === "down" && p.avaliacoes >= 2)
-      .slice(0, 3)
-      .forEach((p) =>
-        out.push({
-          tipo: "warn",
-          texto: `${p.nome} — tendência de queda (${p.delta.toFixed(0)}pp nas últimas semanas)`,
-        }),
-      );
-    const encAtrasados = itensCk.filter(
-      (i) => i.tipo === "encaminhamento" && i.status_acompanhamento === "atrasado",
-    );
-    if (encAtrasados.length > 0)
-      out.push({
-        tipo: "err",
-        texto: `${encAtrasados.length} encaminhamento(s) do Check IN Gerencial atrasado(s)`,
-      });
-    const encAbertos = itensCk.filter(
-      (i) => i.tipo === "encaminhamento" && i.status_acompanhamento === "aberto",
-    );
-    if (encAbertos.length > 0)
-      out.push({ tipo: "info", texto: `${encAbertos.length} encaminhamento(s) em aberto` });
-    metasPorEquipe
-      .filter((m) => m.media > 0 && m.media < 80)
-      .forEach((m) =>
-        out.push({
-          tipo: "warn",
-          texto: `Equipe ${m.equipe} atingiu apenas ${m.media.toFixed(0)}% das metas`,
-        }),
-      );
-    return out;
-  }, [kpis, porColaborador, itensCk, metasPorEquipe]);
-
-  const TrendIcon = ({ t }: { t: string }) =>
-    t === "up" ? (
-      <TrendingUp className="h-3.5 w-3.5 text-success" />
-    ) : t === "down" ? (
-      <TrendingDown className="h-3.5 w-3.5 text-destructive" />
-    ) : (
-      <Minus className="h-3.5 w-3.5 text-muted-foreground" />
-    );
-
-  const scoreColor = (v: number) =>
-    v >= 85 ? "text-success" : v >= 70 ? "text-warning" : "text-destructive";
+  const pdiAndamento = planosFiltrados.filter((p) => p.status === "em_andamento").length;
+  const pdiConcluidos = planosFiltrados.filter((p) => p.status === "concluido").length;
+  const pdiVencidos = planosFiltrados.filter((p) => p.due_date && p.due_date < hoje && p.status !== "concluido").length;
+  const pdiProximos = planosFiltrados.filter((p) => p.due_date && p.due_date >= hoje && p.due_date <= em30dias && p.status !== "concluido").length;
+  const atividadesPendentes = atividadesFiltradas.filter((a) => !["concluida", "cancelada"].includes(a.status)).length;
 
   return (
     <div className="p-6 space-y-5">
-      <div className="flex items-start justify-between flex-wrap gap-3">
+      <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
-          <h1 className="text-xl font-semibold">Dashboard Gestão — DHO</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Desempenho de pessoas, atividades e metas
-          </p>
+          <h1 className="text-xl font-semibold">Dashboard Gestão</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">Equipes, funcionários, Scorecard e PDI em uma visão única</p>
         </div>
         <Select value={equipeSel} onValueChange={setEquipeSel}>
-          <SelectTrigger className="w-52">
-            <SelectValue placeholder="Equipe" />
-          </SelectTrigger>
+          <SelectTrigger className="w-56"><SelectValue placeholder="Equipe" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todas as equipes</SelectItem>
-            {equipes.map((e) => (
-              <SelectItem key={e.id} value={e.id}>
-                {e.nome}
-              </SelectItem>
-            ))}
+            {equipesAtivas.map((e) => <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>
 
-      {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          {
-            l: "Colaboradores",
-            v: kpis.colaboradores,
-            sub: `${kpis.equipes} equipe(s)`,
-            icon: Users,
-            cls: "",
-          },
-          {
-            l: "Atividades concluídas",
-            v: `${kpis.pctConcluidas}%`,
-            sub: `de ${kpis.totalAtiv} atividades`,
-            icon: CheckCircle2,
-            cls:
-              kpis.pctConcluidas >= 80
-                ? "text-success"
-                : kpis.pctConcluidas >= 60
-                  ? "text-warning"
-                  : "text-destructive",
-          },
-          {
-            l: "Revisões pendentes",
-            v: kpis.revisoesPendentes,
-            sub: "semana atual",
-            icon: CalendarCheck,
-            cls: kpis.revisoesPendentes > 0 ? "text-warning" : "text-success",
-          },
-          {
-            l: "Metas atingidas",
-            v:
-              kpis.totalMetas > 0
-                ? `${Math.round((kpis.metasAtingidas / kpis.totalMetas) * 100)}%`
-                : "—",
-            sub: `${kpis.metasAtingidas} de ${kpis.totalMetas} · média ${kpis.mediaAting.toFixed(0)}%`,
-            icon: Target,
-            cls:
-              kpis.mediaAting >= 100
-                ? "text-success"
-                : kpis.mediaAting >= 70
-                  ? "text-warning"
-                  : "text-destructive",
-          },
-        ].map(({ l, v, sub, icon: Icon, cls }) => (
-          <Card key={l}>
-            <CardContent className="pt-4">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-xs text-muted-foreground uppercase tracking-wide">{l}</span>
-                <Icon className={`h-4 w-4 ${cls || "text-muted-foreground"}`} />
-              </div>
-              <div className={`text-2xl font-semibold ${cls}`}>{v}</div>
-              <div className="text-xs text-muted-foreground mt-0.5">{sub}</div>
-            </CardContent>
-          </Card>
+          { label: "Colaboradores", valor: colabsFiltrados.length, detalhe: `${perfis.filter((p) => p.ativo).length} acessos ativos`, icon: Users },
+          { label: "Equipes ativas", valor: equipeSel === "all" ? equipesAtivas.length : 1, detalhe: `${membrosAtivos.filter((m) => !idsEquipe || idsEquipe.has(m.user_id)).length} vínculos ativos`, icon: BriefcaseBusiness },
+          { label: "Scorecard", valor: mediaGeral == null ? "—" : mediaGeral.toFixed(1), detalhe: cicloAtual ? `${avaliacoesCiclo.length} avaliados · ${cicloAtual.nome}` : "Nenhum ciclo", icon: Award },
+          { label: "PDI em andamento", valor: pdiAndamento, detalhe: `${pdiConcluidos} concluídos · ${atividadesPendentes} atividades pendentes`, icon: CheckCircle2 },
+        ].map(({ label, valor, detalhe, icon: Icon }) => (
+          <Card key={label}><CardContent className="pt-4"><div className="flex items-center justify-between"><span className="text-xs uppercase text-muted-foreground">{label}</span><Icon className="h-4 w-4 text-muted-foreground" /></div><div className="text-2xl font-semibold mt-1">{valor}</div><div className="text-xs text-muted-foreground mt-1">{detalhe}</div></CardContent></Card>
         ))}
       </div>
 
-      {/* Alertas */}
-      {alertas.length > 0 && (
-        <Card className="border-warning">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <AlertCircle className="h-4 w-4 text-warning" /> Atenção necessária
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-1.5">
-            {alertas.map((a, i) => (
-              <div
-                key={i}
-                className={`flex items-start gap-2 p-2 rounded text-sm border-l-2 ${
-                  a.tipo === "err"
-                    ? "bg-destructive/5 border-destructive"
-                    : a.tipo === "warn"
-                      ? "bg-warning/5 border-warning"
-                      : "bg-primary/5 border-primary"
-                }`}
-              >
-                <span>{a.texto}</span>
-              </div>
-            ))}
+      <div className="grid lg:grid-cols-2 gap-4">
+        <Card>
+          <CardHeader><CardTitle className="text-sm">Scorecard por dimensão</CardTitle><CardDescription>{cicloAtual ? `${cicloAtual.nome} · ${cicloAtual.status}` : "Crie um ciclo para iniciar as avaliações"}</CardDescription></CardHeader>
+          <CardContent className="space-y-3">
+            {dimensoes.some((d) => d.valor != null) ? dimensoes.map((d) => <div key={d.label}><div className="flex justify-between text-sm mb-1"><span>{d.label}</span><strong>{d.valor?.toFixed(1) ?? "—"}</strong></div><Progress value={d.valor ?? 0} className="h-2" /></div>) : <p className="text-sm text-muted-foreground text-center py-10">Nenhuma avaliação registrada neste ciclo.</p>}
           </CardContent>
         </Card>
-      )}
+        <Card>
+          <CardHeader><CardTitle className="text-sm">Acompanhamento de PDI</CardTitle><CardDescription>Progresso, prazos e atividades de desenvolvimento</CardDescription></CardHeader>
+          <CardContent>
+            {planosFiltrados.length === 0 ? <p className="text-sm text-muted-foreground text-center py-10">Nenhum PDI cadastrado para este recorte.</p> : <div className="space-y-4"><div><div className="flex justify-between text-sm mb-1"><span>Progresso médio</span><strong>{(media(planosFiltrados.map((p) => p.progresso)) ?? 0).toFixed(0)}%</strong></div><Progress value={media(planosFiltrados.map((p) => p.progresso)) ?? 0} className="h-2" /></div><div className="grid grid-cols-3 gap-2 text-center"><div className="border rounded p-3"><div className="text-xl font-semibold text-destructive">{pdiVencidos}</div><div className="text-xs text-muted-foreground">vencidos</div></div><div className="border rounded p-3"><div className="text-xl font-semibold text-warning">{pdiProximos}</div><div className="text-xs text-muted-foreground">próximos 30 dias</div></div><div className="border rounded p-3"><div className="text-xl font-semibold">{atividadesPendentes}</div><div className="text-xs text-muted-foreground">atividades pendentes</div></div></div></div>}
+          </CardContent>
+        </Card>
+      </div>
 
-      <Tabs defaultValue="evolucao">
-        <TabsList>
-          <TabsTrigger value="evolucao">Evolução</TabsTrigger>
-          <TabsTrigger value="pessoas">Por colaborador</TabsTrigger>
-          <TabsTrigger value="metas">Metas por equipe</TabsTrigger>
-        </TabsList>
+      {(pdiVencidos > 0 || pdiProximos > 0) && <Card className="border-warning"><CardContent className="pt-4 flex items-center gap-3"><AlertTriangle className="h-5 w-5 text-warning" /><div className="text-sm"><strong>Atenção aos prazos:</strong> {pdiVencidos} PDI(s) vencido(s) e {pdiProximos} com vencimento nos próximos 30 dias.</div></CardContent></Card>}
 
-        {/* ── EVOLUÇÃO ── */}
-        <TabsContent value="evolucao" className="space-y-4 mt-4">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <Card className="lg:col-span-2">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Evolução semanal — resultados</CardTitle>
-                <CardDescription>Distribuição percentual das últimas 8 semanas</CardDescription>
-              </CardHeader>
-              <CardContent className="h-[280px]">
-                {!temHistorico ? (
-                  <div className="h-full flex items-center justify-center text-sm text-muted-foreground text-center px-6">
-                    Sem histórico de revisões ainda. Os dados aparecem aqui conforme as revisões
-                    semanais forem enviadas.
-                  </div>
-                ) : (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={evolucao} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                      <XAxis dataKey="semana" tick={{ fontSize: 11 }} />
-                      <YAxis tick={{ fontSize: 11 }} domain={[0, 100]} />
-                      <Tooltip formatter={(v: number) => `${v}%`} />
-                      <Legend wrapperStyle={{ fontSize: 11 }} />
-                      <Bar dataKey="Sucesso" stackId="a" fill={C.success} />
-                      <Bar dataKey="Atraso" stackId="a" fill="#F5C842" />
-                      <Bar dataKey="Desvios" stackId="a" fill={C.warning} />
-                      <Bar
-                        dataKey="Não realizado"
-                        stackId="a"
-                        fill={C.destructive}
-                        radius={[4, 4, 0, 0]}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Distribuição de resultados</CardTitle>
-                <CardDescription>Todas as revisões registradas</CardDescription>
-              </CardHeader>
-              <CardContent className="h-[280px]">
-                {distribuicao.length === 0 ? (
-                  <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
-                    Sem dados
-                  </div>
-                ) : (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={distribuicao}
-                        dataKey="value"
-                        nameKey="name"
-                        cx="50%"
-                        cy="45%"
-                        innerRadius={45}
-                        outerRadius={75}
-                        paddingAngle={2}
-                      >
-                        {distribuicao.map((d, i) => (
-                          <Cell key={i} fill={d.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                      <Legend wrapperStyle={{ fontSize: 10 }} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm">Atividades por status</CardTitle>
-            </CardHeader>
-            <CardContent className="h-[220px]">
-              {statusDist.length === 0 ? (
-                <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
-                  Nenhuma atividade cadastrada
-                </div>
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={statusDist} layout="vertical" margin={{ left: 20, right: 40 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                    <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11 }} />
-                    <YAxis type="category" dataKey="status" width={110} tick={{ fontSize: 11 }} />
-                    <Tooltip />
-                    <Bar dataKey="qtd" name="Atividades" radius={[0, 4, 4, 0]} maxBarSize={28}>
-                      {statusDist.map((d, i) => (
-                        <Cell key={i} fill={d.color} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* ── POR COLABORADOR ── */}
-        <TabsContent value="pessoas" className="space-y-4 mt-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm">Desempenho individual</CardTitle>
-              <CardDescription>
-                Pontuação média das últimas 4 semanas — indicador auxiliar, não nota isolada
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
-              {porColaborador.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-10">
-                  Nenhum dado de desempenho ainda
-                </p>
-              ) : (
-                <div className="divide-y">
-                  {porColaborador.map((p, i) => (
-                    <div key={p.user_id} className="flex items-center gap-3 px-4 py-2.5">
-                      <span className="w-6 text-center text-sm">
-                        {i === 0 ? (
-                          "🥇"
-                        ) : i === 1 ? (
-                          "🥈"
-                        ) : i === 2 ? (
-                          "🥉"
-                        ) : (
-                          <span className="text-muted-foreground text-xs">{i + 1}</span>
-                        )}
-                      </span>
-                      <div className="h-8 w-8 rounded-full bg-primary/10 grid place-items-center text-[10px] font-semibold text-primary shrink-0">
-                        {p.nome
-                          .split(" ")
-                          .map((n) => n[0])
-                          .slice(0, 2)
-                          .join("")}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium truncate">{p.nome}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {p.atividades} atividade(s) · {p.avaliacoes} avaliação(ões)
-                        </div>
-                      </div>
-                      <div className="w-28 shrink-0">
-                        <Progress value={Math.min(p.media, 100)} className="h-1.5" />
-                      </div>
-                      <div
-                        className={`w-12 text-right text-sm font-semibold ${scoreColor(p.media)}`}
-                      >
-                        {p.avaliacoes > 0 ? `${p.media.toFixed(0)}%` : "—"}
-                      </div>
-                      <TrendIcon t={p.tendencia} />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {porColaborador.filter((p) => p.avaliacoes > 0).length > 0 && (
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Comparativo de pontuação</CardTitle>
-              </CardHeader>
-              <CardContent className="h-[280px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={porColaborador
-                      .filter((p) => p.avaliacoes > 0)
-                      .map((p) => ({
-                        nome: p.nome.split(" ")[0],
-                        pontuacao: Number(p.media.toFixed(1)),
-                      }))}
-                    margin={{ top: 8, right: 8, left: -20 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                    <XAxis dataKey="nome" tick={{ fontSize: 11 }} />
-                    <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} />
-                    <Tooltip formatter={(v: number) => `${v}%`} />
-                    <Bar
-                      dataKey="pontuacao"
-                      name="Pontuação média"
-                      fill={C.primary}
-                      radius={[4, 4, 0, 0]}
-                      maxBarSize={48}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-
-        {/* ── METAS POR EQUIPE ── */}
-        <TabsContent value="metas" className="space-y-4 mt-4">
-          {metasPorEquipe.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center text-sm text-muted-foreground">
-                Nenhuma meta vinculada a equipes ainda. Cadastre equipes, adicione membros e crie
-                metas.
-              </CardContent>
-            </Card>
-          ) : (
-            <>
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">Atingimento médio por equipe</CardTitle>
-                </CardHeader>
-                <CardContent className="h-[260px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={metasPorEquipe.map((m) => ({
-                        equipe: m.equipe,
-                        media: Number(m.media.toFixed(1)),
-                      }))}
-                      layout="vertical"
-                      margin={{ left: 20, right: 50 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                      <XAxis type="number" domain={[0, 120]} tick={{ fontSize: 11 }} />
-                      <YAxis type="category" dataKey="equipe" width={120} tick={{ fontSize: 11 }} />
-                      <Tooltip formatter={(v: number) => `${v}%`} />
-                      <Bar
-                        dataKey="media"
-                        name="Atingimento médio"
-                        radius={[0, 4, 4, 0]}
-                        maxBarSize={28}
-                      >
-                        {metasPorEquipe.map((m, i) => (
-                          <Cell
-                            key={i}
-                            fill={
-                              m.media >= 100 ? C.success : m.media >= 70 ? C.warning : C.destructive
-                            }
-                          />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                {metasPorEquipe.map((m) => (
-                  <Card key={m.equipe}>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm">{m.equipe}</CardTitle>
-                      <CardDescription>
-                        {m.atingidas} de {m.total} metas atingidas
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className={`text-2xl font-semibold ${scoreColor(m.media)}`}>
-                        {m.media.toFixed(0)}%
-                      </div>
-                      <Progress value={Math.min(m.media, 100)} className="h-1.5 mt-2" />
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </>
-          )}
-        </TabsContent>
-      </Tabs>
+      <Card>
+        <CardHeader><CardTitle className="text-sm">Visão por colaborador</CardTitle><CardDescription>Equipe, resultado do ciclo atual e evolução do PDI</CardDescription></CardHeader>
+        <CardContent className="p-0">
+          {ranking.length === 0 ? <p className="text-sm text-muted-foreground text-center py-10">Nenhum colaborador neste recorte.</p> : <div className="divide-y">{ranking.map((p, i) => <div key={p.id} className="grid grid-cols-[2rem_minmax(0,1fr)_auto] md:grid-cols-[2rem_minmax(0,1fr)_9rem_8rem_7rem] items-center gap-3 px-4 py-3"><span className="text-xs text-muted-foreground text-center">{i + 1}</span><div className="min-w-0"><div className="text-sm font-medium truncate">{p.nome} {p.destaque && <Badge className="ml-1 bg-success/10 text-success border-0">Destaque</Badge>}</div><div className="text-xs text-muted-foreground truncate">{p.cargo} · {p.area}</div></div><div className="hidden md:block text-xs text-muted-foreground truncate">{p.equipe}</div><div className="hidden md:block"><Progress value={p.progresso ?? 0} className="h-1.5" /><div className="text-[10px] text-muted-foreground mt-1">{p.pdis} PDI(s) · {p.progresso?.toFixed(0) ?? 0}%</div></div><div className="text-right"><div className="font-semibold">{p.score?.toFixed(1) ?? "—"}</div><div className="text-[10px] text-muted-foreground">Scorecard</div></div></div>)}</div>}
+        </CardContent>
+      </Card>
     </div>
   );
 }
