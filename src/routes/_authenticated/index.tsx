@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PanoramaReal } from "@/components/operacional/panorama-real";
+import { useDadosOperacionais } from "@/hooks/use-dados-operacionais";
 import { useRealtimeTable } from "@/hooks/use-realtime-table";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -203,6 +204,27 @@ function DashboardPage() {
   const [filtroMesGlobal, setFiltroMesGlobal] = useState<string>("all");
   const [filtroGrupoKpi, setFiltroGrupoKpi] = useState<"all" | UnidadeKey>("all");
   const [showCusto, setShowCusto] = useState(false);
+
+  // Custo e volume reais, vindos de Custo Operacional e do Cadastro Operacional
+  const dadosOp = useDadosOperacionais();
+  const custoReal = useMemo(
+    () =>
+      dadosOp.comDados
+        .filter((o) => o.custo > 0)
+        .map((o) => ({
+          key: o.key,
+          label: o.label,
+          custo: o.custo,
+          volume: o.volume,
+          pessoas: o.pessoas,
+          custoPorProcesso: o.custoPorProcesso,
+        }))
+        .sort((a, b) => b.custo - a.custo),
+    [dadosOp.comDados],
+  );
+  const custoTotalReal = custoReal.reduce((s, c) => s + c.custo, 0);
+  const fmtBRL = (v: number) =>
+    v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
 
   // Visibilidade de seções do dashboard
   const [hideTendencia, setHideTendencia] = useState(false);
@@ -1015,128 +1037,112 @@ function DashboardPage() {
             </button>
           </div>
 
-          {/* KPIs rápidos */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            {[
-              { label: "Total Midea",     value: 382945.12, head: 58 },
-              { label: "Midea Manaus",    value: 156354.69, head: 24 },
-              { label: "Midea Canoas",    value: 124128.14, head: 18 },
-              { label: "Midea SC",        value: 102462.29, head: 16 },
-            ].map(({ label, value, head }) => (
-              <Card key={label}>
-                <CardContent className="pt-5">
-                  <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">{label}</div>
-                  <div className="text-2xl font-bold text-primary">
-                    {value.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 })}
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-0.5">{head} colaboradores</div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          {/* Comparativo 2024 vs Atual */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          {custoReal.length === 0 ? (
             <Card>
-              <CardHeader>
-                <CardTitle>Custo Total por Unidade</CardTitle>
-                <CardDescription>Comparativo 2024 vs. Atual</CardDescription>
-              </CardHeader>
-              <CardContent className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={[
-                      { planta: "Midea Manaus", atual: 156354.69, ref2024: 88651.59 },
-                      { planta: "Midea Canoas", atual: 124128.14, ref2024: 163821.51 },
-                      { planta: "Midea SC",     atual: 102462.29, ref2024: 161405.47 },
-                    ]}
-                    margin={{ top: 8, right: 16, left: 8, bottom: 4 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                    <XAxis dataKey="planta" tick={{ fontSize: 11 }} />
-                    <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `R$${(v/1000).toFixed(0)}k`} />
-                    <Tooltip formatter={(v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} />
-                    <Legend />
-                    <Bar dataKey="atual"   name="Atual"   fill={C1} radius={[4, 4, 0, 0]} maxBarSize={40} />
-                    <Bar dataKey="ref2024" name="2024"    fill={C2} radius={[4, 4, 0, 0]} maxBarSize={40} />
-                  </BarChart>
-                </ResponsiveContainer>
+              <CardContent className="py-16 text-center">
+                <div className="font-medium mb-1">Nenhum custo lançado</div>
+                <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                  Cadastre em <strong>Custo Operacional</strong>, por upload da planilha ou
+                  manualmente. Os valores aparecem aqui automaticamente.
+                </p>
               </CardContent>
             </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Composição do Custo (Atual)</CardTitle>
-                <CardDescription>Distribuição dos componentes por unidade</CardDescription>
-              </CardHeader>
-              <CardContent className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={[
-                      { planta: "Manaus", rem: 87472, encargos: 16860, provisoes: 29879, beneficios: 22143 },
-                      { planta: "Canoas", rem: 66856, encargos: 14261, provisoes: 24848, beneficios: 18163 },
-                      { planta: "SC",     rem: 62202, encargos: 10182, provisoes: 18093, beneficios: 11985 },
-                    ]}
-                    margin={{ top: 8, right: 16, left: 8, bottom: 4 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                    <XAxis dataKey="planta" tick={{ fontSize: 12 }} />
-                    <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `R$${(v/1000).toFixed(0)}k`} />
-                    <Tooltip formatter={(v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} />
-                    <Legend wrapperStyle={{ fontSize: 11 }} />
-                    <Bar dataKey="rem"        name="Remuneração"  stackId="a" fill={C1}   />
-                    <Bar dataKey="encargos"   name="Encargos"     stackId="a" fill={C2}   />
-                    <Bar dataKey="provisoes"  name="Provisões"    stackId="a" fill={C3}   />
-                    <Bar dataKey="beneficios" name="Benefícios"   stackId="a" fill="var(--color-warning)" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Cards individuais por planta */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {([
-              { label: "Midea Manaus", total: 156354.69, head: 24, rem: 87472.15, inss: 12342.50, fgts: 4517.77, provisoes: 29878.83, beneficios: 22143.45 },
-              { label: "Midea Canoas", total: 124128.14, head: 18, rem: 66855.72, inss:  8912.80, fgts: 5348.46, provisoes: 24848.03, beneficios: 18163.12 },
-              { label: "Midea SC",     total: 102462.29, head: 16, rem: 62201.85, inss:  7772.47, fgts: 2410.07, provisoes: 18093.25, beneficios: 11984.64 },
-            ] as const).map((p) => (
-              <Card key={p.label}>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base">{p.label}</CardTitle>
-                  <CardDescription>{p.head} colaboradores</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-2 text-sm">
-                  {[
-                    { label: "Remuneração bruta", value: p.rem,        pct: (p.rem/p.total*100) },
-                    { label: "INSS + FGTS",        value: p.inss+p.fgts, pct: ((p.inss+p.fgts)/p.total*100) },
-                    { label: "Provisões",           value: p.provisoes,  pct: (p.provisoes/p.total*100) },
-                    { label: "Benefícios",          value: p.beneficios, pct: (p.beneficios/p.total*100) },
-                  ].map(({ label, value, pct }) => (
-                    <div key={label}>
-                      <div className="flex justify-between mb-0.5">
-                        <span className="text-muted-foreground">{label}</span>
-                        <span className="font-medium tabular-nums">
-                          {value.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 })}
-                          <span className="text-muted-foreground text-xs ml-1">({pct.toFixed(0)}%)</span>
-                        </span>
-                      </div>
-                      <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                        <div className="h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />
-                      </div>
+          ) : (
+            <>
+              {/* KPIs por unidade, lidos do cadastro */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <Card>
+                  <CardContent className="pt-5">
+                    <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Total</div>
+                    <div className="text-2xl font-bold text-primary">{fmtBRL(custoTotalReal)}</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">
+                      {custoReal.reduce((s, c) => s + c.pessoas, 0)} colaborador(es)
                     </div>
-                  ))}
-                  <div className="pt-1 border-t flex justify-between font-bold">
-                    <span>Total</span>
-                    <span>{p.total.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 })}</span>
-                  </div>
+                  </CardContent>
+                </Card>
+                {custoReal.slice(0, 3).map((c) => (
+                  <Card key={c.key}>
+                    <CardContent className="pt-5">
+                      <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">{c.label}</div>
+                      <div className="text-2xl font-bold text-primary">{fmtBRL(c.custo)}</div>
+                      <div className="text-xs text-muted-foreground mt-0.5">{c.pessoas} colaborador(es)</div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Custo por unidade</CardTitle>
+                    <CardDescription>Valores lançados em Custo Operacional</CardDescription>
+                  </CardHeader>
+                  <CardContent className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={custoReal} margin={{ top: 8, right: 16, left: 8, bottom: 4 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                        <XAxis dataKey="label" tick={{ fontSize: 11 }} />
+                        <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} />
+                        <Tooltip formatter={(v: number) => fmtBRL(v)} />
+                        <Bar dataKey="custo" name="Custo total" fill={C1} radius={[4, 4, 0, 0]} maxBarSize={44} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Custo por processo</CardTitle>
+                    <CardDescription>Custo da unidade ÷ volume do período</CardDescription>
+                  </CardHeader>
+                  <CardContent className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={custoReal.filter((c) => c.custoPorProcesso > 0)}
+                        margin={{ top: 8, right: 16, left: 8, bottom: 4 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                        <XAxis dataKey="label" tick={{ fontSize: 11 }} />
+                        <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `R$${v.toFixed(0)}`} />
+                        <Tooltip formatter={(v: number) => fmtBRL(v)} />
+                        <Bar dataKey="custoPorProcesso" name="Custo/processo" fill={C2} radius={[4, 4, 0, 0]} maxBarSize={44} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <Card>
+                <CardContent className="p-0">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b">
+                        {["Unidade", "Colaboradores", "Custo total", "Volume", "Custo/processo"].map((h) => (
+                          <th key={h} className="text-left py-2 px-4 text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
+                            {h}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {custoReal.map((c) => (
+                        <tr key={c.key} className="border-b last:border-0">
+                          <td className="py-2 px-4 font-medium">{c.label}</td>
+                          <td className="py-2 px-4">{c.pessoas}</td>
+                          <td className="py-2 px-4">{fmtBRL(c.custo)}</td>
+                          <td className="py-2 px-4">{c.volume.toLocaleString("pt-BR")}</td>
+                          <td className="py-2 px-4">{c.custoPorProcesso > 0 ? fmtBRL(c.custoPorProcesso) : "—"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </CardContent>
               </Card>
-            ))}
-          </div>
+            </>
+          )}
 
           <p className="text-xs text-muted-foreground mt-4 text-center">
-            Bosch: a definir · Dados extraídos da planilha vigente de custo · Valores sujeitos a atualização
+            Dados lidos de Custo Operacional e do Cadastro Operacional · atualizam a cada lançamento
           </p>
         </Slide>
       )}

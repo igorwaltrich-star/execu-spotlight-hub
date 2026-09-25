@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useDadosOperacionais } from "@/hooks/use-dados-operacionais";
+import { usePerfil } from "@/hooks/use-perfil";
 import { useColaboradores } from "@/components/gestao/use-colaboradores";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -41,6 +43,9 @@ const media = (valores: Array<number | null | undefined>) => {
 export function DashboardDhoView() {
   const { data: colaboradores = [] } = useColaboradores();
   const [equipeSel, setEquipeSel] = useState("all");
+  const { eUmDe } = usePerfil();
+  const podeVerCusto = eUmDe(["gestor", "coordenador"]);
+  const op = useDadosOperacionais(undefined, podeVerCusto);
   const fetchAll = <T,>(tabela: string, ordem?: string) => async () => {
     let query = (supabase.from as unknown as (t: string) => ReturnType<typeof supabase.from>)(tabela).select("*");
     if (ordem) query = query.order(ordem, { ascending: false });
@@ -104,6 +109,126 @@ export function DashboardDhoView() {
           </SelectContent>
         </Select>
       </div>
+
+      {/* Indicadores operacionais — Cadastro Operacional e lançamentos por pessoa */}
+      {op.temDados && (
+        <>
+          <div className={`grid grid-cols-2 gap-3 ${podeVerCusto ? "lg:grid-cols-5" : "lg:grid-cols-4"}`}>
+            {[
+              {
+                label: "Volume",
+                valor: op.totais.volume.toLocaleString("pt-BR"),
+                detalhe: `${op.totais.operacoesAtivas} operação(ões) com dado`,
+                cls: "",
+              },
+              {
+                label: "Pessoas",
+                valor: op.totais.pessoas.toLocaleString("pt-BR"),
+                detalhe: `${op.totais.fte.toFixed(1)} FTE`,
+                cls: "",
+              },
+              {
+                label: "Produtividade",
+                valor: op.totais.produtividade.toFixed(1),
+                detalhe: `meta média ${op.totais.metaMedia.toFixed(0)}`,
+                cls:
+                  op.totais.metaMedia > 0 && op.totais.produtividade >= op.totais.metaMedia
+                    ? "text-success"
+                    : "text-warning",
+              },
+              {
+                label: "Não conformidades",
+                valor: op.totais.ncQtd.toLocaleString("pt-BR"),
+                detalhe:
+                  op.totais.ncCusto > 0
+                    ? op.totais.ncCusto.toLocaleString("pt-BR", {
+                        style: "currency",
+                        currency: "BRL",
+                        maximumFractionDigits: 0,
+                      })
+                    : "sem custo lançado",
+                cls: op.totais.ncQtd > 0 ? "text-destructive" : "",
+              },
+              ...(podeVerCusto
+                ? [
+                    {
+                      label: "Custo / processo",
+                      valor:
+                        op.totais.custoPorProcesso > 0
+                          ? op.totais.custoPorProcesso.toLocaleString("pt-BR", {
+                              style: "currency",
+                              currency: "BRL",
+                              maximumFractionDigits: 0,
+                            })
+                          : "—",
+                      detalhe:
+                        op.totais.custo > 0
+                          ? op.totais.custo.toLocaleString("pt-BR", {
+                              style: "currency",
+                              currency: "BRL",
+                              maximumFractionDigits: 0,
+                            })
+                          : "custo não lançado",
+                      cls: "",
+                    },
+                  ]
+                : []),
+            ].map(({ label, valor, detalhe, cls }) => (
+              <Card key={label}>
+                <CardContent className="pt-4">
+                  <span className="text-xs uppercase text-muted-foreground">{label}</span>
+                  <div className={`text-2xl font-semibold mt-1 ${cls}`}>{valor}</div>
+                  <div className="text-xs text-muted-foreground mt-1">{detalhe}</div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">Produtividade por operação</CardTitle>
+              <CardDescription>
+                Volume ÷ FTE contra a meta de cada unidade · dados do Cadastro Operacional
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="divide-y">
+                {op.comDados
+                  .filter((o) => o.fte > 0)
+                  .sort((a, b) => b.volume - a.volume)
+                  .map((o) => (
+                    <div key={o.key} className="flex items-center gap-3 px-4 py-2.5">
+                      <div className="w-32 min-w-0">
+                        <div className="text-sm font-medium truncate">{o.label}</div>
+                        <div className="text-[10px] text-muted-foreground">
+                          {o.volume.toLocaleString("pt-BR")} proc · {o.fte.toFixed(1)} FTE
+                        </div>
+                      </div>
+                      <Progress value={Math.min(o.pctMeta, 100)} className="h-1.5 flex-1" />
+                      <div className="w-24 text-right">
+                        <span
+                          className={`text-sm font-semibold ${
+                            o.pctMeta >= 100
+                              ? "text-success"
+                              : o.pctMeta >= 70
+                                ? "text-warning"
+                                : "text-destructive"
+                          }`}
+                        >
+                          {o.produtividade.toFixed(1)}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground"> / {o.meta}</span>
+                      </div>
+                      <Badge variant="outline" className="text-[10px] w-14 justify-center">
+                        {o.pctMeta.toFixed(0)}%
+                      </Badge>
+                    </div>
+                  ))}
+              </div>
+            </CardContent>
+          </Card>
+        </>
+      )}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[

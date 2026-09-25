@@ -17,6 +17,8 @@ import {
   type DimensaoKey,
   type PesosCiclo,
   type PesoBpmn,
+  type OperacionalMensal,
+  type AlocacaoPeriodo,
   type RegistroProd,
   type NaoConf,
 } from "@/lib/scorecard-engine";
@@ -171,6 +173,14 @@ export function ScorecardView() {
     queryKey: ["sc_bpmn"],
     queryFn: fetchAll<PesoBpmn & { id: string }>("complexidade_bpmn"),
   });
+  const { data: opMensal = [] } = useQuery({
+    queryKey: ["sc_op_mensal"],
+    queryFn: fetchAll<OperacionalMensal>("operacional_mensal"),
+  });
+  const { data: alocacoes = [] } = useQuery({
+    queryKey: ["sc_alocacoes"],
+    queryFn: fetchAll<AlocacaoPeriodo>("alocacoes_periodo"),
+  });
   const { data: regsProd = [] } = useQuery({
     queryKey: ["sc_prod"],
     queryFn: fetchAll<RegistroProd>("registros_produtividade"),
@@ -203,7 +213,7 @@ export function ScorecardView() {
     const per = { inicio: c.periodo_inicio, fim: c.periodo_fim };
     const av = avals.find((a) => a.ciclo_id === c.id && a.colaborador_id === colabId);
 
-    const prod = calcularProdutividade(regsProd, bpmn, colabId, per);
+    const prod = calcularProdutividade(regsProd, bpmn, colabId, per, opMensal, alocacoes);
     const qual = calcularQualidade(ncs, regsProd, colabId, per);
 
     const usar = (calc: number, semDados: boolean, origem?: string, manual?: number) =>
@@ -1206,7 +1216,7 @@ export function ScorecardView() {
                     {[
                       {
                         k: "produtividade" as const,
-                        det: `${s.prod.volume} proc · fator ${s.prod.fator.toFixed(2)}× · FTE ${s.prod.fte.toFixed(2)} · meta ${s.prod.meta.toFixed(0)}`,
+                        det: `${s.prod.volume} proc · fator ${s.prod.fator.toFixed(2)}× · FTE ${s.prod.fte.toFixed(2)} · meta ${s.prod.meta.toFixed(0)}${s.prod.origem === "rateado" ? " · rateado do Cadastro Operacional" : ""}`,
                       },
                       {
                         k: "qualidade" as const,

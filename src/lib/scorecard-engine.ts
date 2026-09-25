@@ -56,6 +56,22 @@ export type PesoBpmn = {
   ativo: boolean;
   referencia?: string | null;
 };
+/** Volume por unidade/mês vindo do Cadastro Operacional. */
+export type OperacionalMensal = {
+  unidade: string;
+  mes: string;
+  volume: number;
+  pessoas: number;
+};
+
+/** Alocação da pessoa na operação, usada para ratear o volume da unidade. */
+export type AlocacaoPeriodo = {
+  colaborador_id: string;
+  operacao: string;
+  mes: string;
+  fte: number;
+};
+
 export type RegistroProd = {
   colaborador_id: string;
   operacao: string;
@@ -100,6 +116,13 @@ export type DetalheProdutividade = {
   meta: number;
   fator: number;
   semDados: boolean;
+  /**
+   * De onde veio o volume:
+   *   individual — lançamento por pessoa em Produtividade
+   *   rateado    — volume da unidade (Cadastro Operacional) dividido pelo
+   *                FTE da pessoa no período. É estimativa, não medição.
+   */
+  origem: "individual" | "rateado" | "sem_dados";
 };
 
 export function calcularProdutividade(
@@ -107,11 +130,75 @@ export function calcularProdutividade(
   pesos: PesoBpmn[],
   colaboradorId: string,
   periodo: { inicio: string; fim: string },
+  /** Base do Cadastro Operacional, usada como fallback quando não há lançamento individual. */
+  opMensal: OperacionalMensal[] = [],
+  /** Alocações do período, necessárias para ratear o volume da unidade. */
+  alocacoes: AlocacaoPeriodo[] = [],
 ): DetalheProdutividade {
   const meus = regs.filter(
     (r) => r.colaborador_id === colaboradorId && r.mes >= periodo.inicio && r.mes <= periodo.fim,
   );
-  if (meus.length === 0)
+  if (meus.length === 0) {
+    // Fallback: rateia o volume da unidade pelo FTE da pessoa no período.
+    // Só faz sentido quando existe alocação registrada — sem ela não há
+    // como saber quanto do volume coletivo pertence a quem.
+    const minhasAloc = alocacoes.filter(
+      (a) =>
+        a.colaborador_id === colaboradorId &&
+        a.mes >= periodo.inicio &&
+        a.mes <= periodo.fim &&
+        Number(a.fte ?? 0) > 0,
+    );
+
+    if (minhasAloc.length > 0 && opMensal.length > 0) {
+      let vol = 0,
+        volAj = 0,
+        fteTot = 0,
+        metaP = 0,
+        fatorP = 0;
+
+      for (const a of minhasAloc) {
+        const unidadeMes = opMensal.filter(
+          (o) => o.unidade === a.operacao && o.mes.slice(0, 7) === a.mes.slice(0, 7),
+        );
+        if (unidadeMes.length === 0) continue;
+
+        const volUnidade = unidadeMes.reduce((s2, o) => s2 + Number(o.volume ?? 0), 0);
+        // FTE total da unidade naquele mês, para saber a fatia da pessoa
+        const fteUnidade = alocacoes
+          .filter((x) => x.operacao === a.operacao && x.mes.slice(0, 7) === a.mes.slice(0, 7))
+          .reduce((s2, x) => s2 + Number(x.fte ?? 0), 0);
+        if (fteUnidade <= 0) continue;
+
+        const minhaFte = Number(a.fte ?? 0);
+        const minhaFatia = volUnidade * (minhaFte / fteUnidade);
+        const f = fatorComplexidade(pesos, a.operacao);
+
+        vol += minhaFatia;
+        volAj += minhaFatia * f;
+        fteTot += minhaFte;
+        metaP += metaProdUnidade(a.operacao) * minhaFte;
+        fatorP += f * minhaFte;
+      }
+
+      if (fteTot > 0 && vol > 0) {
+        const prod = volAj / fteTot;
+        const fMedio = fatorP / fteTot;
+        const metaAj = (metaP / fteTot) * fMedio;
+        return {
+          nota: metaAj > 0 ? nota((prod / metaAj) * 100) : 0,
+          volume: Math.round(vol),
+          volumeAjustado: volAj,
+          fte: fteTot,
+          produtividade: prod,
+          meta: metaAj,
+          fator: fMedio,
+          semDados: false,
+          origem: "rateado",
+        };
+      }
+    }
+
     return {
       nota: 0,
       volume: 0,
@@ -121,7 +208,9 @@ export function calcularProdutividade(
       meta: 0,
       fator: 1,
       semDados: true,
+      origem: "sem_dados",
     };
+  }
 
   let volume = 0,
     volumeAjustado = 0,
@@ -154,6 +243,7 @@ export function calcularProdutividade(
     meta,
     fator: fatorMedio,
     semDados: false,
+    origem: "individual",
   };
 }
 

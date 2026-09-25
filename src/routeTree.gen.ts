@@ -28,6 +28,7 @@ import { Route as AuthenticatedGerenciamentoOperacionalRouteImport } from './rou
 import { Route as AuthenticatedFuncionariosRouteImport } from './routes/_authenticated/funcionarios'
 import { Route as AuthenticatedEquipesRouteImport } from './routes/_authenticated/equipes'
 import { Route as AuthenticatedDiagnosticoRouteImport } from './routes/_authenticated/diagnostico'
+import { Route as AuthenticatedDashboardOperacaoRouteImport } from './routes/_authenticated/dashboard-operacao'
 import { Route as AuthenticatedDashboardGestaoRouteImport } from './routes/_authenticated/dashboard-gestao'
 import { Route as AuthenticatedCustoOperacionalRouteImport } from './routes/_authenticated/custo-operacional'
 import { Route as AuthenticatedCadastroOportunidadesRouteImport } from './routes/_authenticated/cadastro-oportunidades'
@@ -136,6 +137,12 @@ const AuthenticatedDiagnosticoRoute =
     path: '/diagnostico',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedDashboardOperacaoRoute =
+  AuthenticatedDashboardOperacaoRouteImport.update({
+    id: '/dashboard-operacao',
+    path: '/dashboard-operacao',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedDashboardGestaoRoute =
   AuthenticatedDashboardGestaoRouteImport.update({
     id: '/dashboard-gestao',
@@ -173,6 +180,7 @@ export interface FileRoutesByFullPath {
   '/cadastro-oportunidades': typeof AuthenticatedCadastroOportunidadesRoute
   '/custo-operacional': typeof AuthenticatedCustoOperacionalRoute
   '/dashboard-gestao': typeof AuthenticatedDashboardGestaoRoute
+  '/dashboard-operacao': typeof AuthenticatedDashboardOperacaoRoute
   '/diagnostico': typeof AuthenticatedDiagnosticoRoute
   '/equipes': typeof AuthenticatedEquipesRoute
   '/funcionarios': typeof AuthenticatedFuncionariosRoute
@@ -197,6 +205,7 @@ export interface FileRoutesByTo {
   '/cadastro-oportunidades': typeof AuthenticatedCadastroOportunidadesRoute
   '/custo-operacional': typeof AuthenticatedCustoOperacionalRoute
   '/dashboard-gestao': typeof AuthenticatedDashboardGestaoRoute
+  '/dashboard-operacao': typeof AuthenticatedDashboardOperacaoRoute
   '/diagnostico': typeof AuthenticatedDiagnosticoRoute
   '/equipes': typeof AuthenticatedEquipesRoute
   '/funcionarios': typeof AuthenticatedFuncionariosRoute
@@ -224,6 +233,7 @@ export interface FileRoutesById {
   '/_authenticated/cadastro-oportunidades': typeof AuthenticatedCadastroOportunidadesRoute
   '/_authenticated/custo-operacional': typeof AuthenticatedCustoOperacionalRoute
   '/_authenticated/dashboard-gestao': typeof AuthenticatedDashboardGestaoRoute
+  '/_authenticated/dashboard-operacao': typeof AuthenticatedDashboardOperacaoRoute
   '/_authenticated/diagnostico': typeof AuthenticatedDiagnosticoRoute
   '/_authenticated/equipes': typeof AuthenticatedEquipesRoute
   '/_authenticated/funcionarios': typeof AuthenticatedFuncionariosRoute
@@ -252,6 +262,7 @@ export interface FileRouteTypes {
     | '/cadastro-oportunidades'
     | '/custo-operacional'
     | '/dashboard-gestao'
+    | '/dashboard-operacao'
     | '/diagnostico'
     | '/equipes'
     | '/funcionarios'
@@ -276,6 +287,7 @@ export interface FileRouteTypes {
     | '/cadastro-oportunidades'
     | '/custo-operacional'
     | '/dashboard-gestao'
+    | '/dashboard-operacao'
     | '/diagnostico'
     | '/equipes'
     | '/funcionarios'
@@ -302,6 +314,7 @@ export interface FileRouteTypes {
     | '/_authenticated/cadastro-oportunidades'
     | '/_authenticated/custo-operacional'
     | '/_authenticated/dashboard-gestao'
+    | '/_authenticated/dashboard-operacao'
     | '/_authenticated/diagnostico'
     | '/_authenticated/equipes'
     | '/_authenticated/funcionarios'
@@ -461,6 +474,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDiagnosticoRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/dashboard-operacao': {
+      id: '/_authenticated/dashboard-operacao'
+      path: '/dashboard-operacao'
+      fullPath: '/dashboard-operacao'
+      preLoaderRoute: typeof AuthenticatedDashboardOperacaoRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/dashboard-gestao': {
       id: '/_authenticated/dashboard-gestao'
       path: '/dashboard-gestao'
@@ -505,6 +525,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedCadastroOportunidadesRoute: typeof AuthenticatedCadastroOportunidadesRoute
   AuthenticatedCustoOperacionalRoute: typeof AuthenticatedCustoOperacionalRoute
   AuthenticatedDashboardGestaoRoute: typeof AuthenticatedDashboardGestaoRoute
+  AuthenticatedDashboardOperacaoRoute: typeof AuthenticatedDashboardOperacaoRoute
   AuthenticatedDiagnosticoRoute: typeof AuthenticatedDiagnosticoRoute
   AuthenticatedEquipesRoute: typeof AuthenticatedEquipesRoute
   AuthenticatedFuncionariosRoute: typeof AuthenticatedFuncionariosRoute
@@ -531,6 +552,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedCadastroOportunidadesRoute,
   AuthenticatedCustoOperacionalRoute: AuthenticatedCustoOperacionalRoute,
   AuthenticatedDashboardGestaoRoute: AuthenticatedDashboardGestaoRoute,
+  AuthenticatedDashboardOperacaoRoute: AuthenticatedDashboardOperacaoRoute,
   AuthenticatedDiagnosticoRoute: AuthenticatedDiagnosticoRoute,
   AuthenticatedEquipesRoute: AuthenticatedEquipesRoute,
   AuthenticatedFuncionariosRoute: AuthenticatedFuncionariosRoute,

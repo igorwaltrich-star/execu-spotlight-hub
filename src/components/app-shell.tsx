@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Database, Briefcase, BarChart3,
   AlertTriangle, DollarSign, Clock,
   Users, UserCheck, LogOut, Anchor, GraduationCap, Sparkles, Award, Wallet,
-  ChevronDown, ChevronRight, TrendingUp, Gauge,
+  ChevronDown, ChevronRight, TrendingUp, Gauge, Building2,
 } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { NotificacoesBell } from "@/components/notificacoes-bell";
@@ -22,6 +22,7 @@ const NAV_OP: NavItem[] = [
   { to: "/margem-contribucao",        label: "Margem de Contribuição",   icon: TrendingUp },
   { to: "/banco-horas",               label: "Banco de Horas",           icon: Clock, papeis: ["gestor","coordenador","supervisor"] },
   { to: "/paineis-operacionais",      label: "Painéis Operacionais",     icon: Gauge },
+  { to: "/dashboard-operacao",        label: "Dashboard por Operação",   icon: Building2 },
   { to: "/insights",                  label: "Insights",                 icon: Sparkles, papeis: ["gestor","coordenador","supervisor"] },
   { to: "/gestao-financeira",         label: "Gestão Financeira",        icon: Wallet, papeis: ["gestor","coordenador","supervisor"] },
   { to: "/gerenciamento-operacional", label: "Gerenciamento",            icon: Briefcase },
