@@ -1598,7 +1598,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      meu_papel: { Args: never; Returns: string }
+      tem_papel: { Args: { papeis: string[] }; Returns: boolean }
     }
     Enums: {
       acao_status: "andamento" | "concluido" | "atrasado"
