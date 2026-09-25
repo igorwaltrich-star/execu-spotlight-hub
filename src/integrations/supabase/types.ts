@@ -570,6 +570,144 @@ export type Database = {
         }
         Relationships: []
       }
+      financeiro_categorias: {
+        Row: {
+          ativo: boolean
+          conta_como_gap: boolean
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+          ordem: number
+          responsavel: string
+        }
+        Insert: {
+          ativo?: boolean
+          conta_como_gap?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          ordem?: number
+          responsavel?: string
+        }
+        Update: {
+          ativo?: boolean
+          conta_como_gap?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          ordem?: number
+          responsavel?: string
+        }
+        Relationships: []
+      }
+      financeiro_justificativas: {
+        Row: {
+          autor_id: string | null
+          categoria_id: string
+          centro_custo: string | null
+          created_at: string
+          escopo: string
+          id: string
+          justificativa: string | null
+          processo_id: string | null
+        }
+        Insert: {
+          autor_id?: string | null
+          categoria_id: string
+          centro_custo?: string | null
+          created_at?: string
+          escopo?: string
+          id?: string
+          justificativa?: string | null
+          processo_id?: string | null
+        }
+        Update: {
+          autor_id?: string | null
+          categoria_id?: string
+          centro_custo?: string | null
+          created_at?: string
+          escopo?: string
+          id?: string
+          justificativa?: string | null
+          processo_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financeiro_justificativas_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "financeiro_categorias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financeiro_justificativas_processo_id_fkey"
+            columns: ["processo_id"]
+            isOneToOne: false
+            referencedRelation: "financeiro_processos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      financeiro_processos: {
+        Row: {
+          atualizado_em: string
+          canal_rfb: string | null
+          centro_custo: string | null
+          codigo: string | null
+          data_fechamento: string | null
+          data_registro: string | null
+          data_solicitacao: string | null
+          di: string | null
+          dias_reg_sol: number | null
+          dias_sol_fec: number | null
+          id: string
+          importado_em: string
+          importado_por: string | null
+          importador: string | null
+          modal: string | null
+          sigra: string
+        }
+        Insert: {
+          atualizado_em?: string
+          canal_rfb?: string | null
+          centro_custo?: string | null
+          codigo?: string | null
+          data_fechamento?: string | null
+          data_registro?: string | null
+          data_solicitacao?: string | null
+          di?: string | null
+          dias_reg_sol?: number | null
+          dias_sol_fec?: number | null
+          id?: string
+          importado_em?: string
+          importado_por?: string | null
+          importador?: string | null
+          modal?: string | null
+          sigra: string
+        }
+        Update: {
+          atualizado_em?: string
+          canal_rfb?: string | null
+          centro_custo?: string | null
+          codigo?: string | null
+          data_fechamento?: string | null
+          data_registro?: string | null
+          data_solicitacao?: string | null
+          di?: string | null
+          dias_reg_sol?: number | null
+          dias_sol_fec?: number | null
+          id?: string
+          importado_em?: string
+          importado_por?: string | null
+          importador?: string | null
+          modal?: string | null
+          sigra?: string
+        }
+        Relationships: []
+      }
       gargalos: {
         Row: {
           created_at: string
