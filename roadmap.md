@@ -8,4 +8,4 @@
 - [x] Corrigir escalada de privilégio e restringir perfis, custos, auditoria e banco de horas
 - [x] Registrar criação automática de perfil analista para novos cadastros
 - [x] Confirmar a remoção integral das tabelas e do tipo do PDI
-- [ ] Validar as telas preservadas após o endurecimento das permissões
+- [x] Validar as telas preservadas após o endurecimento das permissões
