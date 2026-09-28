@@ -17,7 +17,6 @@ import { Route as AuthenticatedSlaBoschRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedScorecardRouteImport } from './routes/_authenticated/scorecard'
 import { Route as AuthenticatedProdutividadeRouteImport } from './routes/_authenticated/produtividade'
 import { Route as AuthenticatedPlanoAcaoRouteImport } from './routes/_authenticated/plano-acao'
-import { Route as AuthenticatedPdiRouteImport } from './routes/_authenticated/pdi'
 import { Route as AuthenticatedPaineisOperacionaisRouteImport } from './routes/_authenticated/paineis-operacionais'
 import { Route as AuthenticatedNaoConformidadesRouteImport } from './routes/_authenticated/nao-conformidades'
 import { Route as AuthenticatedMelhoriasRouteImport } from './routes/_authenticated/melhorias'
@@ -73,11 +72,6 @@ const AuthenticatedProdutividadeRoute =
 const AuthenticatedPlanoAcaoRoute = AuthenticatedPlanoAcaoRouteImport.update({
   id: '/plano-acao',
   path: '/plano-acao',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedPdiRoute = AuthenticatedPdiRouteImport.update({
-  id: '/pdi',
-  path: '/pdi',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedPaineisOperacionaisRoute =
@@ -191,7 +185,6 @@ export interface FileRoutesByFullPath {
   '/melhorias': typeof AuthenticatedMelhoriasRoute
   '/nao-conformidades': typeof AuthenticatedNaoConformidadesRoute
   '/paineis-operacionais': typeof AuthenticatedPaineisOperacionaisRoute
-  '/pdi': typeof AuthenticatedPdiRoute
   '/plano-acao': typeof AuthenticatedPlanoAcaoRoute
   '/produtividade': typeof AuthenticatedProdutividadeRoute
   '/scorecard': typeof AuthenticatedScorecardRoute
@@ -216,7 +209,6 @@ export interface FileRoutesByTo {
   '/melhorias': typeof AuthenticatedMelhoriasRoute
   '/nao-conformidades': typeof AuthenticatedNaoConformidadesRoute
   '/paineis-operacionais': typeof AuthenticatedPaineisOperacionaisRoute
-  '/pdi': typeof AuthenticatedPdiRoute
   '/plano-acao': typeof AuthenticatedPlanoAcaoRoute
   '/produtividade': typeof AuthenticatedProdutividadeRoute
   '/scorecard': typeof AuthenticatedScorecardRoute
@@ -244,7 +236,6 @@ export interface FileRoutesById {
   '/_authenticated/melhorias': typeof AuthenticatedMelhoriasRoute
   '/_authenticated/nao-conformidades': typeof AuthenticatedNaoConformidadesRoute
   '/_authenticated/paineis-operacionais': typeof AuthenticatedPaineisOperacionaisRoute
-  '/_authenticated/pdi': typeof AuthenticatedPdiRoute
   '/_authenticated/plano-acao': typeof AuthenticatedPlanoAcaoRoute
   '/_authenticated/produtividade': typeof AuthenticatedProdutividadeRoute
   '/_authenticated/scorecard': typeof AuthenticatedScorecardRoute
@@ -273,7 +264,6 @@ export interface FileRouteTypes {
     | '/melhorias'
     | '/nao-conformidades'
     | '/paineis-operacionais'
-    | '/pdi'
     | '/plano-acao'
     | '/produtividade'
     | '/scorecard'
@@ -298,7 +288,6 @@ export interface FileRouteTypes {
     | '/melhorias'
     | '/nao-conformidades'
     | '/paineis-operacionais'
-    | '/pdi'
     | '/plano-acao'
     | '/produtividade'
     | '/scorecard'
@@ -325,7 +314,6 @@ export interface FileRouteTypes {
     | '/_authenticated/melhorias'
     | '/_authenticated/nao-conformidades'
     | '/_authenticated/paineis-operacionais'
-    | '/_authenticated/pdi'
     | '/_authenticated/plano-acao'
     | '/_authenticated/produtividade'
     | '/_authenticated/scorecard'
@@ -395,13 +383,6 @@ declare module '@tanstack/react-router' {
       path: '/plano-acao'
       fullPath: '/plano-acao'
       preLoaderRoute: typeof AuthenticatedPlanoAcaoRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/pdi': {
-      id: '/_authenticated/pdi'
-      path: '/pdi'
-      fullPath: '/pdi'
-      preLoaderRoute: typeof AuthenticatedPdiRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/paineis-operacionais': {
@@ -536,7 +517,6 @@ interface AuthenticatedRouteChildren {
   AuthenticatedMelhoriasRoute: typeof AuthenticatedMelhoriasRoute
   AuthenticatedNaoConformidadesRoute: typeof AuthenticatedNaoConformidadesRoute
   AuthenticatedPaineisOperacionaisRoute: typeof AuthenticatedPaineisOperacionaisRoute
-  AuthenticatedPdiRoute: typeof AuthenticatedPdiRoute
   AuthenticatedPlanoAcaoRoute: typeof AuthenticatedPlanoAcaoRoute
   AuthenticatedProdutividadeRoute: typeof AuthenticatedProdutividadeRoute
   AuthenticatedScorecardRoute: typeof AuthenticatedScorecardRoute
@@ -564,7 +544,6 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedMelhoriasRoute: AuthenticatedMelhoriasRoute,
   AuthenticatedNaoConformidadesRoute: AuthenticatedNaoConformidadesRoute,
   AuthenticatedPaineisOperacionaisRoute: AuthenticatedPaineisOperacionaisRoute,
-  AuthenticatedPdiRoute: AuthenticatedPdiRoute,
   AuthenticatedPlanoAcaoRoute: AuthenticatedPlanoAcaoRoute,
   AuthenticatedProdutividadeRoute: AuthenticatedProdutividadeRoute,
   AuthenticatedScorecardRoute: AuthenticatedScorecardRoute,
