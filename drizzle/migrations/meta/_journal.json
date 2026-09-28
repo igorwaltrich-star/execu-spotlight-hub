@@ -22,6 +22,13 @@
       "when": 1790603585461,
       "tag": "0002_harden_sensitive_access_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1790603731331,
+      "tag": "0003_activate_profile_signup_trigger_and_grants",
+      "breakpoints": true
     }
   ]
 }
