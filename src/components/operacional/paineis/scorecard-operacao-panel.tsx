@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { usePerfil } from "@/hooks/use-perfil";
 import { UNIDADES, metaProdUnidade, fmtMes } from "@/lib/constants";
 import {
   brl,
@@ -23,8 +24,10 @@ function notaBadge(score: number) {
 }
 
 export function ScorecardOperacaoPanel() {
+  const { eUmDe } = usePerfil();
+  const podeVerCusto = eUmDe(["gestor", "coordenador"]);
   const { data: op = [] } = useOperacionalMensal();
-  const { data: custos = [] } = useCustoPessoal();
+  const { data: custos = [] } = useCustoPessoal(podeVerCusto);
   const { data: ncs = [] } = useNaoConformidades();
   const [mes, setMes] = useState("todos");
 
@@ -126,7 +129,7 @@ export function ScorecardOperacaoPanel() {
                   <TableHead className="text-right">Produtividade</TableHead>
                   <TableHead className="text-right">Meta</TableHead>
                   <TableHead className="text-right">Atingimento</TableHead>
-                  <TableHead className="text-right">Custo/processo</TableHead>
+                  {podeVerCusto && <TableHead className="text-right">Custo/processo</TableHead>}
                   <TableHead className="text-right">NCs</TableHead>
                   <TableHead className="text-right">Nota</TableHead>
                 </TableRow>
@@ -142,7 +145,9 @@ export function ScorecardOperacaoPanel() {
                       <TableCell className="text-right">{num(l.prod)}</TableCell>
                       <TableCell className="text-right">{l.meta}</TableCell>
                       <TableCell className="text-right">{num(l.atingimento, 0)}%</TableCell>
-                      <TableCell className="text-right">{l.custoProc > 0 ? brl(l.custoProc) : "-"}</TableCell>
+                      {podeVerCusto && (
+                        <TableCell className="text-right">{l.custoProc > 0 ? brl(l.custoProc) : "-"}</TableCell>
+                      )}
                       <TableCell className="text-right">
                         {l.ncQtd} {l.ncCusto > 0 && <span className="text-muted-foreground">({brl(l.ncCusto)})</span>}
                       </TableCell>

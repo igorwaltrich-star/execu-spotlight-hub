@@ -13,6 +13,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { usePerfil } from "@/hooks/use-perfil";
 import { UNIDADES, metaProdUnidade, META_PRODUTIVIDADE, fmtMes } from "@/lib/constants";
 import {
   brl,
@@ -56,8 +57,10 @@ function Kpi({
 }
 
 export function IndicadoresPanel() {
+  const { eUmDe } = usePerfil();
+  const podeVerCusto = eUmDe(["gestor", "coordenador"]);
   const { data: op = [] } = useOperacionalMensal();
-  const { data: custos = [] } = useCustoPessoal();
+  const { data: custos = [] } = useCustoPessoal(podeVerCusto);
   const { data: ncs = [] } = useNaoConformidades();
   const [mes, setMes] = useState("todos");
 
@@ -147,7 +150,7 @@ export function IndicadoresPanel() {
         </Select>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      <div className={`grid gap-3 sm:grid-cols-2 ${podeVerCusto ? "lg:grid-cols-5" : "lg:grid-cols-4"}`}>
         <Kpi titulo="Volume de processos" valor={num(volume, 0)} detalhe={mes === "todos" ? "acumulado" : fmtMes(`${mes}-01`)} />
         <Kpi titulo="Pessoas (último mês)" valor={num(pessoas, 0)} detalhe={ultimoMes ? fmtMes(`${ultimoMes}-01`) : "-"} />
         <Kpi
@@ -156,7 +159,9 @@ export function IndicadoresPanel() {
           detalhe={`meta geral ${META_PRODUTIVIDADE}`}
           tom={prodMedia >= META_PRODUTIVIDADE ? "success" : "warning"}
         />
-        <Kpi titulo="Custo por processo" valor={custoPorProcesso > 0 ? brl(custoPorProcesso) : "-"} detalhe={brl(custoTotal)} />
+        {podeVerCusto && (
+          <Kpi titulo="Custo por processo" valor={custoPorProcesso > 0 ? brl(custoPorProcesso) : "-"} detalhe={brl(custoTotal)} />
+        )}
         <Kpi
           titulo="Perdas por não conformidade"
           valor={brl(ncCusto)}

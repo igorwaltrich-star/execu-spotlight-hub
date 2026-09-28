@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as XLSX from "xlsx";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { usePerfil } from "@/hooks/use-perfil";
 import { useColaboradores } from "@/components/gestao/use-colaboradores";
 import { UNIDADES } from "@/lib/constants";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -70,6 +71,8 @@ const fmtDate = (d: string) => {
 
 export function CustoOperacionalView() {
   const { user } = useAuth();
+  const { eUmDe } = usePerfil();
+  const podeVerCusto = eUmDe(["gestor", "coordenador"]);
   const qc = useQueryClient();
   const { data: colabs = [] } = useColaboradores();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -80,7 +83,7 @@ export function CustoOperacionalView() {
   const [form, setForm] = useState(emptyForm);
 
   const { data: custos = [] } = useQuery({
-    queryKey: ["custo_pessoal", filtroOp, filtroMes],
+    queryKey: ["custo_pessoal", filtroOp, filtroMes, podeVerCusto],
     queryFn: async () => {
       let q = supabase
         .from("custo_pessoal_mensal")
@@ -93,6 +96,7 @@ export function CustoOperacionalView() {
       if (error) throw error;
       return (data ?? []) as CustoMensal[];
     },
+    enabled: podeVerCusto,
   });
 
   const nome = (id: string) => colabs.find((c) => c.id === id)?.nome ?? "—";

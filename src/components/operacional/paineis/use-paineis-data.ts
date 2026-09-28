@@ -50,9 +50,9 @@ export function useOperacionalMensal() {
   });
 }
 
-export function useCustoPessoal() {
+export function useCustoPessoal(podeVerCusto: boolean) {
   return useQuery({
-    queryKey: ["custo_pessoal_paineis"],
+    queryKey: ["custo_pessoal_paineis", podeVerCusto],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("custo_pessoal_mensal")
@@ -60,6 +60,7 @@ export function useCustoPessoal() {
       if (error) throw error;
       return (data ?? []) as CustoMes[];
     },
+    enabled: podeVerCusto,
   });
 }
 
