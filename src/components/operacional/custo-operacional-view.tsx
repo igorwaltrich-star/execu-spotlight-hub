@@ -71,7 +71,7 @@ const fmtDate = (d: string) => {
 
 export function CustoOperacionalView() {
   const { user } = useAuth();
-  const { eUmDe } = usePerfil();
+  const { eUmDe, carregando } = usePerfil();
   const podeVerCusto = eUmDe(["gestor", "coordenador"]);
   const qc = useQueryClient();
   const { data: colabs = [] } = useColaboradores();
@@ -271,6 +271,21 @@ export function CustoOperacionalView() {
     setEditId(c.id);
     setOpen(true);
   };
+
+  if (carregando) return null;
+
+  if (!podeVerCusto) {
+    return (
+      <div className="p-6">
+        <Card>
+          <CardContent className="flex items-center gap-3 py-6 text-muted-foreground">
+            <AlertTriangle className="h-5 w-5 shrink-0" />
+            <p>Dados de custo disponíveis apenas para gestores e coordenadores.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-5">
