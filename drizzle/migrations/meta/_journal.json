@@ -15,6 +15,27 @@
       "when": 1790348486923,
       "tag": "0001_create_gestao_financeira_tables",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790603585461,
+      "tag": "0002_harden_sensitive_access_policies",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1790603731331,
+      "tag": "0003_activate_profile_signup_trigger_and_grants",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790603788465,
+      "tag": "0004_assert_pdi_schema_removed",
+      "breakpoints": true
     }
   ]
 }
