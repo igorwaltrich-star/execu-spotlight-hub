@@ -308,7 +308,7 @@ export function gerarInsights(params: {
           titulo: `${nomeColaborador(cid)} com ${q} ocorrências no período`,
           descricao:
             "Reincidência nesse volume geralmente aponta lacuna de treinamento ou sobrecarga, não descuido.",
-          acao: "Vale uma conversa individual antes de qualquer registro formal — e considerar um PDI se for lacuna técnica.",
+          acao: "Vale uma conversa individual antes de qualquer registro formal e definir um acompanhamento se houver lacuna técnica.",
           peso: 72,
         });
       });
