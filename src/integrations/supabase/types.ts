@@ -92,50 +92,6 @@ export type Database = {
         }
         Relationships: []
       }
-      atividades_desenvolvimento: {
-        Row: {
-          created_at: string
-          descricao: string | null
-          due_date: string | null
-          evidencia: string | null
-          id: string
-          plano_id: string
-          progresso: number
-          status: string
-          titulo: string
-        }
-        Insert: {
-          created_at?: string
-          descricao?: string | null
-          due_date?: string | null
-          evidencia?: string | null
-          id?: string
-          plano_id: string
-          progresso?: number
-          status?: string
-          titulo: string
-        }
-        Update: {
-          created_at?: string
-          descricao?: string | null
-          due_date?: string | null
-          evidencia?: string | null
-          id?: string
-          plano_id?: string
-          progresso?: number
-          status?: string
-          titulo?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "atividades_desenvolvimento_plano_id_fkey"
-            columns: ["plano_id"]
-            isOneToOne: false
-            referencedRelation: "planos_desenvolvimento"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       audit_logs: {
         Row: {
           action: string
@@ -168,44 +124,6 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
-      }
-      avaliacoes_pdi: {
-        Row: {
-          avaliacao: string
-          avaliador_id: string | null
-          created_at: string
-          data: string
-          id: string
-          plano_id: string
-          progresso: number
-        }
-        Insert: {
-          avaliacao: string
-          avaliador_id?: string | null
-          created_at?: string
-          data?: string
-          id?: string
-          plano_id: string
-          progresso?: number
-        }
-        Update: {
-          avaliacao?: string
-          avaliador_id?: string | null
-          created_at?: string
-          data?: string
-          id?: string
-          plano_id?: string
-          progresso?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "avaliacoes_pdi_plano_id_fkey"
-            columns: ["plano_id"]
-            isOneToOne: false
-            referencedRelation: "planos_desenvolvimento"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       banco_horas: {
         Row: {
@@ -1166,39 +1084,6 @@ export type Database = {
         }
         Relationships: []
       }
-      pdi: {
-        Row: {
-          colaborador_id: string
-          created_at: string
-          id: string
-          meta: string
-          prazo: string | null
-          status: Database["public"]["Enums"]["pdi_status"]
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          colaborador_id: string
-          created_at?: string
-          id?: string
-          meta: string
-          prazo?: string | null
-          status?: Database["public"]["Enums"]["pdi_status"]
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          colaborador_id?: string
-          created_at?: string
-          id?: string
-          meta?: string
-          prazo?: string | null
-          status?: Database["public"]["Enums"]["pdi_status"]
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       plano_acao: {
         Row: {
           created_at: string
@@ -1235,51 +1120,6 @@ export type Database = {
           status?: Database["public"]["Enums"]["acao_status"]
           updated_at?: string
           user_id?: string
-        }
-        Relationships: []
-      }
-      planos_desenvolvimento: {
-        Row: {
-          colaborador_id: string
-          competencia: string
-          created_at: string
-          created_by: string | null
-          due_date: string | null
-          evidencias: string | null
-          id: string
-          indicador: string | null
-          objetivo: string
-          progresso: number
-          start_date: string | null
-          status: string
-        }
-        Insert: {
-          colaborador_id: string
-          competencia: string
-          created_at?: string
-          created_by?: string | null
-          due_date?: string | null
-          evidencias?: string | null
-          id?: string
-          indicador?: string | null
-          objetivo: string
-          progresso?: number
-          start_date?: string | null
-          status?: string
-        }
-        Update: {
-          colaborador_id?: string
-          competencia?: string
-          created_at?: string
-          created_by?: string | null
-          due_date?: string | null
-          evidencias?: string | null
-          id?: string
-          indicador?: string | null
-          objetivo?: string
-          progresso?: number
-          start_date?: string | null
-          status?: string
         }
         Relationships: []
       }
@@ -1749,7 +1589,6 @@ export type Database = {
         | "zona_desalinhamento"
       melhoria_tipo: "atencao" | "oportunidade"
       navy_seal_tag: "a_player" | "b_player" | "c_player"
-      pdi_status: "nao_iniciado" | "em_andamento" | "concluido" | "atrasado"
       risco_nivel: "alto" | "medio" | "baixo"
       unidade_carteira:
         | "midea_sc"
@@ -1900,7 +1739,6 @@ export const Constants = {
       ],
       melhoria_tipo: ["atencao", "oportunidade"],
       navy_seal_tag: ["a_player", "b_player", "c_player"],
-      pdi_status: ["nao_iniciado", "em_andamento", "concluido", "atrasado"],
       risco_nivel: ["alto", "medio", "baixo"],
       unidade_carteira: [
         "midea_sc",
