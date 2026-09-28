@@ -61,7 +61,6 @@ type NaoConf = {
   data_ocorrencia: string;
   custo_gerado: number;
 };
-type CheckIn = { operacao: string; data: string; status_geral: string };
 
 const fmtBRL = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
@@ -112,20 +111,6 @@ export function DashboardOperacaoView() {
       const { data, error } = await q;
       if (error) throw error;
       return (data ?? []) as NaoConf[];
-    },
-  });
-
-  const { data: checkins = [] } = useQuery({
-    queryKey: ["dashop_checkin", opSel],
-    queryFn: async () => {
-      const desde = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
-      const { data, error } = await supabase
-        .from("checkins_operacionais")
-        .select("operacao,data,status_geral")
-        .eq("operacao", opSel)
-        .gte("data", desde);
-      if (error) throw error;
-      return (data ?? []) as CheckIn[];
     },
   });
 
@@ -185,13 +170,6 @@ export function DashboardOperacaoView() {
     const notaQual =
       vol > 0 ? notaOu(100 - (ncs.length / vol) * 100 * 10) : ncs.length > 0 ? 0 : null;
 
-    // confiabilidade: check-ins dos últimos 30 dias
-    const pesoCk: Record<string, number> = { normal: 100, atencao: 60, critico: 0 };
-    const notaConf =
-      checkins.length > 0
-        ? notaOu(checkins.reduce((s, c) => s + (pesoCk[c.status_geral] ?? 0), 0) / checkins.length)
-        : null;
-
     // eficiência de custo: compara custo/processo com a média das operações
     const cpps = dados.comDados
       .filter((o) => o.custoPorProcesso > 0)
@@ -204,7 +182,6 @@ export function DashboardOperacaoView() {
     const dims = [
       { key: "produtividade", label: "Produtividade", nota: notaProd, peso: 40 },
       { key: "qualidade", label: "Qualidade", nota: notaQual, peso: 25 },
-      { key: "confiabilidade", label: "Confiabilidade", nota: notaConf, peso: 20 },
       ...(podeVerCusto
         ? [{ key: "custo", label: "Eficiência de custo", nota: notaCusto, peso: 15 }]
         : []),
@@ -216,7 +193,7 @@ export function DashboardOperacaoView() {
         ? validas.reduce((s, d) => s + (d.nota as number) * d.peso, 0) / pesoAplicado
         : 0;
     return { dims, total, pesoAplicado, ausentes: dims.length - validas.length };
-  }, [indicador, ncs, checkins, dados.comDados, podeVerCusto, opSel]);
+  }, [indicador, ncs, dados.comDados, podeVerCusto, opSel]);
 
   /* ── evolução da operação ── */
   const evolucao = useMemo(() => {
@@ -763,46 +740,6 @@ export function DashboardOperacaoView() {
                     </CardContent>
                   </Card>
 
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm">Check IN dos últimos 30 dias</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      {checkins.length === 0 ? (
-                        <p className="text-sm text-muted-foreground text-center py-6">
-                          Nenhum check-in registrado no período.
-                        </p>
-                      ) : (
-                        <div className="flex gap-4 flex-wrap text-sm">
-                          {[
-                            {
-                              l: "Normal",
-                              v: checkins.filter((c) => c.status_geral === "normal").length,
-                              c: "text-success",
-                            },
-                            {
-                              l: "Atenção",
-                              v: checkins.filter((c) => c.status_geral === "atencao").length,
-                              c: "text-warning",
-                            },
-                            {
-                              l: "Crítico",
-                              v: checkins.filter((c) => c.status_geral === "critico").length,
-                              c: "text-destructive",
-                            },
-                          ].map((x) => (
-                            <div
-                              key={x.l}
-                              className="flex-1 min-w-24 p-3 rounded-lg border text-center"
-                            >
-                              <div className={`text-2xl font-semibold ${x.c}`}>{x.v}</div>
-                              <div className="text-xs text-muted-foreground">{x.l}</div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
                 </>
               )}
             </TabsContent>

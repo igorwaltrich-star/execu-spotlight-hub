@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard, Database, Briefcase, BarChart3,
   AlertTriangle, DollarSign, Clock,
-  Users, UserCheck, LogOut, Anchor, GraduationCap, Sparkles, Award, Wallet,
+  Users, UserCheck, LogOut, Anchor, Sparkles, Award, Wallet,
   ChevronDown, ChevronRight, TrendingUp, Gauge, Building2,
 } from "lucide-react";
 import { type ReactNode, useState } from "react";
@@ -13,8 +13,13 @@ import { usePerfil, type Papel } from "@/hooks/use-perfil";
 
 type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean; papeis?: Papel[] };
 
-const NAV_OP: NavItem[] = [
+const NAV_DASHBOARDS: NavItem[] = [
   { to: "/",                          label: "Dashboard Operacional",    icon: LayoutDashboard, exact: true },
+  { to: "/dashboard-operacao",        label: "Dashboard por Operação",   icon: Building2 },
+  { to: "/dashboard-gestao",          label: "Dashboard Gestão",         icon: Users },
+];
+
+const NAV_OP: NavItem[] = [
   { to: "/cadastro",                  label: "Cadastro Operacional",     icon: Database },
   { to: "/produtividade",             label: "Produtividade",            icon: BarChart3 },
   { to: "/nao-conformidades",         label: "Não Conformidades",        icon: AlertTriangle },
@@ -22,18 +27,15 @@ const NAV_OP: NavItem[] = [
   { to: "/margem-contribucao",        label: "Margem de Contribuição",   icon: TrendingUp },
   { to: "/banco-horas",               label: "Banco de Horas",           icon: Clock, papeis: ["gestor","coordenador","supervisor"] },
   { to: "/paineis-operacionais",      label: "Painéis Operacionais",     icon: Gauge },
-  { to: "/dashboard-operacao",        label: "Dashboard por Operação",   icon: Building2 },
   { to: "/insights",                  label: "Insights",                 icon: Sparkles, papeis: ["gestor","coordenador","supervisor"] },
   { to: "/gestao-financeira",         label: "Gestão Financeira",        icon: Wallet, papeis: ["gestor","coordenador","supervisor"] },
   { to: "/gerenciamento-operacional", label: "Gerenciamento",            icon: Briefcase },
 ];
 
 const NAV_DHO: NavItem[] = [
-  { to: "/dashboard-gestao",    label: "Dashboard Gestão",    icon: LayoutDashboard },
   { to: "/equipes",             label: "Equipes",             icon: Users, papeis: ["gestor","coordenador"] },
   { to: "/funcionarios",        label: "Funcionários",        icon: UserCheck, papeis: ["gestor","coordenador"] },
   { to: "/scorecard",          label: "Scorecard",           icon: Award, papeis: ["gestor","coordenador","supervisor"] },
-  { to: "/pdi",                 label: "PDI",                 icon: GraduationCap },
 ];
 
 function NavGroup({ label, items, defaultOpen = true }: { label: string; items: NavItem[]; defaultOpen?: boolean }) {
@@ -96,6 +98,8 @@ export function AppShell({ children }: { children: ReactNode }) {
 
         {/* Nav */}
         <nav className="flex-1 py-3 overflow-y-auto space-y-1">
+          <NavGroup label="Dashboards" items={NAV_DASHBOARDS} defaultOpen={true} />
+          <div className="mx-3 my-2 border-t border-sidebar-border" />
           <NavGroup label="Operacional" items={NAV_OP} defaultOpen={true} />
           <div className="mx-3 my-2 border-t border-sidebar-border" />
           <NavGroup label="DHO" items={NAV_DHO} defaultOpen={true} />
