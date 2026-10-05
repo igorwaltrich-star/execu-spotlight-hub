@@ -62,6 +62,7 @@ import {
   Download,
 } from "lucide-react";
 import { toast } from "sonner";
+import { FechamentoPendenteSummary } from "./fechamento-pendente-summary";
 
 type Categoria = {
   id: string;
@@ -489,6 +490,8 @@ export function GestaoFinanceiraView() {
           </CardContent>
         </Card>
       )}
+
+      <FechamentoPendenteSummary podeEditar={podeEditar} />
 
       {procs.length === 0 ? (
         <Card>
