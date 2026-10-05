@@ -9,3 +9,5 @@
 - [x] Registrar criação automática de perfil analista para novos cadastros
 - [x] Confirmar a remoção integral das tabelas e do tipo do PDI
 - [x] Validar as telas preservadas após o endurecimento das permissões
+- [x] Permitir excluir ciclos completos do Scorecard com confirmação
+- [x] Importar o consolidado de fechamentos pendentes e exibir resumo gerencial

@@ -323,7 +323,6 @@ export function ScorecardView() {
 
   const excluirCiclo = useMutation({
     mutationFn: async (c: Ciclo) => {
-      if (c.status !== "rascunho") throw new Error("Só é possível excluir ciclos em rascunho");
       const { error } = await supabase.from("scorecard_ciclos").delete().eq("id", c.id);
       if (error) throw error;
     },
@@ -956,23 +955,6 @@ export function ScorecardView() {
                           <Send className="h-4 w-4 mr-1.5" />
                           Publicar
                         </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-destructive"
-                          disabled={excluirCiclo.isPending}
-                          onClick={() => {
-                            if (
-                              window.confirm(
-                                `Excluir o rascunho "${ciclo.nome}"? Esta ação não pode ser desfeita.`,
-                              )
-                            )
-                              excluirCiclo.mutate(ciclo);
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4 mr-1.5" />
-                          Excluir rascunho
-                        </Button>
                       </>
                     )}
                     {podeGerirCiclo && ciclo?.status === "publicado" && (
@@ -983,6 +965,25 @@ export function ScorecardView() {
                       >
                         <Lock className="h-4 w-4 mr-1.5" />
                         Fechar ciclo
+                      </Button>
+                    )}
+                    {podeGerirCiclo && ciclo && ciclo.status !== "fechado" && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-destructive"
+                        disabled={excluirCiclo.isPending}
+                        onClick={() => {
+                          if (
+                            window.confirm(
+                              `Excluir o ciclo completo "${ciclo.nome}"? Todas as avaliações e registros vinculados serão removidos. Esta ação não pode ser desfeita.`,
+                            )
+                          )
+                            excluirCiclo.mutate(ciclo);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4 mr-1.5" />
+                        Excluir ciclo
                       </Button>
                     )}
                   </div>
