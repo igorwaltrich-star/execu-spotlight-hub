@@ -36,6 +36,13 @@
       "when": 1790603788465,
       "tag": "0004_assert_pdi_schema_removed",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791202279345,
+      "tag": "0005_add_financial_closure_imports",
+      "breakpoints": true
     }
   ]
 }

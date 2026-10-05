@@ -521,6 +521,133 @@ export type Database = {
         }
         Relationships: []
       }
+      financeiro_fechamento_importacoes: {
+        Row: {
+          arquivo_nome: string
+          created_at: string
+          data_referencia: string | null
+          id: string
+          importado_por: string | null
+        }
+        Insert: {
+          arquivo_nome: string
+          created_at?: string
+          data_referencia?: string | null
+          id?: string
+          importado_por?: string | null
+        }
+        Update: {
+          arquivo_nome?: string
+          created_at?: string
+          data_referencia?: string | null
+          id?: string
+          importado_por?: string | null
+        }
+        Relationships: []
+      }
+      financeiro_fechamento_pendencias: {
+        Row: {
+          centro_custo: string
+          cliente: string | null
+          data_registro: string | null
+          di_duimp: string | null
+          dias_sem_pedido: number
+          faixa: string | null
+          id: string
+          importacao_id: string
+          processo: string
+          usa_fluxo: boolean
+        }
+        Insert: {
+          centro_custo: string
+          cliente?: string | null
+          data_registro?: string | null
+          di_duimp?: string | null
+          dias_sem_pedido?: number
+          faixa?: string | null
+          id?: string
+          importacao_id: string
+          processo: string
+          usa_fluxo?: boolean
+        }
+        Update: {
+          centro_custo?: string
+          cliente?: string | null
+          data_registro?: string | null
+          di_duimp?: string | null
+          dias_sem_pedido?: number
+          faixa?: string | null
+          id?: string
+          importacao_id?: string
+          processo?: string
+          usa_fluxo?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financeiro_fechamento_pendencias_importacao_id_fkey"
+            columns: ["importacao_id"]
+            isOneToOne: false
+            referencedRelation: "financeiro_fechamento_importacoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      financeiro_fechamento_resumos: {
+        Row: {
+          ate_15: number
+          centro_custo: string
+          com_pedido: number
+          de_15_30: number
+          de_30_60: number
+          de_60_90: number
+          id: string
+          importacao_id: string
+          mais_90: number
+          percentual_pedido: number
+          processos_di: number
+          sem_pedido: number
+          usa_fluxo: boolean
+        }
+        Insert: {
+          ate_15?: number
+          centro_custo: string
+          com_pedido?: number
+          de_15_30?: number
+          de_30_60?: number
+          de_60_90?: number
+          id?: string
+          importacao_id: string
+          mais_90?: number
+          percentual_pedido?: number
+          processos_di?: number
+          sem_pedido?: number
+          usa_fluxo?: boolean
+        }
+        Update: {
+          ate_15?: number
+          centro_custo?: string
+          com_pedido?: number
+          de_15_30?: number
+          de_30_60?: number
+          de_60_90?: number
+          id?: string
+          importacao_id?: string
+          mais_90?: number
+          percentual_pedido?: number
+          processos_di?: number
+          sem_pedido?: number
+          usa_fluxo?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financeiro_fechamento_resumos_importacao_id_fkey"
+            columns: ["importacao_id"]
+            isOneToOne: false
+            referencedRelation: "financeiro_fechamento_importacoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       financeiro_justificativas: {
         Row: {
           autor_id: string | null
