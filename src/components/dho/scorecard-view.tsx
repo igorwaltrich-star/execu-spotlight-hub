@@ -334,6 +334,21 @@ export function ScorecardView() {
     onError: (e) => toast.error(e instanceof Error ? e.message : "Erro ao excluir ciclo"),
   });
 
+  const excluirCriterio = useMutation({
+    mutationFn: async (c: Ciclo) => {
+      const { error } = await supabase
+        .from("scorecard_ciclos")
+        .update({ criterio_publicado: null })
+        .eq("id", c.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Critério excluído");
+      qc.invalidateQueries({ queryKey: ["sc_ciclos"] });
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Erro ao excluir critério"),
+  });
+
   const [formAval, setFormAval] = useState<Record<string, string>>({});
   const abrirAval = (colabId: string) => {
     const av = avals.find((a) => a.ciclo_id === ciclo?.id && a.colaborador_id === colabId);
@@ -976,7 +991,7 @@ export function ScorecardView() {
                         onClick={() => {
                           if (
                             window.confirm(
-                              `Excluir o ciclo completo "${ciclo.nome}"? Todas as avaliações e registros vinculados serão removidos. Esta ação não pode ser desfeita.`,
+                              `Excluir o ciclo completo "${ciclo.nome}"? Todas as avaliações deste ciclo serão removidas. Esta ação não pode ser desfeita.`,
                             )
                           )
                             excluirCiclo.mutate(ciclo);
@@ -1017,8 +1032,27 @@ export function ScorecardView() {
                   </TableBody>
                 </Table>
                 {ciclo?.criterio_publicado && (
-                  <div className="p-3 rounded-lg bg-muted text-sm whitespace-pre-line">
-                    {ciclo.criterio_publicado}
+                  <div className="p-3 rounded-lg bg-muted text-sm flex items-start gap-2">
+                    <div className="flex-1 whitespace-pre-line">{ciclo.criterio_publicado}</div>
+                    {podeGerirCiclo && ciclo.status !== "fechado" && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-destructive shrink-0"
+                        disabled={excluirCriterio.isPending}
+                        onClick={() => {
+                          if (
+                            window.confirm(
+                              `Excluir o critério do ciclo "${ciclo.nome}"? Os pesos e as avaliações são mantidos.`,
+                            )
+                          )
+                            excluirCriterio.mutate(ciclo);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4 mr-1.5" />
+                        Excluir critério
+                      </Button>
+                    )}
                   </div>
                 )}
               </CardContent>
