@@ -45,6 +45,16 @@ create table if not exists public.hub_onboarding_itens (
 );
 create index if not exists hub_onb_itens_importacao_idx on public.hub_onboarding_itens(importacao_id);
 
+-- Acesso pela API: o que cada papel pode fazer fica nas policies abaixo; sem update (snapshots imutáveis).
+grant select, insert, delete on public.hub_frequencia_importacoes to authenticated;
+grant all on public.hub_frequencia_importacoes to service_role;
+grant select, insert, delete on public.hub_frequencia_colaboradores to authenticated;
+grant all on public.hub_frequencia_colaboradores to service_role;
+grant select, insert, delete on public.hub_onboarding_importacoes to authenticated;
+grant all on public.hub_onboarding_importacoes to service_role;
+grant select, insert, delete on public.hub_onboarding_itens to authenticated;
+grant all on public.hub_onboarding_itens to service_role;
+
 -- Os dados citam colaboradores pelo nome: leitura e escrita só para gestor, coordenador e supervisor,
 -- os mesmos papéis que veem a página.
 alter table public.hub_frequencia_importacoes   enable row level security;

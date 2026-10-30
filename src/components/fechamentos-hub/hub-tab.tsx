@@ -87,7 +87,7 @@ function AvisoMigration() {
         <AlertTriangle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
         <span>
           As tabelas do Hub ainda não existem no banco. Aplique a migration{" "}
-          <code>20261029000001_hub_adesao_onboarding.sql</code> para liberar a importação.
+          <code>0007_create_hub_adoption_onboarding.sql</code> para liberar a importação.
         </span>
       </CardContent>
     </Card>

@@ -13,7 +13,7 @@
 - [x] Importar o consolidado de fechamentos pendentes e exibir resumo gerencial
 - [x] Página Fechamentos e Hub: comparação entre bases do Sigra, filtro por centro e importação em CSV
 - [x] Aba Pendências Hub: adesão dos colaboradores e pendências de onboarding com importação de arquivos
-- [ ] Aplicar a migration 20261029000001_hub_adesao_onboarding no banco
+- [ ] Aplicar a migration 0007_create_hub_adoption_onboarding no banco (antiga 20261029000001, agora com GRANTs)
 - [x] Remover as telas Banco de Horas e Gestão Financeira (tabelas preservadas no banco)
 - [x] Revisar Fechamentos e Hub: centros que zeraram a lista, atalhos do filtro, rollback do supervisor, datas e textos
 - [ ] Aplicar a migration 0006_allow_supervisor_undo_closure_import no banco
