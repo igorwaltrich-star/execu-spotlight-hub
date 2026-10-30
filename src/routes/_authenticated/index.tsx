@@ -1023,13 +1023,13 @@ function DashboardPage() {
         </Slide>
       )}
 
-      {/* Custo Operacional — Midea (toggle) */}
+      {/* Custo Operacional (toggle) */}
       {showCusto && (
         <Slide>
           <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
             <div>
-              <h2 className="text-3xl md:text-4xl font-bold tracking-tight">💰 Custo Operacional — Midea</h2>
-              <p className="text-muted-foreground mt-1">Custo total por unidade · Referência: planilha vigente</p>
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight">💰 Custo Operacional</h2>
+              <p className="text-muted-foreground mt-1">Todas as operações · Custo total por unidade</p>
             </div>
             <button onClick={() => setShowCusto(false)}
               className="px-4 py-2 rounded-md border text-sm font-semibold hover:bg-muted transition-colors">
@@ -1060,7 +1060,7 @@ function DashboardPage() {
                     </div>
                   </CardContent>
                 </Card>
-                {custoReal.slice(0, 3).map((c) => (
+                {custoReal.map((c) => (
                   <Card key={c.key}>
                     <CardContent className="pt-5">
                       <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">{c.label}</div>
