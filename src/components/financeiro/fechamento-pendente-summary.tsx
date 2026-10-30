@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { importarFechamento } from "@/components/fechamentos-hub/dados";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 type Resumo = {
@@ -40,18 +41,6 @@ type Pendencia = {
 };
 
 const n0 = (v: number) => v.toLocaleString("pt-BR", { maximumFractionDigits: 0 });
-const texto = (v: unknown) => String(v ?? "").trim();
-const numero = (v: unknown) => {
-  if (typeof v === "number") return v;
-  const limpo = texto(v).replace(/\./g, "").replace(",", ".").replace("%", "");
-  const n = Number(limpo);
-  return Number.isFinite(n) ? n : 0;
-};
-const dataIso = (v: unknown) => {
-  if (v instanceof Date && !Number.isNaN(v.getTime())) return v.toISOString().slice(0, 10);
-  const m = texto(v).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  return m ? `${m[3]}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}` : null;
-};
 
 export function FechamentoPendenteSummary({ podeEditar }: { podeEditar: boolean }) {
   const { user } = useAuth();
@@ -89,81 +78,12 @@ export function FechamentoPendenteSummary({ podeEditar }: { podeEditar: boolean 
 
   const importar = async (file: File) => {
     setImportando(true);
-    let importacaoId: string | null = null;
     try {
-      const wb = XLSX.read(await file.arrayBuffer(), { type: "array", cellDates: true });
-      const resumoWs = wb.Sheets["Resumo"];
-      const pendWs = wb.Sheets["Sem fechamento"];
-      const foraWs = wb.Sheets["Centros sem o fluxo"];
-      if (!resumoWs || !pendWs || !foraWs)
-        throw new Error('A planilha precisa conter as abas "Resumo", "Sem fechamento" e "Centros sem o fluxo".');
-
-      const resumoLinhas = XLSX.utils.sheet_to_json<unknown[]>(resumoWs, { header: 1, defval: "" });
-      const cabecalho = resumoLinhas.findIndex((r) => texto(r[0]).toLowerCase() === "centro de custo");
-      if (cabecalho < 0) throw new Error("Cabeçalho do resumo não encontrado.");
-      const refTexto = texto(resumoLinhas[1]?.[0]);
-      const ref = refTexto.match(/(\d{2})\/(\d{2})\/(\d{4})(?:,\s*(\d{2}):(\d{2}))?/);
-      const dataReferencia = ref
-        ? `${ref[3]}-${ref[2]}-${ref[1]}T${ref[4] ?? "00"}:${ref[5] ?? "00"}:00-03:00`
-        : null;
-
-      const { data: novaImportacao, error: importError } = await supabase
-        .from("financeiro_fechamento_importacoes")
-        .insert({ arquivo_nome: file.name, data_referencia: dataReferencia, importado_por: user?.id })
-        .select("id")
-        .single();
-      if (importError) throw importError;
-      importacaoId = novaImportacao.id;
-
-      const resumos: Resumo[] = resumoLinhas
-        .slice(cabecalho + 1)
-        .filter((r) => texto(r[0]) && texto(r[0]).toLowerCase() !== "total")
-        .map((r) => ({
-          importacao_id: novaImportacao.id,
-          centro_custo: texto(r[0]),
-          usa_fluxo: texto(r[1]).toLowerCase() !== "não",
-          processos_di: numero(r[2]),
-          com_pedido: numero(r[3]),
-          percentual_pedido: numero(r[4]) <= 1 ? numero(r[4]) * 100 : numero(r[4]),
-          sem_pedido: numero(r[5]),
-          ate_15: numero(r[6]),
-          de_15_30: numero(r[7]),
-          de_30_60: numero(r[8]),
-          de_60_90: numero(r[9]),
-          mais_90: numero(r[10]),
-        }));
-      if (resumos.length === 0) throw new Error("Nenhum centro de custo encontrado no resumo.");
-
-      const lerPendencias = (ws: XLSX.WorkSheet, usaFluxo: boolean): Pendencia[] =>
-        XLSX.utils
-          .sheet_to_json<unknown[]>(ws, { header: 1, defval: "" })
-          .slice(1)
-          .filter((r) => texto(r[0]) && texto(r[1]))
-          .map((r) => ({
-            importacao_id: novaImportacao.id,
-            centro_custo: texto(r[0]),
-            processo: texto(r[1]),
-            cliente: texto(r[2]) || null,
-            di_duimp: texto(r[3]) || null,
-            data_registro: dataIso(r[4]),
-            dias_sem_pedido: numero(r[5]),
-            faixa: texto(r[6]) || null,
-            usa_fluxo: usaFluxo,
-          }));
-
-      const pendencias = [...lerPendencias(pendWs, true), ...lerPendencias(foraWs, false)];
-      const inserirLotes = async (tabela: "financeiro_fechamento_resumos" | "financeiro_fechamento_pendencias", linhas: Resumo[] | Pendencia[]) => {
-        for (let i = 0; i < linhas.length; i += 500) {
-          const { error } = await supabase.from(tabela).insert(linhas.slice(i, i + 500) as never[]);
-          if (error) throw error;
-        }
-      };
-      await inserirLotes("financeiro_fechamento_resumos", resumos);
-      await inserirLotes("financeiro_fechamento_pendencias", pendencias);
+      const r = await importarFechamento(file, user?.id);
       await qc.invalidateQueries({ queryKey: ["fin_fechamento_pendente"] });
-      toast.success(`${n0(resumos.length)} centros e ${n0(pendencias.length)} pendências importados`);
+      await qc.invalidateQueries({ queryKey: ["fh_importacoes"] });
+      toast.success(`${n0(r.centros)} centros e ${n0(r.processos)} pendências importados${r.estimado ? " (resumo estimado do CSV)" : ""}`);
     } catch (e) {
-      if (importacaoId) await supabase.from("financeiro_fechamento_importacoes").delete().eq("id", importacaoId);
       toast.error(e instanceof Error ? e.message : "Falha ao importar a planilha");
     } finally {
       setImportando(false);
@@ -195,7 +115,7 @@ export function FechamentoPendenteSummary({ podeEditar }: { podeEditar: boolean 
             <Button variant="outline" size="sm" onClick={() => inputRef.current?.click()} disabled={importando}>
               <Upload className="h-4 w-4 mr-1.5" />{importando ? "Importando..." : "Importar fechamentos pendentes"}
             </Button>
-            <input ref={inputRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) importar(f); e.target.value = ""; }} />
+            <input ref={inputRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) importar(f); e.target.value = ""; }} />
           </>
         )}
       </div>

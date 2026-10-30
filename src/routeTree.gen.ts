@@ -25,6 +25,7 @@ import { Route as AuthenticatedInsightsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedGestaoFinanceiraRouteImport } from './routes/_authenticated/gestao-financeira'
 import { Route as AuthenticatedGerenciamentoOperacionalRouteImport } from './routes/_authenticated/gerenciamento-operacional'
 import { Route as AuthenticatedFuncionariosRouteImport } from './routes/_authenticated/funcionarios'
+import { Route as AuthenticatedFechamentosHubRouteImport } from './routes/_authenticated/fechamentos-hub'
 import { Route as AuthenticatedEquipesRouteImport } from './routes/_authenticated/equipes'
 import { Route as AuthenticatedDiagnosticoRouteImport } from './routes/_authenticated/diagnostico'
 import { Route as AuthenticatedDashboardOperacaoRouteImport } from './routes/_authenticated/dashboard-operacao'
@@ -120,6 +121,12 @@ const AuthenticatedFuncionariosRoute =
     path: '/funcionarios',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedFechamentosHubRoute =
+  AuthenticatedFechamentosHubRouteImport.update({
+    id: '/fechamentos-hub',
+    path: '/fechamentos-hub',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedEquipesRoute = AuthenticatedEquipesRouteImport.update({
   id: '/equipes',
   path: '/equipes',
@@ -177,6 +184,7 @@ export interface FileRoutesByFullPath {
   '/dashboard-operacao': typeof AuthenticatedDashboardOperacaoRoute
   '/diagnostico': typeof AuthenticatedDiagnosticoRoute
   '/equipes': typeof AuthenticatedEquipesRoute
+  '/fechamentos-hub': typeof AuthenticatedFechamentosHubRoute
   '/funcionarios': typeof AuthenticatedFuncionariosRoute
   '/gerenciamento-operacional': typeof AuthenticatedGerenciamentoOperacionalRoute
   '/gestao-financeira': typeof AuthenticatedGestaoFinanceiraRoute
@@ -201,6 +209,7 @@ export interface FileRoutesByTo {
   '/dashboard-operacao': typeof AuthenticatedDashboardOperacaoRoute
   '/diagnostico': typeof AuthenticatedDiagnosticoRoute
   '/equipes': typeof AuthenticatedEquipesRoute
+  '/fechamentos-hub': typeof AuthenticatedFechamentosHubRoute
   '/funcionarios': typeof AuthenticatedFuncionariosRoute
   '/gerenciamento-operacional': typeof AuthenticatedGerenciamentoOperacionalRoute
   '/gestao-financeira': typeof AuthenticatedGestaoFinanceiraRoute
@@ -228,6 +237,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard-operacao': typeof AuthenticatedDashboardOperacaoRoute
   '/_authenticated/diagnostico': typeof AuthenticatedDiagnosticoRoute
   '/_authenticated/equipes': typeof AuthenticatedEquipesRoute
+  '/_authenticated/fechamentos-hub': typeof AuthenticatedFechamentosHubRoute
   '/_authenticated/funcionarios': typeof AuthenticatedFuncionariosRoute
   '/_authenticated/gerenciamento-operacional': typeof AuthenticatedGerenciamentoOperacionalRoute
   '/_authenticated/gestao-financeira': typeof AuthenticatedGestaoFinanceiraRoute
@@ -256,6 +266,7 @@ export interface FileRouteTypes {
     | '/dashboard-operacao'
     | '/diagnostico'
     | '/equipes'
+    | '/fechamentos-hub'
     | '/funcionarios'
     | '/gerenciamento-operacional'
     | '/gestao-financeira'
@@ -280,6 +291,7 @@ export interface FileRouteTypes {
     | '/dashboard-operacao'
     | '/diagnostico'
     | '/equipes'
+    | '/fechamentos-hub'
     | '/funcionarios'
     | '/gerenciamento-operacional'
     | '/gestao-financeira'
@@ -306,6 +318,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard-operacao'
     | '/_authenticated/diagnostico'
     | '/_authenticated/equipes'
+    | '/_authenticated/fechamentos-hub'
     | '/_authenticated/funcionarios'
     | '/_authenticated/gerenciamento-operacional'
     | '/_authenticated/gestao-financeira'
@@ -441,6 +454,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFuncionariosRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/fechamentos-hub': {
+      id: '/_authenticated/fechamentos-hub'
+      path: '/fechamentos-hub'
+      fullPath: '/fechamentos-hub'
+      preLoaderRoute: typeof AuthenticatedFechamentosHubRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/equipes': {
       id: '/_authenticated/equipes'
       path: '/equipes'
@@ -509,6 +529,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedDashboardOperacaoRoute: typeof AuthenticatedDashboardOperacaoRoute
   AuthenticatedDiagnosticoRoute: typeof AuthenticatedDiagnosticoRoute
   AuthenticatedEquipesRoute: typeof AuthenticatedEquipesRoute
+  AuthenticatedFechamentosHubRoute: typeof AuthenticatedFechamentosHubRoute
   AuthenticatedFuncionariosRoute: typeof AuthenticatedFuncionariosRoute
   AuthenticatedGerenciamentoOperacionalRoute: typeof AuthenticatedGerenciamentoOperacionalRoute
   AuthenticatedGestaoFinanceiraRoute: typeof AuthenticatedGestaoFinanceiraRoute
@@ -535,6 +556,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedDashboardOperacaoRoute: AuthenticatedDashboardOperacaoRoute,
   AuthenticatedDiagnosticoRoute: AuthenticatedDiagnosticoRoute,
   AuthenticatedEquipesRoute: AuthenticatedEquipesRoute,
+  AuthenticatedFechamentosHubRoute: AuthenticatedFechamentosHubRoute,
   AuthenticatedFuncionariosRoute: AuthenticatedFuncionariosRoute,
   AuthenticatedGerenciamentoOperacionalRoute:
     AuthenticatedGerenciamentoOperacionalRoute,

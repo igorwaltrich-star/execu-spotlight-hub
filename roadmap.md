@@ -11,3 +11,6 @@
 - [x] Validar as telas preservadas após o endurecimento das permissões
 - [x] Permitir excluir ciclos completos do Scorecard com confirmação
 - [x] Importar o consolidado de fechamentos pendentes e exibir resumo gerencial
+- [x] Página Fechamentos e Hub: comparação entre bases do Sigra, filtro por centro e importação em CSV
+- [x] Aba Pendências Hub: adesão dos colaboradores e pendências de onboarding com importação de arquivos
+- [ ] Aplicar a migration 20261029000001_hub_adesao_onboarding no banco

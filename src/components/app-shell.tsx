@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Database, Briefcase, BarChart3,
   AlertTriangle, DollarSign, Clock,
   Users, UserCheck, LogOut, Anchor, Sparkles, Award, Wallet,
-  ChevronDown, ChevronRight, TrendingUp, Gauge, Building2,
+  ChevronDown, ChevronRight, TrendingUp, Gauge, Building2, ClipboardCheck,
 } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { NotificacoesBell } from "@/components/notificacoes-bell";
@@ -17,6 +17,7 @@ const NAV_DASHBOARDS: NavItem[] = [
   { to: "/",                          label: "Dashboard Operacional",    icon: LayoutDashboard, exact: true },
   { to: "/dashboard-operacao",        label: "Dashboard por Operação",   icon: Building2 },
   { to: "/dashboard-gestao",          label: "Dashboard Gestão",         icon: Users },
+  { to: "/fechamentos-hub",           label: "Fechamentos e Hub",        icon: ClipboardCheck, papeis: ["gestor","coordenador","supervisor"] },
 ];
 
 const NAV_OP: NavItem[] = [
