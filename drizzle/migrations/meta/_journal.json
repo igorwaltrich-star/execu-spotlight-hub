@@ -50,6 +50,13 @@
       "when": 1793365689662,
       "tag": "0006_allow_supervisor_undo_closure_import",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793365712997,
+      "tag": "0007_create_hub_adoption_onboarding",
+      "breakpoints": true
     }
   ]
 }

@@ -783,6 +783,148 @@ export type Database = {
         }
         Relationships: []
       }
+      hub_frequencia_colaboradores: {
+        Row: {
+          cargo: string | null
+          colaborador: string
+          dashboard_dias_30: number
+          empresa: string | null
+          gestor: string | null
+          hub_dias_30: number
+          id: string
+          importacao_id: string
+          nota: number | null
+          treinamento_concluidos: number
+          treinamentos_pendentes: string | null
+          ultima_acao_processo: string | null
+          ultimo_acesso_dashboard: string | null
+          ultimo_acesso_hub: string | null
+        }
+        Insert: {
+          cargo?: string | null
+          colaborador: string
+          dashboard_dias_30?: number
+          empresa?: string | null
+          gestor?: string | null
+          hub_dias_30?: number
+          id?: string
+          importacao_id: string
+          nota?: number | null
+          treinamento_concluidos?: number
+          treinamentos_pendentes?: string | null
+          ultima_acao_processo?: string | null
+          ultimo_acesso_dashboard?: string | null
+          ultimo_acesso_hub?: string | null
+        }
+        Update: {
+          cargo?: string | null
+          colaborador?: string
+          dashboard_dias_30?: number
+          empresa?: string | null
+          gestor?: string | null
+          hub_dias_30?: number
+          id?: string
+          importacao_id?: string
+          nota?: number | null
+          treinamento_concluidos?: number
+          treinamentos_pendentes?: string | null
+          ultima_acao_processo?: string | null
+          ultimo_acesso_dashboard?: string | null
+          ultimo_acesso_hub?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hub_frequencia_colaboradores_importacao_id_fkey"
+            columns: ["importacao_id"]
+            isOneToOne: false
+            referencedRelation: "hub_frequencia_importacoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hub_frequencia_importacoes: {
+        Row: {
+          arquivo_nome: string
+          created_at: string
+          data_referencia: string | null
+          id: string
+          importado_por: string | null
+        }
+        Insert: {
+          arquivo_nome: string
+          created_at?: string
+          data_referencia?: string | null
+          id?: string
+          importado_por?: string | null
+        }
+        Update: {
+          arquivo_nome?: string
+          created_at?: string
+          data_referencia?: string | null
+          id?: string
+          importado_por?: string | null
+        }
+        Relationships: []
+      }
+      hub_onboarding_importacoes: {
+        Row: {
+          arquivo_nome: string
+          created_at: string
+          data_referencia: string | null
+          id: string
+          importado_por: string | null
+        }
+        Insert: {
+          arquivo_nome: string
+          created_at?: string
+          data_referencia?: string | null
+          id?: string
+          importado_por?: string | null
+        }
+        Update: {
+          arquivo_nome?: string
+          created_at?: string
+          data_referencia?: string | null
+          id?: string
+          importado_por?: string | null
+        }
+        Relationships: []
+      }
+      hub_onboarding_itens: {
+        Row: {
+          desde: string | null
+          empresa: string
+          id: string
+          importacao_id: string
+          item: string
+          responsavel: string | null
+        }
+        Insert: {
+          desde?: string | null
+          empresa: string
+          id?: string
+          importacao_id: string
+          item: string
+          responsavel?: string | null
+        }
+        Update: {
+          desde?: string | null
+          empresa?: string
+          id?: string
+          importacao_id?: string
+          item?: string
+          responsavel?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hub_onboarding_itens_importacao_id_fkey"
+            columns: ["importacao_id"]
+            isOneToOne: false
+            referencedRelation: "hub_onboarding_importacoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       indicadores_performance: {
         Row: {
           colaborador_id: string
