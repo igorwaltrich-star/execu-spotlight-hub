@@ -43,6 +43,13 @@
       "when": 1791202279345,
       "tag": "0005_add_financial_closure_imports",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793365689662,
+      "tag": "0006_allow_supervisor_undo_closure_import",
+      "breakpoints": true
     }
   ]
 }
