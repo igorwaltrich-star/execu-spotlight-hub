@@ -9,37 +9,37 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
-import { Route as AuthenticatedSlaMideaRouteImport } from './routes/_authenticated/sla-midea'
-import { Route as AuthenticatedSlaBoschRouteImport } from './routes/_authenticated/sla-bosch'
-import { Route as AuthenticatedScorecardRouteImport } from './routes/_authenticated/scorecard'
-import { Route as AuthenticatedProdutividadeRouteImport } from './routes/_authenticated/produtividade'
-import { Route as AuthenticatedPlanoAcaoRouteImport } from './routes/_authenticated/plano-acao'
-import { Route as AuthenticatedPaineisOperacionaisRouteImport } from './routes/_authenticated/paineis-operacionais'
-import { Route as AuthenticatedNaoConformidadesRouteImport } from './routes/_authenticated/nao-conformidades'
-import { Route as AuthenticatedMelhoriasRouteImport } from './routes/_authenticated/melhorias'
-import { Route as AuthenticatedMargemContribucaoRouteImport } from './routes/_authenticated/margem-contribucao'
-import { Route as AuthenticatedInsightsRouteImport } from './routes/_authenticated/insights'
-import { Route as AuthenticatedGerenciamentoOperacionalRouteImport } from './routes/_authenticated/gerenciamento-operacional'
-import { Route as AuthenticatedFuncionariosRouteImport } from './routes/_authenticated/funcionarios'
-import { Route as AuthenticatedFechamentosHubRouteImport } from './routes/_authenticated/fechamentos-hub'
-import { Route as AuthenticatedEquipesRouteImport } from './routes/_authenticated/equipes'
-import { Route as AuthenticatedDiagnosticoRouteImport } from './routes/_authenticated/diagnostico'
-import { Route as AuthenticatedDashboardOperacaoRouteImport } from './routes/_authenticated/dashboard-operacao'
-import { Route as AuthenticatedDashboardGestaoRouteImport } from './routes/_authenticated/dashboard-gestao'
-import { Route as AuthenticatedCustoOperacionalRouteImport } from './routes/_authenticated/custo-operacional'
-import { Route as AuthenticatedCadastroOportunidadesRouteImport } from './routes/_authenticated/cadastro-oportunidades'
 import { Route as AuthenticatedCadastroRouteImport } from './routes/_authenticated/cadastro'
+import { Route as AuthenticatedCadastroOportunidadesRouteImport } from './routes/_authenticated/cadastro-oportunidades'
+import { Route as AuthenticatedCustoOperacionalRouteImport } from './routes/_authenticated/custo-operacional'
+import { Route as AuthenticatedDashboardGestaoRouteImport } from './routes/_authenticated/dashboard-gestao'
+import { Route as AuthenticatedDashboardOperacaoRouteImport } from './routes/_authenticated/dashboard-operacao'
+import { Route as AuthenticatedDiagnosticoRouteImport } from './routes/_authenticated/diagnostico'
+import { Route as AuthenticatedEquipesRouteImport } from './routes/_authenticated/equipes'
+import { Route as AuthenticatedFechamentosHubRouteImport } from './routes/_authenticated/fechamentos-hub'
+import { Route as AuthenticatedFuncionariosRouteImport } from './routes/_authenticated/funcionarios'
+import { Route as AuthenticatedGerenciamentoOperacionalRouteImport } from './routes/_authenticated/gerenciamento-operacional'
+import { Route as AuthenticatedInsightsRouteImport } from './routes/_authenticated/insights'
+import { Route as AuthenticatedMargemContribucaoRouteImport } from './routes/_authenticated/margem-contribucao'
+import { Route as AuthenticatedMelhoriasRouteImport } from './routes/_authenticated/melhorias'
+import { Route as AuthenticatedNaoConformidadesRouteImport } from './routes/_authenticated/nao-conformidades'
+import { Route as AuthenticatedPaineisOperacionaisRouteImport } from './routes/_authenticated/paineis-operacionais'
+import { Route as AuthenticatedPlanoAcaoRouteImport } from './routes/_authenticated/plano-acao'
+import { Route as AuthenticatedProdutividadeRouteImport } from './routes/_authenticated/produtividade'
+import { Route as AuthenticatedScorecardRouteImport } from './routes/_authenticated/scorecard'
+import { Route as AuthenticatedSlaBoschRouteImport } from './routes/_authenticated/sla-bosch'
+import { Route as AuthenticatedSlaMideaRouteImport } from './routes/_authenticated/sla-midea'
 
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedRoute = AuthenticatedRouteImport.update({
-  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
@@ -47,99 +47,15 @@ const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedSlaMideaRoute = AuthenticatedSlaMideaRouteImport.update({
-  id: '/sla-midea',
-  path: '/sla-midea',
+const AuthenticatedCadastroRoute = AuthenticatedCadastroRouteImport.update({
+  id: '/cadastro',
+  path: '/cadastro',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedSlaBoschRoute = AuthenticatedSlaBoschRouteImport.update({
-  id: '/sla-bosch',
-  path: '/sla-bosch',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedScorecardRoute = AuthenticatedScorecardRouteImport.update({
-  id: '/scorecard',
-  path: '/scorecard',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedProdutividadeRoute =
-  AuthenticatedProdutividadeRouteImport.update({
-    id: '/produtividade',
-    path: '/produtividade',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedPlanoAcaoRoute = AuthenticatedPlanoAcaoRouteImport.update({
-  id: '/plano-acao',
-  path: '/plano-acao',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedPaineisOperacionaisRoute =
-  AuthenticatedPaineisOperacionaisRouteImport.update({
-    id: '/paineis-operacionais',
-    path: '/paineis-operacionais',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedNaoConformidadesRoute =
-  AuthenticatedNaoConformidadesRouteImport.update({
-    id: '/nao-conformidades',
-    path: '/nao-conformidades',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedMelhoriasRoute = AuthenticatedMelhoriasRouteImport.update({
-  id: '/melhorias',
-  path: '/melhorias',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedMargemContribucaoRoute =
-  AuthenticatedMargemContribucaoRouteImport.update({
-    id: '/margem-contribucao',
-    path: '/margem-contribucao',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedInsightsRoute = AuthenticatedInsightsRouteImport.update({
-  id: '/insights',
-  path: '/insights',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedGerenciamentoOperacionalRoute =
-  AuthenticatedGerenciamentoOperacionalRouteImport.update({
-    id: '/gerenciamento-operacional',
-    path: '/gerenciamento-operacional',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedFuncionariosRoute =
-  AuthenticatedFuncionariosRouteImport.update({
-    id: '/funcionarios',
-    path: '/funcionarios',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedFechamentosHubRoute =
-  AuthenticatedFechamentosHubRouteImport.update({
-    id: '/fechamentos-hub',
-    path: '/fechamentos-hub',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedEquipesRoute = AuthenticatedEquipesRouteImport.update({
-  id: '/equipes',
-  path: '/equipes',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedDiagnosticoRoute =
-  AuthenticatedDiagnosticoRouteImport.update({
-    id: '/diagnostico',
-    path: '/diagnostico',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedDashboardOperacaoRoute =
-  AuthenticatedDashboardOperacaoRouteImport.update({
-    id: '/dashboard-operacao',
-    path: '/dashboard-operacao',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedDashboardGestaoRoute =
-  AuthenticatedDashboardGestaoRouteImport.update({
-    id: '/dashboard-gestao',
-    path: '/dashboard-gestao',
+const AuthenticatedCadastroOportunidadesRoute =
+  AuthenticatedCadastroOportunidadesRouteImport.update({
+    id: '/cadastro-oportunidades',
+    path: '/cadastro-oportunidades',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedCustoOperacionalRoute =
@@ -148,15 +64,99 @@ const AuthenticatedCustoOperacionalRoute =
     path: '/custo-operacional',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
-const AuthenticatedCadastroOportunidadesRoute =
-  AuthenticatedCadastroOportunidadesRouteImport.update({
-    id: '/cadastro-oportunidades',
-    path: '/cadastro-oportunidades',
+const AuthenticatedDashboardGestaoRoute =
+  AuthenticatedDashboardGestaoRouteImport.update({
+    id: '/dashboard-gestao',
+    path: '/dashboard-gestao',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
-const AuthenticatedCadastroRoute = AuthenticatedCadastroRouteImport.update({
-  id: '/cadastro',
-  path: '/cadastro',
+const AuthenticatedDashboardOperacaoRoute =
+  AuthenticatedDashboardOperacaoRouteImport.update({
+    id: '/dashboard-operacao',
+    path: '/dashboard-operacao',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedDiagnosticoRoute =
+  AuthenticatedDiagnosticoRouteImport.update({
+    id: '/diagnostico',
+    path: '/diagnostico',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedEquipesRoute = AuthenticatedEquipesRouteImport.update({
+  id: '/equipes',
+  path: '/equipes',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedFechamentosHubRoute =
+  AuthenticatedFechamentosHubRouteImport.update({
+    id: '/fechamentos-hub',
+    path: '/fechamentos-hub',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedFuncionariosRoute =
+  AuthenticatedFuncionariosRouteImport.update({
+    id: '/funcionarios',
+    path: '/funcionarios',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedGerenciamentoOperacionalRoute =
+  AuthenticatedGerenciamentoOperacionalRouteImport.update({
+    id: '/gerenciamento-operacional',
+    path: '/gerenciamento-operacional',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedInsightsRoute = AuthenticatedInsightsRouteImport.update({
+  id: '/insights',
+  path: '/insights',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedMargemContribucaoRoute =
+  AuthenticatedMargemContribucaoRouteImport.update({
+    id: '/margem-contribucao',
+    path: '/margem-contribucao',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedMelhoriasRoute = AuthenticatedMelhoriasRouteImport.update({
+  id: '/melhorias',
+  path: '/melhorias',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedNaoConformidadesRoute =
+  AuthenticatedNaoConformidadesRouteImport.update({
+    id: '/nao-conformidades',
+    path: '/nao-conformidades',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedPaineisOperacionaisRoute =
+  AuthenticatedPaineisOperacionaisRouteImport.update({
+    id: '/paineis-operacionais',
+    path: '/paineis-operacionais',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedPlanoAcaoRoute = AuthenticatedPlanoAcaoRouteImport.update({
+  id: '/plano-acao',
+  path: '/plano-acao',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedProdutividadeRoute =
+  AuthenticatedProdutividadeRouteImport.update({
+    id: '/produtividade',
+    path: '/produtividade',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedScorecardRoute = AuthenticatedScorecardRouteImport.update({
+  id: '/scorecard',
+  path: '/scorecard',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedSlaBoschRoute = AuthenticatedSlaBoschRouteImport.update({
+  id: '/sla-bosch',
+  path: '/sla-bosch',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedSlaMideaRoute = AuthenticatedSlaMideaRouteImport.update({
+  id: '/sla-midea',
+  path: '/sla-midea',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 
@@ -317,18 +317,18 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_authenticated': {
       id: '/_authenticated'
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/': {
@@ -338,130 +338,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/sla-midea': {
-      id: '/_authenticated/sla-midea'
-      path: '/sla-midea'
-      fullPath: '/sla-midea'
-      preLoaderRoute: typeof AuthenticatedSlaMideaRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/sla-bosch': {
-      id: '/_authenticated/sla-bosch'
-      path: '/sla-bosch'
-      fullPath: '/sla-bosch'
-      preLoaderRoute: typeof AuthenticatedSlaBoschRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/scorecard': {
-      id: '/_authenticated/scorecard'
-      path: '/scorecard'
-      fullPath: '/scorecard'
-      preLoaderRoute: typeof AuthenticatedScorecardRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/produtividade': {
-      id: '/_authenticated/produtividade'
-      path: '/produtividade'
-      fullPath: '/produtividade'
-      preLoaderRoute: typeof AuthenticatedProdutividadeRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/plano-acao': {
-      id: '/_authenticated/plano-acao'
-      path: '/plano-acao'
-      fullPath: '/plano-acao'
-      preLoaderRoute: typeof AuthenticatedPlanoAcaoRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/paineis-operacionais': {
-      id: '/_authenticated/paineis-operacionais'
-      path: '/paineis-operacionais'
-      fullPath: '/paineis-operacionais'
-      preLoaderRoute: typeof AuthenticatedPaineisOperacionaisRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/nao-conformidades': {
-      id: '/_authenticated/nao-conformidades'
-      path: '/nao-conformidades'
-      fullPath: '/nao-conformidades'
-      preLoaderRoute: typeof AuthenticatedNaoConformidadesRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/melhorias': {
-      id: '/_authenticated/melhorias'
-      path: '/melhorias'
-      fullPath: '/melhorias'
-      preLoaderRoute: typeof AuthenticatedMelhoriasRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/margem-contribucao': {
-      id: '/_authenticated/margem-contribucao'
-      path: '/margem-contribucao'
-      fullPath: '/margem-contribucao'
-      preLoaderRoute: typeof AuthenticatedMargemContribucaoRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/insights': {
-      id: '/_authenticated/insights'
-      path: '/insights'
-      fullPath: '/insights'
-      preLoaderRoute: typeof AuthenticatedInsightsRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/gerenciamento-operacional': {
-      id: '/_authenticated/gerenciamento-operacional'
-      path: '/gerenciamento-operacional'
-      fullPath: '/gerenciamento-operacional'
-      preLoaderRoute: typeof AuthenticatedGerenciamentoOperacionalRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/funcionarios': {
-      id: '/_authenticated/funcionarios'
-      path: '/funcionarios'
-      fullPath: '/funcionarios'
-      preLoaderRoute: typeof AuthenticatedFuncionariosRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/fechamentos-hub': {
-      id: '/_authenticated/fechamentos-hub'
-      path: '/fechamentos-hub'
-      fullPath: '/fechamentos-hub'
-      preLoaderRoute: typeof AuthenticatedFechamentosHubRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/equipes': {
-      id: '/_authenticated/equipes'
-      path: '/equipes'
-      fullPath: '/equipes'
-      preLoaderRoute: typeof AuthenticatedEquipesRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/diagnostico': {
-      id: '/_authenticated/diagnostico'
-      path: '/diagnostico'
-      fullPath: '/diagnostico'
-      preLoaderRoute: typeof AuthenticatedDiagnosticoRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/dashboard-operacao': {
-      id: '/_authenticated/dashboard-operacao'
-      path: '/dashboard-operacao'
-      fullPath: '/dashboard-operacao'
-      preLoaderRoute: typeof AuthenticatedDashboardOperacaoRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/dashboard-gestao': {
-      id: '/_authenticated/dashboard-gestao'
-      path: '/dashboard-gestao'
-      fullPath: '/dashboard-gestao'
-      preLoaderRoute: typeof AuthenticatedDashboardGestaoRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/custo-operacional': {
-      id: '/_authenticated/custo-operacional'
-      path: '/custo-operacional'
-      fullPath: '/custo-operacional'
-      preLoaderRoute: typeof AuthenticatedCustoOperacionalRouteImport
+    '/_authenticated/cadastro': {
+      id: '/_authenticated/cadastro'
+      path: '/cadastro'
+      fullPath: '/cadastro'
+      preLoaderRoute: typeof AuthenticatedCadastroRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/cadastro-oportunidades': {
@@ -471,11 +352,130 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCadastroOportunidadesRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/cadastro': {
-      id: '/_authenticated/cadastro'
-      path: '/cadastro'
-      fullPath: '/cadastro'
-      preLoaderRoute: typeof AuthenticatedCadastroRouteImport
+    '/_authenticated/custo-operacional': {
+      id: '/_authenticated/custo-operacional'
+      path: '/custo-operacional'
+      fullPath: '/custo-operacional'
+      preLoaderRoute: typeof AuthenticatedCustoOperacionalRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/dashboard-gestao': {
+      id: '/_authenticated/dashboard-gestao'
+      path: '/dashboard-gestao'
+      fullPath: '/dashboard-gestao'
+      preLoaderRoute: typeof AuthenticatedDashboardGestaoRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/dashboard-operacao': {
+      id: '/_authenticated/dashboard-operacao'
+      path: '/dashboard-operacao'
+      fullPath: '/dashboard-operacao'
+      preLoaderRoute: typeof AuthenticatedDashboardOperacaoRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/diagnostico': {
+      id: '/_authenticated/diagnostico'
+      path: '/diagnostico'
+      fullPath: '/diagnostico'
+      preLoaderRoute: typeof AuthenticatedDiagnosticoRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/equipes': {
+      id: '/_authenticated/equipes'
+      path: '/equipes'
+      fullPath: '/equipes'
+      preLoaderRoute: typeof AuthenticatedEquipesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/fechamentos-hub': {
+      id: '/_authenticated/fechamentos-hub'
+      path: '/fechamentos-hub'
+      fullPath: '/fechamentos-hub'
+      preLoaderRoute: typeof AuthenticatedFechamentosHubRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/funcionarios': {
+      id: '/_authenticated/funcionarios'
+      path: '/funcionarios'
+      fullPath: '/funcionarios'
+      preLoaderRoute: typeof AuthenticatedFuncionariosRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/gerenciamento-operacional': {
+      id: '/_authenticated/gerenciamento-operacional'
+      path: '/gerenciamento-operacional'
+      fullPath: '/gerenciamento-operacional'
+      preLoaderRoute: typeof AuthenticatedGerenciamentoOperacionalRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/insights': {
+      id: '/_authenticated/insights'
+      path: '/insights'
+      fullPath: '/insights'
+      preLoaderRoute: typeof AuthenticatedInsightsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/margem-contribucao': {
+      id: '/_authenticated/margem-contribucao'
+      path: '/margem-contribucao'
+      fullPath: '/margem-contribucao'
+      preLoaderRoute: typeof AuthenticatedMargemContribucaoRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/melhorias': {
+      id: '/_authenticated/melhorias'
+      path: '/melhorias'
+      fullPath: '/melhorias'
+      preLoaderRoute: typeof AuthenticatedMelhoriasRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/nao-conformidades': {
+      id: '/_authenticated/nao-conformidades'
+      path: '/nao-conformidades'
+      fullPath: '/nao-conformidades'
+      preLoaderRoute: typeof AuthenticatedNaoConformidadesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/paineis-operacionais': {
+      id: '/_authenticated/paineis-operacionais'
+      path: '/paineis-operacionais'
+      fullPath: '/paineis-operacionais'
+      preLoaderRoute: typeof AuthenticatedPaineisOperacionaisRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/plano-acao': {
+      id: '/_authenticated/plano-acao'
+      path: '/plano-acao'
+      fullPath: '/plano-acao'
+      preLoaderRoute: typeof AuthenticatedPlanoAcaoRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/produtividade': {
+      id: '/_authenticated/produtividade'
+      path: '/produtividade'
+      fullPath: '/produtividade'
+      preLoaderRoute: typeof AuthenticatedProdutividadeRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/scorecard': {
+      id: '/_authenticated/scorecard'
+      path: '/scorecard'
+      fullPath: '/scorecard'
+      preLoaderRoute: typeof AuthenticatedScorecardRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/sla-bosch': {
+      id: '/_authenticated/sla-bosch'
+      path: '/sla-bosch'
+      fullPath: '/sla-bosch'
+      preLoaderRoute: typeof AuthenticatedSlaBoschRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/sla-midea': {
+      id: '/_authenticated/sla-midea'
+      path: '/sla-midea'
+      fullPath: '/sla-midea'
+      preLoaderRoute: typeof AuthenticatedSlaMideaRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
   }
