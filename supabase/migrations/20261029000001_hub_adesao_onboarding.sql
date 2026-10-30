@@ -52,20 +52,45 @@ alter table public.hub_frequencia_colaboradores enable row level security;
 alter table public.hub_onboarding_importacoes   enable row level security;
 alter table public.hub_onboarding_itens         enable row level security;
 
-drop policy if exists "hub_freq_imp_all"   on public.hub_frequencia_importacoes;
+-- snapshots imutáveis: leitura, inclusão e exclusão (desfazer importação); sem update
+drop policy if exists "hub_freq_imp_all" on public.hub_frequencia_importacoes;
+drop policy if exists "hub_freq_imp_select" on public.hub_frequencia_importacoes;
+drop policy if exists "hub_freq_imp_insert" on public.hub_frequencia_importacoes;
+drop policy if exists "hub_freq_imp_delete" on public.hub_frequencia_importacoes;
 drop policy if exists "hub_freq_colab_all" on public.hub_frequencia_colaboradores;
-drop policy if exists "hub_onb_imp_all"    on public.hub_onboarding_importacoes;
-drop policy if exists "hub_onb_itens_all"  on public.hub_onboarding_itens;
+drop policy if exists "hub_freq_colab_select" on public.hub_frequencia_colaboradores;
+drop policy if exists "hub_freq_colab_insert" on public.hub_frequencia_colaboradores;
+drop policy if exists "hub_freq_colab_delete" on public.hub_frequencia_colaboradores;
+drop policy if exists "hub_onb_imp_all" on public.hub_onboarding_importacoes;
+drop policy if exists "hub_onb_imp_select" on public.hub_onboarding_importacoes;
+drop policy if exists "hub_onb_imp_insert" on public.hub_onboarding_importacoes;
+drop policy if exists "hub_onb_imp_delete" on public.hub_onboarding_importacoes;
+drop policy if exists "hub_onb_itens_all" on public.hub_onboarding_itens;
+drop policy if exists "hub_onb_itens_select" on public.hub_onboarding_itens;
+drop policy if exists "hub_onb_itens_insert" on public.hub_onboarding_itens;
+drop policy if exists "hub_onb_itens_delete" on public.hub_onboarding_itens;
 
-create policy "hub_freq_imp_all" on public.hub_frequencia_importacoes for all
-  using (public.tem_papel(array['gestor','coordenador','supervisor']))
+create policy "hub_freq_imp_select" on public.hub_frequencia_importacoes for select
+  using (public.tem_papel(array['gestor','coordenador','supervisor']));
+create policy "hub_freq_imp_insert" on public.hub_frequencia_importacoes for insert
   with check (public.tem_papel(array['gestor','coordenador','supervisor']));
-create policy "hub_freq_colab_all" on public.hub_frequencia_colaboradores for all
-  using (public.tem_papel(array['gestor','coordenador','supervisor']))
+create policy "hub_freq_imp_delete" on public.hub_frequencia_importacoes for delete
+  using (public.tem_papel(array['gestor','coordenador','supervisor']));
+create policy "hub_freq_colab_select" on public.hub_frequencia_colaboradores for select
+  using (public.tem_papel(array['gestor','coordenador','supervisor']));
+create policy "hub_freq_colab_insert" on public.hub_frequencia_colaboradores for insert
   with check (public.tem_papel(array['gestor','coordenador','supervisor']));
-create policy "hub_onb_imp_all" on public.hub_onboarding_importacoes for all
-  using (public.tem_papel(array['gestor','coordenador','supervisor']))
+create policy "hub_freq_colab_delete" on public.hub_frequencia_colaboradores for delete
+  using (public.tem_papel(array['gestor','coordenador','supervisor']));
+create policy "hub_onb_imp_select" on public.hub_onboarding_importacoes for select
+  using (public.tem_papel(array['gestor','coordenador','supervisor']));
+create policy "hub_onb_imp_insert" on public.hub_onboarding_importacoes for insert
   with check (public.tem_papel(array['gestor','coordenador','supervisor']));
-create policy "hub_onb_itens_all" on public.hub_onboarding_itens for all
-  using (public.tem_papel(array['gestor','coordenador','supervisor']))
+create policy "hub_onb_imp_delete" on public.hub_onboarding_importacoes for delete
+  using (public.tem_papel(array['gestor','coordenador','supervisor']));
+create policy "hub_onb_itens_select" on public.hub_onboarding_itens for select
+  using (public.tem_papel(array['gestor','coordenador','supervisor']));
+create policy "hub_onb_itens_insert" on public.hub_onboarding_itens for insert
   with check (public.tem_papel(array['gestor','coordenador','supervisor']));
+create policy "hub_onb_itens_delete" on public.hub_onboarding_itens for delete
+  using (public.tem_papel(array['gestor','coordenador','supervisor']));

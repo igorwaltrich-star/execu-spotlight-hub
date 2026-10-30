@@ -22,7 +22,6 @@ import { Route as AuthenticatedNaoConformidadesRouteImport } from './routes/_aut
 import { Route as AuthenticatedMelhoriasRouteImport } from './routes/_authenticated/melhorias'
 import { Route as AuthenticatedMargemContribucaoRouteImport } from './routes/_authenticated/margem-contribucao'
 import { Route as AuthenticatedInsightsRouteImport } from './routes/_authenticated/insights'
-import { Route as AuthenticatedGestaoFinanceiraRouteImport } from './routes/_authenticated/gestao-financeira'
 import { Route as AuthenticatedGerenciamentoOperacionalRouteImport } from './routes/_authenticated/gerenciamento-operacional'
 import { Route as AuthenticatedFuncionariosRouteImport } from './routes/_authenticated/funcionarios'
 import { Route as AuthenticatedFechamentosHubRouteImport } from './routes/_authenticated/fechamentos-hub'
@@ -33,7 +32,6 @@ import { Route as AuthenticatedDashboardGestaoRouteImport } from './routes/_auth
 import { Route as AuthenticatedCustoOperacionalRouteImport } from './routes/_authenticated/custo-operacional'
 import { Route as AuthenticatedCadastroOportunidadesRouteImport } from './routes/_authenticated/cadastro-oportunidades'
 import { Route as AuthenticatedCadastroRouteImport } from './routes/_authenticated/cadastro'
-import { Route as AuthenticatedBancoHorasRouteImport } from './routes/_authenticated/banco-horas'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -103,12 +101,6 @@ const AuthenticatedInsightsRoute = AuthenticatedInsightsRouteImport.update({
   path: '/insights',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedGestaoFinanceiraRoute =
-  AuthenticatedGestaoFinanceiraRouteImport.update({
-    id: '/gestao-financeira',
-    path: '/gestao-financeira',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
 const AuthenticatedGerenciamentoOperacionalRoute =
   AuthenticatedGerenciamentoOperacionalRouteImport.update({
     id: '/gerenciamento-operacional',
@@ -167,16 +159,10 @@ const AuthenticatedCadastroRoute = AuthenticatedCadastroRouteImport.update({
   path: '/cadastro',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedBancoHorasRoute = AuthenticatedBancoHorasRouteImport.update({
-  id: '/banco-horas',
-  path: '/banco-horas',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/login': typeof LoginRoute
-  '/banco-horas': typeof AuthenticatedBancoHorasRoute
   '/cadastro': typeof AuthenticatedCadastroRoute
   '/cadastro-oportunidades': typeof AuthenticatedCadastroOportunidadesRoute
   '/custo-operacional': typeof AuthenticatedCustoOperacionalRoute
@@ -187,7 +173,6 @@ export interface FileRoutesByFullPath {
   '/fechamentos-hub': typeof AuthenticatedFechamentosHubRoute
   '/funcionarios': typeof AuthenticatedFuncionariosRoute
   '/gerenciamento-operacional': typeof AuthenticatedGerenciamentoOperacionalRoute
-  '/gestao-financeira': typeof AuthenticatedGestaoFinanceiraRoute
   '/insights': typeof AuthenticatedInsightsRoute
   '/margem-contribucao': typeof AuthenticatedMargemContribucaoRoute
   '/melhorias': typeof AuthenticatedMelhoriasRoute
@@ -201,7 +186,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
-  '/banco-horas': typeof AuthenticatedBancoHorasRoute
   '/cadastro': typeof AuthenticatedCadastroRoute
   '/cadastro-oportunidades': typeof AuthenticatedCadastroOportunidadesRoute
   '/custo-operacional': typeof AuthenticatedCustoOperacionalRoute
@@ -212,7 +196,6 @@ export interface FileRoutesByTo {
   '/fechamentos-hub': typeof AuthenticatedFechamentosHubRoute
   '/funcionarios': typeof AuthenticatedFuncionariosRoute
   '/gerenciamento-operacional': typeof AuthenticatedGerenciamentoOperacionalRoute
-  '/gestao-financeira': typeof AuthenticatedGestaoFinanceiraRoute
   '/insights': typeof AuthenticatedInsightsRoute
   '/margem-contribucao': typeof AuthenticatedMargemContribucaoRoute
   '/melhorias': typeof AuthenticatedMelhoriasRoute
@@ -229,7 +212,6 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
-  '/_authenticated/banco-horas': typeof AuthenticatedBancoHorasRoute
   '/_authenticated/cadastro': typeof AuthenticatedCadastroRoute
   '/_authenticated/cadastro-oportunidades': typeof AuthenticatedCadastroOportunidadesRoute
   '/_authenticated/custo-operacional': typeof AuthenticatedCustoOperacionalRoute
@@ -240,7 +222,6 @@ export interface FileRoutesById {
   '/_authenticated/fechamentos-hub': typeof AuthenticatedFechamentosHubRoute
   '/_authenticated/funcionarios': typeof AuthenticatedFuncionariosRoute
   '/_authenticated/gerenciamento-operacional': typeof AuthenticatedGerenciamentoOperacionalRoute
-  '/_authenticated/gestao-financeira': typeof AuthenticatedGestaoFinanceiraRoute
   '/_authenticated/insights': typeof AuthenticatedInsightsRoute
   '/_authenticated/margem-contribucao': typeof AuthenticatedMargemContribucaoRoute
   '/_authenticated/melhorias': typeof AuthenticatedMelhoriasRoute
@@ -258,7 +239,6 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
-    | '/banco-horas'
     | '/cadastro'
     | '/cadastro-oportunidades'
     | '/custo-operacional'
@@ -269,7 +249,6 @@ export interface FileRouteTypes {
     | '/fechamentos-hub'
     | '/funcionarios'
     | '/gerenciamento-operacional'
-    | '/gestao-financeira'
     | '/insights'
     | '/margem-contribucao'
     | '/melhorias'
@@ -283,7 +262,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
-    | '/banco-horas'
     | '/cadastro'
     | '/cadastro-oportunidades'
     | '/custo-operacional'
@@ -294,7 +272,6 @@ export interface FileRouteTypes {
     | '/fechamentos-hub'
     | '/funcionarios'
     | '/gerenciamento-operacional'
-    | '/gestao-financeira'
     | '/insights'
     | '/margem-contribucao'
     | '/melhorias'
@@ -310,7 +287,6 @@ export interface FileRouteTypes {
     | '__root__'
     | '/_authenticated'
     | '/login'
-    | '/_authenticated/banco-horas'
     | '/_authenticated/cadastro'
     | '/_authenticated/cadastro-oportunidades'
     | '/_authenticated/custo-operacional'
@@ -321,7 +297,6 @@ export interface FileRouteTypes {
     | '/_authenticated/fechamentos-hub'
     | '/_authenticated/funcionarios'
     | '/_authenticated/gerenciamento-operacional'
-    | '/_authenticated/gestao-financeira'
     | '/_authenticated/insights'
     | '/_authenticated/margem-contribucao'
     | '/_authenticated/melhorias'
@@ -433,13 +408,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInsightsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/gestao-financeira': {
-      id: '/_authenticated/gestao-financeira'
-      path: '/gestao-financeira'
-      fullPath: '/gestao-financeira'
-      preLoaderRoute: typeof AuthenticatedGestaoFinanceiraRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
     '/_authenticated/gerenciamento-operacional': {
       id: '/_authenticated/gerenciamento-operacional'
       path: '/gerenciamento-operacional'
@@ -510,18 +478,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCadastroRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/banco-horas': {
-      id: '/_authenticated/banco-horas'
-      path: '/banco-horas'
-      fullPath: '/banco-horas'
-      preLoaderRoute: typeof AuthenticatedBancoHorasRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
   }
 }
 
 interface AuthenticatedRouteChildren {
-  AuthenticatedBancoHorasRoute: typeof AuthenticatedBancoHorasRoute
   AuthenticatedCadastroRoute: typeof AuthenticatedCadastroRoute
   AuthenticatedCadastroOportunidadesRoute: typeof AuthenticatedCadastroOportunidadesRoute
   AuthenticatedCustoOperacionalRoute: typeof AuthenticatedCustoOperacionalRoute
@@ -532,7 +492,6 @@ interface AuthenticatedRouteChildren {
   AuthenticatedFechamentosHubRoute: typeof AuthenticatedFechamentosHubRoute
   AuthenticatedFuncionariosRoute: typeof AuthenticatedFuncionariosRoute
   AuthenticatedGerenciamentoOperacionalRoute: typeof AuthenticatedGerenciamentoOperacionalRoute
-  AuthenticatedGestaoFinanceiraRoute: typeof AuthenticatedGestaoFinanceiraRoute
   AuthenticatedInsightsRoute: typeof AuthenticatedInsightsRoute
   AuthenticatedMargemContribucaoRoute: typeof AuthenticatedMargemContribucaoRoute
   AuthenticatedMelhoriasRoute: typeof AuthenticatedMelhoriasRoute
@@ -547,7 +506,6 @@ interface AuthenticatedRouteChildren {
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
-  AuthenticatedBancoHorasRoute: AuthenticatedBancoHorasRoute,
   AuthenticatedCadastroRoute: AuthenticatedCadastroRoute,
   AuthenticatedCadastroOportunidadesRoute:
     AuthenticatedCadastroOportunidadesRoute,
@@ -560,7 +518,6 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedFuncionariosRoute: AuthenticatedFuncionariosRoute,
   AuthenticatedGerenciamentoOperacionalRoute:
     AuthenticatedGerenciamentoOperacionalRoute,
-  AuthenticatedGestaoFinanceiraRoute: AuthenticatedGestaoFinanceiraRoute,
   AuthenticatedInsightsRoute: AuthenticatedInsightsRoute,
   AuthenticatedMargemContribucaoRoute: AuthenticatedMargemContribucaoRoute,
   AuthenticatedMelhoriasRoute: AuthenticatedMelhoriasRoute,

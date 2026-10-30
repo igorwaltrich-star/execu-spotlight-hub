@@ -34,12 +34,8 @@ function lerCsvObjetos(conteudo: string): Record<string, unknown>[] {
 }
 
 async function lerPlanilha(file: File): Promise<Record<string, unknown>[]> {
-  if (/\.csv$/i.test(file.name)) return lerCsvObjetos(await file.text());
-  const wb = XLSX.read(await file.arrayBuffer(), { type: "array", cellDates: true });
-  return XLSX.utils.sheet_to_json<Record<string, unknown>>(wb.Sheets[wb.SheetNames[0]], {
-    defval: "",
-    raw: false,
-  });
+  if (!/\.csv$/i.test(file.name)) throw new Error("Importe o arquivo .csv exportado do Hub.");
+  return lerCsvObjetos(await file.text());
 }
 
 const exigir = (linhas: Record<string, unknown>[], colunas: string[]) => {
@@ -49,8 +45,14 @@ const exigir = (linhas: Record<string, unknown>[], colunas: string[]) => {
 
 /** O Excel converte "3/3" em "03/mar": as duas formas valem. */
 export function modulosConcluidos(v: unknown): number {
-  const m = texto(v).match(/^(\d+)\/(\d+|[a-zç]{3})$/i);
+  const m = texto(v).match(/^(\d+)\s*[/-]\s*(\d+|[a-zç]{3}\.?)$/i);
   return m ? Number(m[1]) : 0;
+}
+
+/** "94%", "94,5%" ou "94.5%": aqui o ponto é decimal, não milhar. */
+function notaPercentual(v: string): number | null {
+  const n = Number(v.replace("%", "").replace(",", ".").trim());
+  return Number.isFinite(n) ? Math.min(100, Math.max(0, n)) : null;
 }
 
 export async function lerFrequencia(file: File): Promise<LinhaColaborador[]> {
@@ -73,7 +75,7 @@ export async function lerFrequencia(file: File): Promise<LinhaColaborador[]> {
         empresa: texto(r["Empresa"]) || null,
         treinamento_concluidos: modulosConcluidos(r["Treinamento"]),
         treinamentos_pendentes: texto(r["Treinamentos pendentes"]) || null,
-        nota: nota ? numero(nota) : null,
+        nota: nota ? notaPercentual(nota) : null,
         hub_dias_30: numero(r["Hub · dias com acesso (30 dias)"]),
         ultimo_acesso_hub: dataIso(r["Último acesso ao Hub"]),
         ultima_acao_processo: dataIso(r["Última ação em processo"]),

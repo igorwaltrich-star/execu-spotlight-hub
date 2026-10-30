@@ -120,7 +120,6 @@ export function FechamentosTab({ podeEditar }: { podeEditar: boolean }) {
       /* ignora */
     }
   };
-  const noFiltro = (c: string) => !centrosSel.length || centrosSel.includes(c);
 
   const comp = useMemo(() => {
     if (!dados.data) return null;
@@ -128,6 +127,9 @@ export function FechamentosTab({ podeEditar }: { podeEditar: boolean }) {
     const linhas = compararCentros(resA, resP, pendA, pendP, centrosComLista);
     return { linhas, todos: linhas.map((l) => l.centro).sort() };
   }, [dados.data]);
+  // centros salvos que não existem nesta base não contam na seleção
+  const selValida = centrosSel.filter((c) => !comp || comp.todos.includes(c));
+  const noFiltro = (c: string) => !selValida.length || selValida.includes(c);
 
   const visao = useMemo(() => {
     if (!comp || !dados.data) return null;
@@ -160,14 +162,13 @@ export function FechamentosTab({ podeEditar }: { podeEditar: boolean }) {
       faixasAtu,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [comp, dados.data, centrosSel]);
+  }, [comp, dados.data, selValida.join("|")]);
 
   const importar = async (file: File) => {
     setImportando(true);
     try {
       const r = await importarFechamento(file, user?.id);
       await qc.invalidateQueries({ queryKey: ["fh_importacoes"] });
-      await qc.invalidateQueries({ queryKey: ["fin_fechamento_pendente"] });
       setAtualId(null);
       setAnteriorId(null);
       toast.success(
@@ -260,7 +261,7 @@ export function FechamentosTab({ podeEditar }: { podeEditar: boolean }) {
         <FiltroCentros
           todos={comp?.todos ?? []}
           linhas={comp?.linhas ?? []}
-          sel={centrosSel}
+          sel={selValida}
           aoMudar={salvarCentros}
         />
         <div className="ml-auto">{botaoImportar}</div>
@@ -439,6 +440,10 @@ function FiltroCentros({
   const crit = (c: string) =>
     situacaoCentro(linhas.find((l) => l.centro === c)?.atual ?? null) === "critico";
   const vis = todos.filter((c) => c.toLowerCase().includes(busca.toLowerCase()));
+  const atalho = (lista: string[], rotulo: string) => {
+    if (!lista.length) toast.info(`Nenhum centro ${rotulo} nesta base.`);
+    else aoMudar(lista);
+  };
   const marcar = (c: string, on: boolean) => aoMudar(on ? [...sel, c] : sel.filter((x) => x !== c));
   const resumo = !sel.length
     ? "Todos os centros"
@@ -468,7 +473,12 @@ function FiltroCentros({
             size="sm"
             variant="ghost"
             className="h-7 text-xs"
-            onClick={() => aoMudar(todos.filter((c) => fluxo(c)))}
+            onClick={() =>
+              atalho(
+                todos.filter((c) => fluxo(c)),
+                "com fluxo",
+              )
+            }
           >
             Só com fluxo
           </Button>
@@ -476,7 +486,12 @@ function FiltroCentros({
             size="sm"
             variant="ghost"
             className="h-7 text-xs"
-            onClick={() => aoMudar(todos.filter((c) => !fluxo(c)))}
+            onClick={() =>
+              atalho(
+                todos.filter((c) => !fluxo(c)),
+                "sem fluxo",
+              )
+            }
           >
             Só sem fluxo
           </Button>
@@ -484,7 +499,7 @@ function FiltroCentros({
             size="sm"
             variant="ghost"
             className="h-7 text-xs"
-            onClick={() => aoMudar(todos.filter(crit))}
+            onClick={() => atalho(todos.filter(crit), "crítico")}
           >
             Só críticos
           </Button>
@@ -519,7 +534,10 @@ function FiltroCentros({
   );
 }
 
-type Ord = { k: "centro" | "sem" | "delta" | "pct" | "m90" | "di"; d: 1 | -1 };
+type Ord = {
+  k: "centro" | "sem" | "delta" | "pct" | "m90" | "di" | "entraram" | "sairam";
+  d: 1 | -1;
+};
 
 function TabelaCentros({
   linhas,
@@ -537,6 +555,8 @@ function TabelaCentros({
       pct: l.atual?.percentual_pedido ?? 0,
       m90: l.atual?.mais_90 ?? 0,
       di: l.atual?.processos_di ?? 0,
+      entraram: l.entraram ?? 0,
+      sairam: l.sairam ?? 0,
     })[ord.k];
   const ordenadas = [...linhas].sort((a, b) => {
     const A = val(a),
@@ -575,8 +595,8 @@ function TabelaCentros({
               {th("pct", "% com pedido")}
               {th("sem", "Sem pedido", "text-right")}
               {temAnterior && th("delta", "Variação", "text-right")}
-              {temAnterior && <TableHead className="text-right">Entraram</TableHead>}
-              {temAnterior && <TableHead className="text-right">Saíram</TableHead>}
+              {temAnterior && th("entraram", "Entraram", "text-right")}
+              {temAnterior && th("sairam", "Saíram", "text-right")}
               <TableHead>Por faixa</TableHead>
               {th("m90", "+90 dias", "text-right")}
             </TableRow>

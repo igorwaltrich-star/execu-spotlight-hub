@@ -48,7 +48,10 @@ export const numero = (v: unknown) => {
 };
 export const dataIso = (v: unknown) => {
   if (v instanceof Date && !Number.isNaN(v.getTime())) return v.toISOString().slice(0, 10);
-  const m = texto(v).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  const t = texto(v);
+  const iso = t.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+  const m = t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:[ T]\d{1,2}:\d{2}(?::\d{2})?)?$/);
   return m ? `${m[3]}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}` : null;
 };
 
@@ -143,6 +146,7 @@ function lerCsv(conteudo: string, nome: string, modificado: number): LeituraFech
     "Centro de custo",
     "Processo",
     "DI/DUIMP",
+    "Data de registro",
     "Dias sem pedir fechamento",
     "Centro usa o fluxo",
   ];
@@ -202,15 +206,22 @@ export function estimarResumos(
   const chavesAnt = new Set(anteriorPendencias.map(chavePendencia));
   const chavesAtu = new Set(atual.map(chavePendencia));
   const limite = anteriorData
-    ? new Date(new Date(anteriorData).getTime() - 7 * 864e5).toISOString().slice(0, 10)
+    ? new Date(new Date(anteriorData).getTime() - 3 * 3600e3 - 7 * 864e5) // horário de Brasília
+        .toISOString()
+        .slice(0, 10)
     : null;
   const porCentro = new Map<string, LinhaPendencia[]>();
   atual.forEach((p) =>
     porCentro.set(p.centro_custo, [...(porCentro.get(p.centro_custo) ?? []), p]),
   );
 
+  // centro com fluxo que zerou a lista: continua no resumo com sem pedido = 0
+  anteriorResumos
+    .filter((r) => r.usa_fluxo && !porCentro.has(r.centro_custo))
+    .forEach((r) => porCentro.set(r.centro_custo, []));
+
   return [...porCentro.entries()].map(([centro, linhas]) => {
-    const usaFluxo = linhas.some((p) => p.usa_fluxo);
+    const usaFluxo = linhas.length ? linhas.some((p) => p.usa_fluxo) : true;
     const sem = linhas.length;
     const ant = anteriorResumos.find((r) => r.centro_custo === centro);
     const entram = linhas.filter((p) => !chavesAnt.has(chavePendencia(p)));

@@ -68,7 +68,7 @@ function BotaoImportar({
       <input
         ref={ref}
         type="file"
-        accept=".csv,.xlsx,.xls"
+        accept=".csv"
         className="hidden"
         onChange={(e) => {
           const f = e.target.files?.[0];
@@ -262,7 +262,7 @@ function Adesao({ podeEditar }: { podeEditar: boolean }) {
           detalhe={`${n0(conta((p) => p.treinamento_concluidos === 0))} não iniciaram`}
         />
         <Kpi
-          rotulo="Acessaram em 7 dias"
+          rotulo="Acessaram nos últimos 7 dias"
           valor={pct(
             (conta((p) => p.dias_sem_acesso !== null && p.dias_sem_acesso <= 7) / n) * 100,
           )}
@@ -543,17 +543,17 @@ function Adesao({ podeEditar }: { podeEditar: boolean }) {
                   <TableHead>Situação</TableHead>
                   <TableHead>Cargo</TableHead>
                   <TableHead>Empresa</TableHead>
-                  <TableHead className="text-right">Trein.</TableHead>
+                  <TableHead className="text-right">Treinamento</TableHead>
                   <TableHead className="text-right">Nota</TableHead>
-                  <TableHead className="text-right">Hub 30d</TableHead>
-                  <TableHead className="text-right">Sem acesso</TableHead>
+                  <TableHead className="text-right">Hub (dias em 30)</TableHead>
+                  <TableHead className="text-right">Dias sem acesso</TableHead>
                   <TableHead className="text-right">Dashboard</TableHead>
                   <TableHead>Pendências</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {lista.map((p) => (
-                  <TableRow key={p.colaborador}>
+                {lista.map((p, i) => (
+                  <TableRow key={`${p.colaborador}-${i}`}>
                     <TableCell className="font-medium text-xs whitespace-nowrap">
                       {p.colaborador}
                     </TableCell>
@@ -830,7 +830,7 @@ function Onboarding({ podeEditar }: { podeEditar: boolean }) {
                   <TableHead>O que falta</TableHead>
                   <TableHead>Com quem</TableHead>
                   <TableHead>Desde</TableHead>
-                  <TableHead className="text-right">Dias</TableHead>
+                  <TableHead className="text-right">Dias em aberto</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

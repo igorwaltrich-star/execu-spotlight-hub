@@ -59,12 +59,31 @@ export async function listarImportacoesFechamento(): Promise<Importacao[]> {
 }
 
 export async function carregarResumos(importacaoId: string): Promise<LinhaResumo[]> {
-  const { data, error } = await supabase
-    .from("financeiro_fechamento_resumos")
-    .select("*")
-    .eq("importacao_id", importacaoId);
-  if (error) throw error;
-  return (data ?? []) as LinhaResumo[];
+  return todas<LinhaResumo>((de, ate) =>
+    supabase
+      .from("financeiro_fechamento_resumos")
+      .select("*")
+      .eq("importacao_id", importacaoId)
+      .order("id")
+      .range(de, ate),
+  );
+}
+
+/** Apaga uma importação que falhou no meio; as linhas saem em cascata. */
+async function desfazerImportacao(
+  tabela:
+    | "financeiro_fechamento_importacoes"
+    | "hub_frequencia_importacoes"
+    | "hub_onboarding_importacoes",
+  id: string,
+  erro: unknown,
+): Promise<never> {
+  const { data, error } = await supabase.from(tabela).delete().eq("id", id).select("id");
+  if (error || !data?.length)
+    throw new Error(
+      `${erro instanceof Error ? erro.message : "Falha na importação"}. A importação incompleta não pôde ser apagada: peça a um gestor para excluí-la.`,
+    );
+  throw erro;
 }
 
 /** Processos de uma importação, só dos centros pedidos (a lista dos centros sem fluxo tem todas as DIs). */
@@ -90,15 +109,22 @@ export async function importarFechamento(file: File, usuarioId: string | undefin
   const leitura = await lerArquivoFechamento(file);
   let resumos = leitura.resumos;
   if (!resumos) {
-    // CSV: estima o resumo a partir da base anterior mais recente
-    const [anterior] = await listarImportacoesFechamento();
+    // CSV: estima o resumo a partir da base anterior mais recente (anterior à data deste arquivo)
+    const ref = leitura.dataReferencia ? new Date(leitura.dataReferencia).getTime() : Infinity;
+    const anterior = (await listarImportacoesFechamento()).find(
+      (i) => !i.data_referencia || new Date(i.data_referencia).getTime() < ref,
+    );
     if (!anterior)
       throw new Error(
         "O CSV não traz o resumo. Importe antes uma planilha .xlsx com a aba Resumo.",
       );
     const resAnt = await carregarResumos(anterior.id);
+    // inclui os centros com fluxo da base anterior que zeraram a lista agora
     const centrosFluxo = [
-      ...new Set(leitura.pendencias.filter((p) => p.usa_fluxo).map((p) => p.centro_custo)),
+      ...new Set([
+        ...leitura.pendencias.filter((p) => p.usa_fluxo).map((p) => p.centro_custo),
+        ...resAnt.filter((r) => r.usa_fluxo).map((r) => r.centro_custo),
+      ]),
     ];
     const pendAnt = await carregarPendencias(anterior.id, centrosFluxo);
     resumos = estimarResumos(leitura.pendencias, resAnt, pendAnt, anterior.data_referencia);
@@ -124,8 +150,7 @@ export async function importarFechamento(file: File, usuarioId: string | undefin
       leitura.pendencias.map((p) => ({ ...p, importacao_id: imp.id })),
     );
   } catch (e) {
-    await supabase.from("financeiro_fechamento_importacoes").delete().eq("id", imp.id);
-    throw e;
+    await desfazerImportacao("financeiro_fechamento_importacoes", imp.id, e);
   }
   return {
     centros: resumos.length,
@@ -196,11 +221,14 @@ async function importarHub(
   tabelaLinhas: string,
   linhas: object[],
 ) {
+  const dataReferencia = dataDoNome(file.name);
+  if (!dataReferencia)
+    throw new Error("O nome do arquivo precisa ter a data no formato AAAA-MM-DD.");
   const { data: imp, error } = await supabase
     .from(tabelaImp)
     .insert({
       arquivo_nome: file.name,
-      data_referencia: dataDoNome(file.name),
+      data_referencia: dataReferencia,
       importado_por: usuarioId,
     })
     .select("id")
@@ -212,8 +240,7 @@ async function importarHub(
       linhas.map((l) => ({ ...l, importacao_id: imp.id })),
     );
   } catch (e) {
-    await supabase.from(tabelaImp).delete().eq("id", imp.id);
-    throw e;
+    await desfazerImportacao(tabelaImp, imp.id, e);
   }
   return linhas.length;
 }

@@ -3,8 +3,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard, Database, Briefcase, BarChart3,
-  AlertTriangle, DollarSign, Clock,
-  Users, UserCheck, LogOut, Anchor, Sparkles, Award, Wallet,
+  AlertTriangle, DollarSign,
+  Users, UserCheck, LogOut, Anchor, Sparkles, Award,
   ChevronDown, ChevronRight, TrendingUp, Gauge, Building2, ClipboardCheck,
 } from "lucide-react";
 import { type ReactNode, useState } from "react";
@@ -26,10 +26,8 @@ const NAV_OP: NavItem[] = [
   { to: "/nao-conformidades",         label: "Não Conformidades",        icon: AlertTriangle },
   { to: "/custo-operacional",         label: "Custo Operacional",        icon: DollarSign, papeis: ["gestor","coordenador"] },
   { to: "/margem-contribucao",        label: "Margem de Contribuição",   icon: TrendingUp },
-  { to: "/banco-horas",               label: "Banco de Horas",           icon: Clock, papeis: ["gestor","coordenador","supervisor"] },
   { to: "/paineis-operacionais",      label: "Painéis Operacionais",     icon: Gauge },
   { to: "/insights",                  label: "Insights",                 icon: Sparkles, papeis: ["gestor","coordenador","supervisor"] },
-  { to: "/gestao-financeira",         label: "Gestão Financeira",        icon: Wallet, papeis: ["gestor","coordenador","supervisor"] },
   { to: "/gerenciamento-operacional", label: "Gerenciamento",            icon: Briefcase },
 ];
 
