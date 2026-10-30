@@ -86,8 +86,8 @@ function AvisoMigration() {
       <CardContent className="py-4 text-sm flex gap-2">
         <AlertTriangle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
         <span>
-          As tabelas do Hub ainda não existem no banco. Aplique a migration{" "}
-          <code>0007_create_hub_adoption_onboarding.sql</code> para liberar a importação.
+          As tabelas do Hub ainda não existem no banco. Aplique a migration do Hub{" "}
+          no Lovable para liberar a importação.
         </span>
       </CardContent>
     </Card>
