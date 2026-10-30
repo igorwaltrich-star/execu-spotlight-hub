@@ -1,4 +1,4 @@
-import { hubClient as supabase } from "./client";
+import { supabase } from "@/integrations/supabase/client";
 import {
   estimarResumos,
   lerArquivoFechamento,

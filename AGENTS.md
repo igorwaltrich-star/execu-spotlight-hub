@@ -7,4 +7,3 @@
 - Hub adoption and onboarding files are stored as immutable import snapshots, readable only by gestor, coordenador and supervisor because they name collaborators.
 - Banco de Horas and Gestão Financeira screens are retired; their tables stay in the database, but no route or menu item links them.
 - A supervisor may delete only their own closure import within one hour, so a failed import can be rolled back without making snapshots mutable.
-- Pending Hub schema types are isolated in a feature-local client extension of the existing authenticated client; generated database types remain untouched until the migration is applied.

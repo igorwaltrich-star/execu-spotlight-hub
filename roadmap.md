@@ -13,7 +13,7 @@
 - [x] Importar o consolidado de fechamentos pendentes e exibir resumo gerencial
 - [x] Página Fechamentos e Hub: comparação entre bases do Sigra, filtro por centro e importação em CSV
 - [x] Aba Pendências Hub: adesão dos colaboradores e pendências de onboarding com importação de arquivos
-- [ ] Aplicar a migration das tabelas hub_* (com GRANTs) pelo fluxo de migrations do Lovable
+- [x] Aplicar a migration das tabelas hub_* (com GRANTs) pelo fluxo de migrations do Lovable
 - [x] Remover as telas Banco de Horas e Gestão Financeira (tabelas preservadas no banco)
 - [x] Revisar Fechamentos e Hub: centros que zeraram a lista, atalhos do filtro, rollback do supervisor, datas e textos
-- [ ] Aplicar a policy fin_fech_import_undo_own pelo fluxo de migrations do Lovable
+- [x] Aplicar a policy fin_fech_import_undo_own pelo fluxo de migrations do Lovable
