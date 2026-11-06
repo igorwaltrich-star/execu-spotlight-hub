@@ -133,6 +133,45 @@ export function CadastroOperacionalView({ hideHeader = false }: { hideHeader?: b
 
   const fileRef = useRef<HTMLInputElement>(null);
 
+  const baixarRelatorio = async () => {
+    if (rows.length === 0) return;
+    try {
+      const ws = XLSX.utils.json_to_sheet(rows.map((r) => ({
+        Unidade: UNIDADE_LABEL[r.unidade] ?? r.unidade,
+        Mês: fmtMes(r.mes),
+        Volume: r.volume,
+        Pessoas: r.pessoas,
+        Produtividade: r.pessoas > 0 ? Number((r.volume / r.pessoas).toFixed(1)) : null,
+      })));
+      ws["!cols"] = [{ wch: 28 }, { wch: 16 }, { wch: 14 }, { wch: 14 }, { wch: 18 }];
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Cadastro Operacional");
+      const blob = new Blob([XLSX.write(wb, { bookType: "xlsx", type: "array" })], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      const filename = "relatorio-cadastro-operacional.xlsx";
+      const file = new File([blob], filename, { type: blob.type });
+      if (window.matchMedia("(pointer: coarse)").matches && navigator.canShare?.({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file], title: "Cadastro Operacional" });
+          return;
+        } catch (error) {
+          if ((error as DOMException).name === "AbortError") return;
+        }
+      }
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 30_000);
+    } catch {
+      toast.error("Não foi possível baixar o relatório. Tente novamente.");
+    }
+  };
+
   const baixarModelo = () => {
     const ws = XLSX.utils.json_to_sheet(
       UNIDADES.slice(0, 3).map((u) => ({
@@ -334,8 +373,12 @@ export function CadastroOperacionalView({ hideHeader = false }: { hideHeader?: b
         </Card>
 
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between gap-2 flex-wrap">
             <CardTitle>Histórico</CardTitle>
+            <Button size="sm" variant="outline" onClick={baixarRelatorio} disabled={rows.length === 0}>
+              <Download className="h-4 w-4 mr-1" />
+              Baixar relatório
+            </Button>
           </CardHeader>
           <CardContent className="p-0">
             <Table>
